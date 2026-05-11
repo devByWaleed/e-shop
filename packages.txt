@@ -1,0 +1,8 @@
+Frontend
+
+npm install axios react-router-dom tailwindcss @tailwindcss/vite
+
+
+Backend
+
+npm install nodemon mongoose dotenv bcryptjs jsonwebtoken cookie-parser nodemailer

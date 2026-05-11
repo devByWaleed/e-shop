@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+    --color-primary: rgb(15, 28, 145);
+    --color-primary-dull: rgb(34, 45, 139);
+    /* --color-primary-dark: #1f6644; */
+}
+
+/* h1 {
+    color: rgb(15, 28, 145);
+    background-color: rgb(34, 45, 139);
+} */
+
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}

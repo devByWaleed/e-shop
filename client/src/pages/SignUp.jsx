@@ -1,0 +1,103 @@
+import { useState } from "react";
+import { assets } from '../assets/assets.js'
+import { useNavigate } from "react-router-dom";
+
+const SignUp = () => {
+
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+
+    const navigate = useNavigate()
+
+    const onSubmitHandler = async (e) => {
+
+        // try {
+        //     e.preventDefault();
+        //     const { data } = await axios.post(`/api/user/${state}`, {
+        //         name, email, password
+        //     })
+
+        //     if (data.success) {
+        //         navigate("/")
+        //         setUser(data.user)
+        //         setShowUserLogin(false)
+        //     } else {
+        //         toast.error(data.message)
+        //     }
+        // } catch (error) {
+        //     toast.error(error.message)
+        // }
+    }
+
+    return (
+        <section className="fixed top-0 bottom-0 left-0 right-0 z-30 flex items-center text-sm text-black">
+            <form onSubmit={onSubmitHandler} onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-88 text-gray-500 rounded-lg shadow-xl border border-gray-200 bg-white">
+                <p className="text-2xl font-medium m-auto">
+                    Register a new account
+                </p>
+
+                <div className="w-full">
+                    <p>Name</p>
+                    <input onChange={(e) => setName(e.target.value)} value={name} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="text" required />
+                </div>
+                <div className="w-full ">
+                    <p>Email</p>
+                    <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="email" required />
+                </div>
+                <div className="w-full">
+                    <p>Password</p>
+                    <div className="relative mt-1">
+                        <input
+                            onChange={(e) => setPassword(e.target.value)}
+                            value={password}
+                            placeholder="type here"
+                            className="border border-gray-200 rounded w-full p-2 pr-10 outline-primary"
+                            type={showPassword ? "text" : "password"}
+                            required
+                        />
+                        <img
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 text-xl"
+                            src={showPassword ? assets.hide_password : assets.show_password}
+                        />
+
+                    </div>
+                </div>
+
+                <div className="mt-2 flex items-center">
+                    {/* <span className="inline-block h-8 w-8 rounded-full overflow-hidden"> */}
+                    <img className="inline-block h-8 w-8 rounded-full overflow-hidden" src={assets.profile} alt="Profile Icon" />
+                    {/* </span> */}
+                    <label
+                        htmlFor="file-input"
+                        className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        <span>Upload a file</span>
+                        <input
+                            type="file"
+                            name="avatar"
+                            id="file-input"
+                            accept=".jpg,.jpeg,.png"
+                            // onChange={handleFileInputChange}
+                            className="sr-only"
+                        />
+                    </label>
+                </div>
+
+
+                <button className="bg-primary hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
+                    Create Account
+                </button>
+
+
+                <p>
+                    Already have an account? <span onClick={() => navigate('/login')} className="text-primary cursor-pointer">Click here</span>
+                </p>
+            </form>
+        </section>
+    );
+};
+
+export default SignUp
