@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { assets } from '../assets/assets.js'
 import { useNavigate } from "react-router-dom";
+import axios from "axios"
+
 
 const SignUp = () => {
 
@@ -8,27 +10,37 @@ const SignUp = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [avatar, setAvatar] = useState(null);
 
     const navigate = useNavigate()
 
+    const handleFileInputChange = (e) => {
+        const file = e.target.files[0]
+        setAvatar(file)
+    }
+
     const onSubmitHandler = async (e) => {
 
-        // try {
-        //     e.preventDefault();
-        //     const { data } = await axios.post(`/api/user/${state}`, {
-        //         name, email, password
-        //     })
+        try {
+            e.preventDefault();
+            const config = { headers: { "Content-Type": "multipart/form-data" } }
 
-        //     if (data.success) {
-        //         navigate("/")
-        //         setUser(data.user)
-        //         setShowUserLogin(false)
-        //     } else {
-        //         toast.error(data.message)
-        //     }
-        // } catch (error) {
-        //     toast.error(error.message)
-        // }
+            const newForm = new FormData()
+            newForm.append("file", avatar)
+            newForm.append("name", name)
+            newForm.append("email", email)
+            newForm.append("password", password)
+
+            const { data } = await axios.post("http://localhost:4000/api/user/register", newForm, config)
+
+            if (data.success) {
+                navigate("/")
+            } else {
+                console.error(data.message)
+            }
+        } catch (error) {
+            console.error(error.message)
+        }
     }
 
     return (
@@ -68,7 +80,7 @@ const SignUp = () => {
 
                 <div className="mt-2 flex items-center">
                     {/* <span className="inline-block h-8 w-8 rounded-full overflow-hidden"> */}
-                    <img className="inline-block h-8 w-8 rounded-full overflow-hidden" src={assets.profile} alt="Profile Icon" />
+                    <img className="inline-block h-8 w-8 rounded-full overflow-hidden" src={avatar ? URL.createObjectURL(avatar) : assets.profile} alt="Profile Icon" />
                     {/* </span> */}
                     <label
                         htmlFor="file-input"
@@ -80,7 +92,7 @@ const SignUp = () => {
                             name="avatar"
                             id="file-input"
                             accept=".jpg,.jpeg,.png"
-                            // onChange={handleFileInputChange}
+                            onChange={handleFileInputChange}
                             className="sr-only"
                         />
                     </label>
