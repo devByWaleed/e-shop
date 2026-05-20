@@ -12,14 +12,13 @@ import path from "path"
 const app = express();
 
 
-
 // Allow multiple origins
-const allowedOrigin = ["http://localhost:5173",];
+const allowedOrigin = ["http://localhost:5173"];
 app.use(cors({
     origin: allowedOrigin,
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization",],
-    credentials: true
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 
@@ -43,9 +42,11 @@ app.use(cors({
 // Middleware configuration
 app.use(express.json());
 app.use(cookieParser());
+
+
+// static files
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-
 app.use("/", express.static(path.join(__dirname, "uploads")));
 
 

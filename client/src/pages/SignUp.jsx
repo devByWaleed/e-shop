@@ -2,6 +2,7 @@ import { useState } from "react";
 import { assets } from '../assets/assets.js'
 import { useNavigate } from "react-router-dom";
 import axios from "axios"
+import toast from "react-hot-toast";
 
 
 const SignUp = () => {
@@ -31,15 +32,16 @@ const SignUp = () => {
             newForm.append("email", email)
             newForm.append("password", password)
 
-            const { data } = await axios.post("http://localhost:4000/api/user/register", newForm, config)
+            const { data } = await axios.post("/api/user/register", newForm, config)
 
             if (data.success) {
+                toast.success(data.message)
                 navigate("/")
             } else {
-                console.error(data.message)
+                toast.error(data.message)
             }
         } catch (error) {
-            console.error(error.message)
+            toast.error(error.message)
         }
     }
 

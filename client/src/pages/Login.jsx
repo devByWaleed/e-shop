@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { assets } from '../assets/assets.js'
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const Login = () => {
 
@@ -13,22 +15,22 @@ const Login = () => {
 
     const onSubmitHandler = async (e) => {
 
-        // try {
-        //     e.preventDefault();
-        //     const { data } = await axios.post(`/api/user/${state}`, {
-        //         name, email, password
-        //     })
+        try {
+            e.preventDefault();
+            const { data } = await axios.post('/api/user/login', {
+                email, password
+            })
 
-        //     if (data.success) {
-        //         navigate("/")
-        //         setUser(data.user)
-        //         setShowUserLogin(false)
-        //     } else {
-        //         toast.error(data.message)
-        //     }
-        // } catch (error) {
-        //     toast.error(error.message)
-        // }
+            if (data.success) {
+                toast.success(data.message)
+                navigate("/")
+                // setUser(data.user)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
     }
 
     return (
@@ -66,7 +68,7 @@ const Login = () => {
 
                 <div className="flex flex-row justify-between items-center w-full">
                     <div className="flex items-center">
-                        <input type="checkbox" id="remember-me" className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                        <input type="checkbox" id="remember-me" name="remember-me" className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
                         <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                             Remember me
                         </label>

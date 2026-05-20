@@ -1,8 +1,87 @@
 Frontend
 
-npm install axios react-router-dom tailwindcss @tailwindcss/vite
-
+npm install axios react-router-dom tailwindcss @tailwindcss/vite react-hot-toast react-hot-toast react-lottie socket.io-client timeago.js country-state-city
 
 Backend
 
-npm install nodemon mongoose dotenv bcryptjs jsonwebtoken cookie-parser nodemailer express cors multer
+npm install nodemon mongoose dotenv bcryptjs jsonwebtoken cookie-parser nodemailer express cors multer cloudinary js-cookie stripe
+
+-----------------------
+
+
+Brand Identity
+Here's a unique name and theme for your multivendor marketplace:
+Name: Zenvio
+
+"Zen" = smooth, effortless experience
+"vio" = via/through, connecting buyers and sellers
+
+
+Theme Colors:
+Primary:     #6C63FF  (Electric Violet)
+Secondary:   #FF6584  (Coral Pink)  
+Accent:      #43E97B  (Mint Green)
+Dark:        #1A1A2E  (Deep Navy)
+Light BG:    #F8F7FF  (Soft Lavender White)
+Text:        #2D2D3A  (Dark Charcoal)
+
+--------------------------
+
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="200" height="50">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6C63FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF6584;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Icon mark -->
+  <rect x="0" y="5" width="40" height="40" rx="10" ry="10" fill="url(#logoGrad)" />
+  <polyline 
+    points="10,14 30,14 10,36 30,36" 
+    fill="none" 
+    stroke="white" 
+    stroke-width="4.5" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
+  <circle cx="30" cy="36" r="3" fill="#43E97B" />
+
+  <!-- Brand name -->
+  <text 
+    x="50" 
+    y="33" 
+    font-family="'Segoe UI', Arial, sans-serif" 
+    font-size="26" 
+    font-weight="700" 
+    fill="url(#logoGrad)"
+  >Zenvio</text>
+
+  <!-- Tagline dot accent -->
+  <circle cx="118" cy="13" r="4" fill="#43E97B" />
+</svg>
+
+--------------------
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6C63FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF6584;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="100" height="100" rx="22" ry="22" fill="url(#grad)" />
+  <!-- Z letter stylized -->
+  <polyline 
+    points="25,28 75,28 25,72 75,72" 
+    fill="none" 
+    stroke="white" 
+    stroke-width="10" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
+  <!-- Small dot accent -->
+  <circle cx="75" cy="72" r="6" fill="#43E97B" />
+</svg>
