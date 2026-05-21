@@ -36,7 +36,6 @@ const SignUp = () => {
 
             if (data.success) {
                 toast.success(data.message)
-                navigate("/")
             } else {
                 toast.error(data.message)
             }

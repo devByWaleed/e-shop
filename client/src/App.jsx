@@ -9,6 +9,7 @@ import Activation from './pages/Activation'
 import Home from './pages/Home'
 import store from './redux/store'
 import { loadUser } from './redux/actions/userAction'
+import ProtectedRoute from './components/ProtectedRoute'
 
 // Send cookies
 axios.defaults.withCredentials = true
@@ -16,13 +17,6 @@ axios.defaults.withCredentials = true
 // Backend URL
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL
 // axios.defaults.baseURL = process.env.BACKEND_URL
-
-// Optional: Add an interceptor to see requests
-axios.interceptors.request.use(request => {
-  console.log('Starting Request:', request.url);
-  console.log('With Credentials:', request.withCredentials);
-  return request;
-});
 
 
 const App = () => {
@@ -47,6 +41,13 @@ const App = () => {
         <Route path='/login' element={<Login />} />
         <Route path='/sign-up' element={<SignUp />} />
         <Route path='/activation/:activation_token' element={<Activation />} />
+
+        {/* Protected Routes */}
+        {/* <Route path='/profile' element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        } /> */}
       </Routes>
     </div>
   )

@@ -1,13 +1,7 @@
 import jwt from "jsonwebtoken"
 
 const userAuth = async (req, res, next) => {
-    // Log everything for debugging
-    console.log("Cookies received:", req.cookies);
-    console.log("Cookie keys:", Object.keys(req.cookies || {}));
-
     const token = req.cookies?.token;  // Safe navigation
-
-    console.log("Extracted token:", token ? "Exists" : "Missing");
 
     if (!token) {
         return res.json({
@@ -18,7 +12,6 @@ const userAuth = async (req, res, next) => {
 
     try {
         const tokenDecode = jwt.verify(token, process.env.JWT_SECRET)
-        console.log("Decoded token:", tokenDecode);
 
         if (tokenDecode.id) {
             req.userID = tokenDecode.id

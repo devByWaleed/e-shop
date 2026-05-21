@@ -25,6 +25,9 @@ Dark:        #1A1A2E  (Deep Navy)
 Light BG:    #F8F7FF  (Soft Lavender White)
 Text:        #2D2D3A  (Dark Charcoal)
 
+#645ec7
+
+
 --------------------------
 
 

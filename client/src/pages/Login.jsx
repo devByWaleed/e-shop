@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { assets } from '../assets/assets.js'
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from 'react-redux';
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const Login = () => {
 
+const Login = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
     const navigate = useNavigate()
+    const dispatch = useDispatch()
 
     const onSubmitHandler = async (e) => {
 
@@ -22,8 +24,10 @@ const Login = () => {
             })
 
             if (data.success) {
-                toast.success(data.message)
+                // Load user data immediately after login
+                await dispatch(loadUser());
                 navigate("/")
+                toast.success(data.message)
                 // setUser(data.user)
             } else {
                 toast.error(data.message)

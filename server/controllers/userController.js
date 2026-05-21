@@ -25,6 +25,12 @@ export const register = async (req, res) => {
         const { name, email, password } = req.body;
 
         if (!name || !email || !password) {
+            // Delete uploaded file if validation fails
+            if (req.file) {
+                const filePath = path.join(__dirname, "../uploads", req.file.filename);
+                await fs.promises.unlink(filePath).catch(console.log);
+            }
+
             return res.json({
                 success: false,
                 message: "Missing Details"
@@ -59,30 +65,34 @@ export const register = async (req, res) => {
         }
 
         const activationToken = createActivationToken(userData)
-        const activationUrl = `http://localhost:5173/activation/${activationToken}`
-
-        // const user = new UserModel({ name, email, password: hashedPassword, avatar: fileUrl })
-        // await user.save();
-
+        const activationUrl = `${process.env.VITE_FRONTEND_URL}/activation/${activationToken}`
 
         // Sending OTP reset email
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
-            to: user.email,
+            to: userData.email,
             subject: "Account Activation",
-            text: `Hello ${user.name}, please activate your account by clicking this link: ${activationUrl}`
+            text: `Hello ${userData.name}, please activate your account by clicking this link: ${activationUrl}`
         }
 
         await transporter.sendMail(mailOptions);
+        // console.log(activationUrl);
 
         return res.json({
             success: true,
-            message: "Please check your email to verify your account"
+            message: "Please check your email to verify your account",
         })
     }
 
     catch (error) {
         console.log(error.message);
+
+        // Delete uploaded file if error occurs
+        if (req.file) {
+            const filePath = path.join(__dirname, "../uploads", req.file.filename);
+            await fs.promises.unlink(filePath).catch(console.log);
+        }
+
         return res.json({
             success: false,
             message: error.message
@@ -121,9 +131,10 @@ export const activateAccount = async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-            maxAge: 7 * 24 * 3600 * 1000
+            secure: false,  // false for localhost
+            sameSite: "lax",
+            maxAge: 7 * 24 * 3600 * 1000,
+            path: "/"
         })
 
         return res.json({
