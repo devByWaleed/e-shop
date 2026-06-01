@@ -61,7 +61,7 @@ export const register = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            avatar: fileName
+            avatar: fileUrl
         }
 
         const activationToken = createActivationToken(userData)
@@ -231,6 +231,33 @@ export const getProfile = async (req, res) => {
             success: true,
             message: "Profile Fetched",
             userData,
+        })
+    }
+
+    catch (error) {
+        console.log(error.message);
+        return res.json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+
+
+// User logout : /api/user/logout
+export const logout = async (req, res) => {
+
+    try {
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
+        })
+
+        return res.json({
+            success: true,
+            message: "Logged Out"
         })
     }
 

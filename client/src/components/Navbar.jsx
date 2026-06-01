@@ -1,10 +1,14 @@
 import { NavLink } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import { useState } from 'react'
 import { assets } from '../assets/assets'
 
 const Navbar = () => {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')
+
+    const dispatch = useDispatch()
+    const { isAuthenticated, user, loading } = useSelector((state) => state.user)
 
     return (
         <>
@@ -204,13 +208,37 @@ const Navbar = () => {
                     <div className="w-px h-5 mx-1 bg-white/25" aria-hidden="true" />
 
                     {/* Avatar */}
-                    <div className="w-8.5 h-8.5 rounded-full bg-accent
-                        flex items-center justify-center text-[13px] font-medium
-                        text-dark cursor-pointer border-2 border-white/40
-                        hover:border-white/70 transition-colors"
-                        title="Profile">
-                        Z
-                    </div>
+                    {
+                        user ? (
+                            <div
+                                className="w-9 h-9 rounded-full overflow-hidden cursor-pointer
+                                border-2 border-white/40 hover:border-white/70 transition-colors
+                                shrink-0"
+                                title="Profile"
+                            >
+                                <img
+                                    src={user.avatar ? `${import.meta.env.VITE_BACKEND_URL}/${user.avatar}` : assets.profile}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ) : (
+                            <NavLink
+                                to="/login"
+                                className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25
+                                transition-colors text-white text-sm font-medium px-4 py-1.5
+                                rounded-full border border-white/30 whitespace-nowrap"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                    <circle cx="8" cy="5" r="3" stroke="white" strokeWidth="1.4"
+                                        strokeLinecap="round" />
+                                    <path d="M2 14c0-3 2.686-5 6-5s6 2 6 5"
+                                        stroke="white" strokeWidth="1.4" strokeLinecap="round" />
+                                </svg>
+                                Login
+                            </NavLink>
+                        )
+                    }
                 </div>
             </nav>
 

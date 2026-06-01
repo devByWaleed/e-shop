@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
 import axios from "axios";
 import toast from "react-hot-toast";
+import { loadUser } from "../redux/actions/userAction.js";
 
 
 const Login = () => {
