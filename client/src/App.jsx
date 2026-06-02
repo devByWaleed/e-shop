@@ -10,6 +10,7 @@ import Home from './pages/Home'
 import store from './redux/store'
 import { loadUser } from './redux/actions/userAction'
 import ProtectedRoute from './components/ProtectedRoute'
+import Loading from './components/Loading'
 
 // Send cookies
 axios.defaults.withCredentials = true
@@ -21,7 +22,8 @@ axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL
 
 const App = () => {
   const dispatch = useDispatch()
-  const { isAuthenticated, user, loading } = useSelector((state) => state.user)
+  const { isLoading } = useSelector((state) => state.loading)
+  const { isAuthenticated, user, loading: userLoading } = useSelector((state) => state.user)
 
   // Load User
   useEffect(() => {
@@ -30,6 +32,11 @@ const App = () => {
 
   console.log("Auth Status:", isAuthenticated)
   console.log("User Data:", user)
+
+  // Don't show main content while loading user data on app start
+  if (userLoading && !user) {
+    return <Loading />
+  }
 
 
   return (
@@ -41,6 +48,7 @@ const App = () => {
         <Route path='/login' element={<Login />} />
         <Route path='/sign-up' element={<SignUp />} />
         <Route path='/activation/:activation_token' element={<Activation />} />
+        <Route path='/loader' element={<Loading />} />
 
         {/* Protected Routes */}
         {/* <Route path='/profile' element={

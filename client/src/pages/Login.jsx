@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { assets } from '../assets/assets.js'
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
 import axios from "axios";
 import toast from "react-hot-toast";
 import { loadUser } from "../redux/actions/userAction.js";
+import useLoading from "../hooks/useLoading.js";
 
 
 const Login = () => {
@@ -15,32 +16,35 @@ const Login = () => {
 
     const navigate = useNavigate()
     const dispatch = useDispatch()
+    const { withLoading } = useLoading();
 
     const onSubmitHandler = async (e) => {
+        e.preventDefault();
 
-        try {
-            e.preventDefault();
-            const { data } = await axios.post('/api/user/login', {
-                email, password
-            })
+        // Wrap login logic with loading
+        await withLoading(
+            async () => {
+                const { data } = await axios.post('/api/user/login', {
+                    email, password
+                });
 
-            if (data.success) {
-                // Load user data immediately after login
-                await dispatch(loadUser());
-                navigate("/")
-                toast.success(data.message)
-                // setUser(data.user)
-            } else {
-                toast.error(data.message)
-            }
-        } catch (error) {
-            toast.error(error.message)
-        }
-    }
+                if (data.success) {
+                    await dispatch(loadUser());
+                    toast.success(data.message);
+                    navigate("/");
+                } else {
+                    toast.error(data.message);
+                    throw new Error(data.message);
+                }
+            },
+            { message: "Logging you in..." }
+        );
+    };
 
     return (
         <section className="fixed top-0 bottom-0 left-0 right-0 z-30 flex items-center text-sm text-black ">
             <form onSubmit={onSubmitHandler} onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-88 text-gray-500 rounded-lg shadow-xl border border-gray-200 bg-white">
+                <NavLink to="/" className="text-primary font-bold">← Homepage</NavLink>
                 <p className="text-2xl font-medium m-auto">
                     Login to your account
                 </p>

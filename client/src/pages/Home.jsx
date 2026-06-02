@@ -2,14 +2,16 @@ import React from 'react'
 import Navbar from '../components/Navbar'
 import HeroSection from '../components/Hero'
 import Footer from '../components/Footer'
-import ProductCard from '../components/ProductCard'
+import BestDeals from '../components/BestDeals'
+import FeaturedProduct from '../components/FeaturedProduct'
 
 const Home = () => {
     return (
         <>
             <Navbar />
             <HeroSection />
-            <ProductCard />
+            <BestDeals />
+            <FeaturedProduct />
             <Footer />
         </>
     )

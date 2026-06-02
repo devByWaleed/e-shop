@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { assets } from '../assets/assets.js'
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios"
 import toast from "react-hot-toast";
 
@@ -22,31 +22,34 @@ const SignUp = () => {
 
     const onSubmitHandler = async (e) => {
 
-        try {
-            e.preventDefault();
-            const config = { headers: { "Content-Type": "multipart/form-data" } }
+        e.preventDefault();
+        const config = { headers: { "Content-Type": "multipart/form-data" } }
 
-            const newForm = new FormData()
-            newForm.append("file", avatar)
-            newForm.append("name", name)
-            newForm.append("email", email)
-            newForm.append("password", password)
+        const newForm = new FormData()
+        newForm.append("file", avatar)
+        newForm.append("name", name)
+        newForm.append("email", email)
+        newForm.append("password", password)
 
-            const { data } = await axios.post("/api/user/register", newForm, config)
+        await withLoading(
+            async () => {
+                const { data } = await axios.post("/api/user/register", newForm, config)
 
-            if (data.success) {
-                toast.success(data.message)
-            } else {
-                toast.error(data.message)
-            }
-        } catch (error) {
-            toast.error(error.message)
-        }
+                if (data.success) {
+                    toast.success(data.message);
+                } else {
+                    toast.error(data.message);
+                    throw new Error(data.message);
+                }
+            },
+            { message: "Creating account..." }
+        );
     }
 
     return (
         <section className="fixed top-0 bottom-0 left-0 right-0 z-30 flex items-center text-sm text-black">
             <form onSubmit={onSubmitHandler} onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-88 text-gray-500 rounded-lg shadow-xl border border-gray-200 bg-white">
+                <NavLink to="/" className="text-primary font-bold">← Homepage</NavLink>
                 <p className="text-2xl font-medium m-auto">
                     Register a new account
                 </p>
