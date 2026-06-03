@@ -11,6 +11,8 @@ import store from './redux/store'
 import { loadUser } from './redux/actions/userAction'
 import ProtectedRoute from './components/ProtectedRoute'
 import Loading from './components/Loading'
+import Navbar from './components/Navbar'
+import Events from './pages/Events';
 
 // Send cookies
 axios.defaults.withCredentials = true
@@ -42,9 +44,11 @@ const App = () => {
   return (
     <div>
       <Toaster />
+      <Navbar />
 
       <Routes>
         <Route path='/' element={<Home />} />
+        <Route path='/events' element={<Events />} />
         <Route path='/login' element={<Login />} />
         <Route path='/sign-up' element={<SignUp />} />
         <Route path='/activation/:activation_token' element={<Activation />} />
