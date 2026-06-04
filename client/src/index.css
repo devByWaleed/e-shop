@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+    /* Light theme variables (default) */
     --color-primary: #6C63FF;
     --color-primary-dull: #5A52D5;
     --color-secondary: #FF6584;
@@ -13,28 +14,49 @@
     --color-light-border: #E0DEFF;
     --color-text: #2D2D3A;
     --color-text-muted: #888799;
+    --color-white: #FFFFFF;
+    --color-gradient-from: #FFFFFF;
+    --color-gradient-to: #F8F7FF;
 }
 
-
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-
-
-/* Dark mode support */
-@tailwind utilities;
-
-/* Dark mode transitions */
-* {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
-}
-
-/* Dark mode custom properties */
+/* Dark theme variables */
 .dark {
+    --color-primary: #6C63FF;
+    --color-primary-dull: #5A52D5;
+    --color-secondary: #FF6584;
+    --color-secondary-dull: #E04E6A;
+    --color-accent: #43E97B;
+    --color-accent-dull: #32C463;
+    --color-dark: #1A1A2E;
+    --color-dark-dull: #12121F;
+    --color-light-bg: #0F0F1A;
+    --color-light-border: #2A2A3D;
+    --color-text: #E8E8F0;
+    --color-text-muted: #6B6B80;
+    --color-white: #1A1A2E;
+    --color-gradient-from: #1A1A2E;
+    --color-gradient-to: #0F0F1A;
     color-scheme: dark;
 }
 
-/* Optional: Smooth theme transition */
-.theme-transition {
-    transition: background-color 0.3s ease, color 0.3s ease;
+/* Apply theme variables globally */
+:root {
+    background-color: var(--color-light-bg);
+}
+
+body {
+    background-color: var(--color-light-bg);
+    color: var(--color-text);
+}
+
+/* Smooth transitions */
+* {
+    transition: background-color 0.3s ease,
+        border-color 0.3s ease,
+        color 0.2s ease,
+        box-shadow 0.3s ease;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
 }

@@ -39,7 +39,7 @@ const EventProduct = () => {
     }, []);
 
     return (
-        <div className="max-w-6xl mx-auto p-6 md:p-8">
+        <div className="max-w-6xl mx-auto  p-6 md:p-8">
             {/* Section Header with Left-aligned Heading and Right-aligned Link */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                 {/* Left side - Heading */}

@@ -2,43 +2,19 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useState, useRef, useEffect } from 'react'
 import { assets } from '../assets/assets'
+import { useTheme } from '../context/ThemeContext'
 
 const Navbar = () => {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')
     const [showMobileSearch, setShowMobileSearch] = useState(false)
     const [showMobileCategories, setShowMobileCategories] = useState(false)
-    const [darkMode, setDarkMode] = useState(() => {
-        // Check localStorage and system preference
-        const savedTheme = localStorage.getItem('theme')
-        if (savedTheme) {
-            return savedTheme === 'dark'
-        }
-        return window.matchMedia('(prefers-color-scheme: dark)').matches
-    })
+    const { darkMode, toggleDarkMode } = useTheme() // Use theme context
     const searchInputRef = useRef(null)
 
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const { isAuthenticated, user, loading } = useSelector((state) => state.user)
-
-    // Apply dark mode class to document
-    useEffect(() => {
-        if (darkMode) {
-            document.documentElement.classList.add('dark')
-            localStorage.setItem('theme', 'dark')
-        } else {
-            document.documentElement.classList.remove('dark')
-            localStorage.setItem('theme', 'light')
-        }
-    }, [darkMode])
-
-    // Auto focus search input when shown on mobile
-    useEffect(() => {
-        if (showMobileSearch && searchInputRef.current) {
-            searchInputRef.current.focus()
-        }
-    }, [showMobileSearch])
 
     const categories = [
         { label: 'All Categories', value: '' },
@@ -62,14 +38,10 @@ const Navbar = () => {
         }
     }
 
-    const toggleDarkMode = () => {
-        setDarkMode(!darkMode)
-    }
-
     return (
         <>
             {/* ── HEADER ── */}
-            <header className="bg-light-bg dark:bg-dark/95 border-b border-light-border dark:border-dark-dull
+            <header className="bg-white  border-b border-light-border 
                 px-4 md:px-16 lg:px-24 xl:px-32 py-2.5
                 flex items-center justify-between gap-3 transition-colors duration-300">
 
@@ -80,7 +52,7 @@ const Navbar = () => {
 
                 {/* Desktop Search - Hidden on mobile */}
                 <div className="hidden md:flex flex-1 max-w-120 items-center
-                    gap-2.5 bg-white dark:bg-dark/50 h-10 px-4 rounded-full
+                    gap-2.5 bg-light-bg  h-10 px-4 rounded-full
                     border-[1.5px] border-primary dark:border-primary/50">
                     <input
                         type="text"
@@ -89,7 +61,7 @@ const Navbar = () => {
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
                         placeholder="Search the products..."
                         className="flex-1 bg-transparent outline-none text-sm
-                            text-text dark:text-white/80 placeholder-text-muted dark:placeholder-white/40"
+                            text-text  placeholder-text-muted"
                     />
                     <button onClick={handleSearch}
                         className="w-7 h-7 rounded-full bg-primary flex
@@ -150,7 +122,7 @@ const Navbar = () => {
                 <div className="flex md:hidden items-center gap-3">
                     {/* Mobile Theme Toggle */}
                     <button onClick={toggleDarkMode}
-                        className="text-primary dark:text-white/80" aria-label="Toggle theme">
+                        className="text-primary " aria-label="Toggle theme">
                         {darkMode ? (
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="12" cy="12" r="5" />
@@ -172,7 +144,7 @@ const Navbar = () => {
 
                     {/* Mobile Search Toggle */}
                     <button onClick={() => setShowMobileSearch(!showMobileSearch)}
-                        className="text-primary dark:text-white/80" aria-label="Search">
+                        className="text-primary " aria-label="Search">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="10" cy="10" r="7" />
                             <path d="M15 15L21 21" />
@@ -220,7 +192,7 @@ const Navbar = () => {
 
             {/* Mobile Search Bar - Shown when search icon clicked */}
             {showMobileSearch && (
-                <div className="md:hidden bg-light-bg dark:bg-dark/95 px-4 py-3 border-b border-light-border dark:border-dark-dull">
+                <div className="md:hidden   px-4 py-3">
                     <form onSubmit={handleSearch} className="flex gap-2">
                         <input
                             ref={searchInputRef}
@@ -228,9 +200,9 @@ const Navbar = () => {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Search products..."
-                            className="flex-1 bg-white dark:bg-dark/50 h-10 px-4 rounded-full
+                            className="flex-1 bg-white  h-10 px-4 rounded-full
                                 border border-primary dark:border-primary/50 outline-none text-sm
-                                text-text dark:text-white/80"
+                                text-text "
                         />
                         <button type="submit"
                             className="bg-primary text-white px-4 rounded-full text-sm font-medium">
@@ -238,7 +210,7 @@ const Navbar = () => {
                         </button>
                         <button type="button"
                             onClick={() => setShowMobileSearch(false)}
-                            className="text-text/60 dark:text-white/60 px-2">
+                            className="text-text/60 px-2">
                             Cancel
                         </button>
                     </form>
@@ -366,7 +338,7 @@ const Navbar = () => {
 
             {/* ── MOBILE MENU ── */}
             {open && (
-                <div className="md:hidden fixed inset-0 z-50 bg-light-bg dark:bg-dark/95">
+                <div className="md:hidden fixed inset-0 z-50 bg-light-bg text-primary">
                     {/* Mobile Menu Header */}
                     <div className="flex items-center justify-between p-4 border-b border-light-border dark:border-dark-dull">
                         <img src={assets.zenvio} className='h-8' alt="Zenvio Logo" />
@@ -378,7 +350,7 @@ const Navbar = () => {
                     </div>
 
                     {/* Mobile Categories Section */}
-                    <div className="p-4 border-b border-light-border dark:border-dark-dull">
+                    <div className="p-4 border-b border-light-border ">
                         <button
                             onClick={() => setShowMobileCategories(!showMobileCategories)}
                             className="w-full flex items-center justify-between py-2">
@@ -408,7 +380,7 @@ const Navbar = () => {
                     </div>
 
                     {/* Mobile Navigation Links */}
-                    <div className="p-4 border-b border-light-border dark:border-dark-dull">
+                    <div className="p-4 border-b border-light-border ">
                         <div className="space-y-2">
                             {[
                                 { label: 'Home', to: '/' },
@@ -452,7 +424,7 @@ const Navbar = () => {
                                 Login / Sign Up
                             </button>
                         ) : (
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5">
+                            <div className="flex items-center gap-3 p-3 rounded-lg ">
                                 <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer
                                     border-2 border-primary"
                                     onClick={() => navigate('/profile')}>
