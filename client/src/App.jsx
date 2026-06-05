@@ -11,8 +11,10 @@ import store from './redux/store'
 import { loadUser } from './redux/actions/userAction'
 import ProtectedRoute from './components/ProtectedRoute'
 import Loading from './components/Loading'
+import Footer from './components/Footer'
 import Navbar from './components/Navbar'
 import Events from './pages/Events';
+import Faqs from './pages/Faqs';
 
 // Send cookies
 axios.defaults.withCredentials = true
@@ -47,12 +49,17 @@ const App = () => {
       <Navbar />
 
       <Routes>
+        {/* Components */}
+        <Route path='/loader' element={<Loading />} />
+
+        {/* Pages */}
         <Route path='/' element={<Home />} />
-        <Route path='/events' element={<Events />} />
         <Route path='/login' element={<Login />} />
         <Route path='/sign-up' element={<SignUp />} />
         <Route path='/activation/:activation_token' element={<Activation />} />
-        <Route path='/loader' element={<Loading />} />
+        <Route path='/events' element={<Events />} />
+        {/* <Route path='/best-selling' element={<Events />} /> */}
+        <Route path='/faqs' element={<Faqs />} />
 
         {/* Protected Routes */}
         {/* <Route path='/profile' element={
@@ -61,6 +68,7 @@ const App = () => {
           </ProtectedRoute>
         } /> */}
       </Routes>
+      <Footer />
     </div>
   )
 }

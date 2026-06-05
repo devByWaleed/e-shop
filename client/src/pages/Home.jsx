@@ -1,9 +1,9 @@
 import React from 'react'
 import HeroSection from '../components/Hero'
-import Footer from '../components/Footer'
 import BestDeals from '../components/BestDeals'
 import FeaturedProduct from '../components/FeaturedProduct'
 import EventProduct from '../components/EventProduct'
+import { NavLink } from 'react-router-dom'
 
 const Home = () => {
     return (
@@ -12,7 +12,6 @@ const Home = () => {
             <BestDeals />
             <EventProduct />
             <FeaturedProduct />
-            <Footer />
         </>
     )
 }

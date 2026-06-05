@@ -5,6 +5,13 @@ import { assets } from '../assets/assets'
 import { useTheme } from '../context/ThemeContext'
 
 const Navbar = () => {
+    const nav_links = [
+        { label: 'Home', to: '/' },
+        { label: 'Best Selling', to: '/best-selling' },
+        { label: 'Products', to: '/products' },
+        { label: 'Events', to: '/events' },
+        { label: 'FAQ', to: '/faqs' },
+    ]
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')
     const [showMobileSearch, setShowMobileSearch] = useState(false)
@@ -255,13 +262,7 @@ const Navbar = () => {
 
                 {/* Nav Links */}
                 <div className="flex items-center gap-1">
-                    {[
-                        { label: 'Home', to: '/' },
-                        { label: 'Best Selling', to: '/best-selling' },
-                        { label: 'Products', to: '/products' },
-                        { label: 'Events', to: '/events' },
-                        { label: 'FAQ', to: '/faq' },
-                    ].map(({ label, to }) => (
+                    {nav_links.map(({ label, to }) => (
                         <NavLink key={to} to={to}
                             className={({ isActive }) =>
                                 `text-sm px-3.5 py-1.5 rounded-full transition-all
@@ -382,13 +383,7 @@ const Navbar = () => {
                     {/* Mobile Navigation Links */}
                     <div className="p-4 border-b border-light-border ">
                         <div className="space-y-2">
-                            {[
-                                { label: 'Home', to: '/' },
-                                { label: 'Best Selling', to: '/best-selling' },
-                                { label: 'Products', to: '/products' },
-                                { label: 'Events', to: '/events' },
-                                { label: 'FAQ', to: '/faq' },
-                            ].map(({ label, to }) => (
+                            {nav_links.map(({ label, to }) => (
                                 <NavLink key={to} to={to}
                                     onClick={() => setOpen(false)}
                                     className={({ isActive }) =>
