@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { assets } from '../assets/assets.js'
+import { assets } from '../../assets/assets.js'
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios"
 import toast from "react-hot-toast";
 
 
-const SignUp = () => {
+const SellerSignup = () => {
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -22,28 +22,28 @@ const SignUp = () => {
 
     const onSubmitHandler = async (e) => {
 
-        e.preventDefault();
-        const config = { headers: { "Content-Type": "multipart/form-data" } }
+        // e.preventDefault();
+        // const config = { headers: { "Content-Type": "multipart/form-data" } }
 
-        const newForm = new FormData()
-        newForm.append("file", avatar)
-        newForm.append("name", name)
-        newForm.append("email", email)
-        newForm.append("password", password)
+        // const newForm = new FormData()
+        // newForm.append("file", avatar)
+        // newForm.append("name", name)
+        // newForm.append("email", email)
+        // newForm.append("password", password)
 
-        await withLoading(
-            async () => {
-                const { data } = await axios.post("/api/user/register", newForm, config)
+        // await withLoading(
+        //     async () => {
+        //         const { data } = await axios.post("/api/user/register", newForm, config)
 
-                if (data.success) {
-                    toast.success(data.message);
-                } else {
-                    toast.error(data.message);
-                    throw new Error(data.message);
-                }
-            },
-            { message: "Creating account..." }
-        );
+        //         if (data.success) {
+        //             toast.success(data.message);
+        //         } else {
+        //             toast.error(data.message);
+        //             throw new Error(data.message);
+        //         }
+        //     },
+        //     { message: "Creating account..." }
+        // );
     }
 
     return (
@@ -109,11 +109,11 @@ const SignUp = () => {
 
 
                 <p>
-                    Already have an account? <span onClick={() => navigate('/user-login')} className="text-primary cursor-pointer">Click here</span>
+                    Already have an account? <span onClick={() => navigate('/seller-login')} className="text-primary cursor-pointer">Click here</span>
                 </p>
             </form>
         </section>
     );
 };
 
-export default SignUp
+export default SellerSignup

@@ -15,6 +15,9 @@ import Footer from './components/Footer'
 import Navbar from './components/Navbar'
 import Events from './pages/Events';
 import Faqs from './pages/Faqs';
+import ProductDetails from './pages/ProductDetails';
+import SellerSignup from './pages/seller/SellerSignup';
+import SellerLogin from './pages/seller/SellerLogin';
 
 // Send cookies
 axios.defaults.withCredentials = true
@@ -25,9 +28,20 @@ axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL
 
 
 const App = () => {
-  const dispatch = useDispatch()
+  const hideNavFooterPages = [
+    '/user-login',
+    '/user-signup',
+    '/seller-login',
+    '/seller-signup'
+  ]
+
+  const shouldHideNavFooter = hideNavFooterPages.includes(useLocation().pathname);
+
+
   const { isLoading } = useSelector((state) => state.loading)
   const { isAuthenticated, user, loading: userLoading } = useSelector((state) => state.user)
+
+  const dispatch = useDispatch()
 
   // Load User
   useEffect(() => {
@@ -46,7 +60,7 @@ const App = () => {
   return (
     <div>
       <Toaster />
-      <Navbar />
+      {!shouldHideNavFooter && <Navbar />}
 
       <Routes>
         {/* Components */}
@@ -54,12 +68,18 @@ const App = () => {
 
         {/* Pages */}
         <Route path='/' element={<Home />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='/sign-up' element={<SignUp />} />
+        <Route path='/user-login' element={<Login />} />
+        <Route path='/user-signup' element={<SignUp />} />
         <Route path='/activation/:activation_token' element={<Activation />} />
         <Route path='/events' element={<Events />} />
         {/* <Route path='/best-selling' element={<Events />} /> */}
         <Route path='/faqs' element={<Faqs />} />
+        <Route path='/product-detail' element={<ProductDetails />} />
+
+        {/* Seller Routes */}
+        <Route path='/seller-login' element={<SellerLogin />} />
+        <Route path='/seller-signup' element={<SellerSignup />} />
+
 
         {/* Protected Routes */}
         {/* <Route path='/profile' element={
@@ -68,7 +88,7 @@ const App = () => {
           </ProtectedRoute>
         } /> */}
       </Routes>
-      <Footer />
+      {!shouldHideNavFooter && <Footer />}
     </div>
   )
 }

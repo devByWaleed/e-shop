@@ -84,7 +84,9 @@ const Navbar = () => {
                 </div>
 
                 {/* Desktop Become Seller */}
-                <button className="hidden md:flex items-center gap-2 bg-dark
+                <button
+                    onClick={() => { setOpen(false); navigate('/seller-signup') }}
+                    className="hidden md:flex items-center gap-2 bg-dark
                     hover:bg-dark-dull dark:bg-primary dark:hover:bg-primary-dull
                     transition-colors text-white text-sm
                     font-medium px-5 py-2 rounded-full shrink-0 cursor-pointer">
@@ -323,7 +325,7 @@ const Navbar = () => {
                                 alt="Profile" className="w-full h-full object-cover" />
                         </div>
                     ) : (
-                        <NavLink to="/login"
+                        <NavLink to="/user-login"
                             className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25
                             transition-colors text-white text-sm font-medium px-4 py-1.5
                             rounded-full border border-white/30 whitespace-nowrap">
@@ -400,7 +402,7 @@ const Navbar = () => {
                     <div className="p-4 space-y-3">
                         <button onClick={() => {
                             setOpen(false)
-                            navigate('/become-seller')
+                            navigate('/seller-signup')
                         }}
                             className="w-full bg-dark dark:bg-primary hover:bg-dark-dull dark:hover:bg-primary-dull
                             transition-colors text-white text-sm font-medium
@@ -411,7 +413,7 @@ const Navbar = () => {
                         {!user ? (
                             <button onClick={() => {
                                 setOpen(false)
-                                navigate('/login')
+                                navigate('/user-login')
                             }}
                                 className="w-full bg-primary hover:bg-primary-dull
                                 transition-colors text-white text-sm font-medium

@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { assets } from '../assets/assets.js'
+import { assets } from '../../assets/assets.js'
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
 import axios from "axios";
 import toast from "react-hot-toast";
-import { loadUser } from "../redux/actions/userAction.js";
-import useLoading from "../hooks/useLoading.js";
+// import { loadUser } from "../redux/actions/userAction.js";
+// import useLoading from "../hooks/useLoading.js";
 
 
-const Login = () => {
+const SellerLogin = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -16,29 +16,29 @@ const Login = () => {
 
     const navigate = useNavigate()
     const dispatch = useDispatch()
-    const { withLoading } = useLoading();
+    // const { withLoading } = useLoading();
 
     const onSubmitHandler = async (e) => {
-        e.preventDefault();
+        // e.preventDefault();
 
-        // Wrap login logic with loading
-        await withLoading(
-            async () => {
-                const { data } = await axios.post('/api/user/login', {
-                    email, password
-                });
+        // // Wrap login logic with loading
+        // await withLoading(
+        //     async () => {
+        //         const { data } = await axios.post('/api/user/login', {
+        //             email, password
+        //         });
 
-                if (data.success) {
-                    await dispatch(loadUser());
-                    toast.success(data.message);
-                    navigate("/");
-                } else {
-                    toast.error(data.message);
-                    throw new Error(data.message);
-                }
-            },
-            { message: "Logging you in..." }
-        );
+        //         if (data.success) {
+        //             await dispatch(loadUser());
+        //             toast.success(data.message);
+        //             navigate("/");
+        //         } else {
+        //             toast.error(data.message);
+        //             throw new Error(data.message);
+        //         }
+        //     },
+        //     { message: "Logging you in..." }
+        // );
     };
 
     return (
@@ -93,11 +93,11 @@ const Login = () => {
 
 
                 <p>
-                    Don't have an account? <span onClick={() => navigate('/user-signup')} className="text-primary cursor-pointer">Click here</span>
+                    Don't have an account? <span onClick={() => navigate('/seller-signup')} className="text-primary cursor-pointer">Click here</span>
                 </p>
             </form>
         </section>
     );
 };
 
-export default Login
+export default SellerLogin
