@@ -9,7 +9,7 @@ import Activation from './pages/Activation'
 import Home from './pages/Home'
 import store from './redux/store'
 import { loadUser } from './redux/actions/userAction'
-import ProtectedRoute from './components/ProtectedRoute'
+import ProtectedLayout from './components/ProtectedLayout';
 import Loading from './components/Loading'
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
@@ -18,6 +18,10 @@ import Faqs from './pages/Faqs';
 import ProductDetails from './pages/ProductDetails';
 import SellerSignup from './pages/seller/SellerSignup';
 import SellerLogin from './pages/seller/SellerLogin';
+import Wishlist from './pages/Wishlist';
+import Cart from './pages/Cart';
+import Profile from './pages/Profile';
+
 
 // Send cookies
 axios.defaults.withCredentials = true
@@ -58,15 +62,13 @@ const App = () => {
 
 
   return (
-    <div>
+    <>
       <Toaster />
       {!shouldHideNavFooter && <Navbar />}
 
       <Routes>
-        {/* Components */}
+        {/* Public Rotes */}
         <Route path='/loader' element={<Loading />} />
-
-        {/* Pages */}
         <Route path='/' element={<Home />} />
         <Route path='/user-login' element={<Login />} />
         <Route path='/user-signup' element={<SignUp />} />
@@ -76,20 +78,21 @@ const App = () => {
         <Route path='/faqs' element={<Faqs />} />
         <Route path='/product-detail' element={<ProductDetails />} />
 
-        {/* Seller Routes */}
+        {/* Seller Auth Routes */}
         <Route path='/seller-login' element={<SellerLogin />} />
         <Route path='/seller-signup' element={<SellerSignup />} />
 
+        {/* Hybrid Routes  User Protected Routes */}
+        <Route path='/cart' element={<Cart />} />
+        <Route path='/wishlist' element={<Wishlist />} />
 
-        {/* Protected Routes */}
-        {/* <Route path='/profile' element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        } /> */}
+        {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
+        <Route element={<ProtectedLayout requireAuth={true} />}>
+          <Route path='/profile' element={<Profile />} />
+        </Route>
       </Routes>
       {!shouldHideNavFooter && <Footer />}
-    </div>
+    </>
   )
 }
 
