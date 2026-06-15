@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext'
 const Navbar = () => {
     const nav_links = [
         { label: 'Home', to: '/' },
-        { label: 'Best Selling', to: '/best-selling' },
+        { label: 'Best Selling', to: '/best-deals' },
         { label: 'Products', to: '/products' },
         { label: 'Events', to: '/events' },
         { label: 'FAQ', to: '/faqs' },
@@ -25,15 +25,11 @@ const Navbar = () => {
 
     const categories = [
         { label: 'All Categories', value: '' },
-        { label: '📱 Electronics', value: '/category/electronics' },
-        { label: '👕 Fashion', value: '/category/fashion' },
-        { label: '🏠 Home & Decor', value: '/category/home-decor' },
-        { label: '📚 Books', value: '/category/books' },
-        { label: '⚽ Sports & Outdoors', value: '/category/sports' },
-        { label: '🎮 Toys & Games', value: '/category/toys' },
-        { label: '💄 Beauty & Health', value: '/category/beauty' },
-        { label: '🚗 Automotive', value: '/category/automotive' },
-        { label: '🐾 Pet Supplies', value: '/category/pet-supplies' },
+        { label: '💻 Computers & Laptops', value: '/category/computers-laptops' },
+        { label: '📱 Mobile & Tablets', value: '/category/mobile-tablets' },
+        { label: '🎮 Music & Gaming', value: '/category/music-gaming' },
+        { label: '👟 Shoes', value: '/category/shoes' },
+        { label: '⌚ Accessories', value: '/category/accessories' },
     ]
 
     const handleSearch = (e) => {

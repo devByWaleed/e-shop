@@ -21,6 +21,7 @@ import SellerLogin from './pages/seller/SellerLogin';
 import Wishlist from './pages/Wishlist';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
+import BestDealsPage from './pages/BestDealsPage';
 
 
 // Send cookies
@@ -74,7 +75,7 @@ const App = () => {
         <Route path='/user-signup' element={<SignUp />} />
         <Route path='/activation/:activation_token' element={<Activation />} />
         <Route path='/events' element={<Events />} />
-        {/* <Route path='/best-selling' element={<Events />} /> */}
+        <Route path="/best-deals" element={<BestDealsPage />} />
         <Route path='/faqs' element={<Faqs />} />
         <Route path='/product-detail' element={<ProductDetails />} />
 
