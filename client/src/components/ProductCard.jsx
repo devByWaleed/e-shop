@@ -1,7 +1,11 @@
+import { useNavigate } from "react-router-dom";
+
 const ProductCard = ({ product, index }) => {
 
+    const navigate = useNavigate()
+
     return (
-        <div key={index} className="border border-zinc-200 hover:border-zinc-300 transition-colors rounded-xl p-4 flex flex-col w-50 relative">
+        <section onClick={() => { navigate(`/products/${product.category.toLowerCase()}/${product.id}`); scrollTo(0, 0); }} key={index} className="border border-zinc-200 hover:border-zinc-300 transition-colors rounded-xl p-4 flex flex-col w-50 relative cursor-pointer">
             {/* Action Buttons - Column layout on top left */}
             <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
                 {/* Quick View Button */}
@@ -47,7 +51,7 @@ const ProductCard = ({ product, index }) => {
                 <span className="text-xs font-bold text-secondary line-through">${product.price}</span>
                 <span className="text-sm p-1 rounded text-accent">{product.total_sell} sold</span>
             </div>
-        </div>
+        </section>
     )
 }
 

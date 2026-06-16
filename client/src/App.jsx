@@ -22,6 +22,7 @@ import Wishlist from './pages/Wishlist';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import BestDealsPage from './pages/BestDealsPage';
+import AllProducts from './pages/AllProducts';
 
 
 // Send cookies
@@ -71,9 +72,11 @@ const App = () => {
         {/* Public Rotes */}
         <Route path='/loader' element={<Loading />} />
         <Route path='/' element={<Home />} />
+        <Route path='/products' element={<AllProducts />} />
         <Route path='/user-login' element={<Login />} />
         <Route path='/user-signup' element={<SignUp />} />
         <Route path='/activation/:activation_token' element={<Activation />} />
+        <Route path='/products/:category/:id' element={<ProductDetails />} />
         <Route path='/events' element={<Events />} />
         <Route path="/best-deals" element={<BestDealsPage />} />
         <Route path='/faqs' element={<Faqs />} />

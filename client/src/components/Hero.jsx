@@ -8,24 +8,30 @@ const HeroSection = () => {
         {
             src: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=689&auto=format&fit=crop",
             alt: "Premium Smart Watch",
-            category: "Electronics"
+            category: "Electronics",
+            reviews: 1280
         },
         {
             src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1170&auto=format&fit=crop",
             alt: "Trendy Sneakers",
-            category: "Fashion"
+            category: "Fashion",
+            reviews: 980
         },
         {
             src: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1170&auto=format&fit=crop",
             alt: "Wireless Headphones",
-            category: "Audio"
+            category: "Audio",
+            reviews: 1435
         },
         {
             src: "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?q=80&w=1160&auto=format&fit=crop",
             alt: "Designer Handbag",
-            category: "Accessories"
+            category: "Accessories",
+            reviews: 745
         }
     ];
+
+    const sortedProductImages = [...productImages].sort((a, b) => b.reviews - a.reviews)
 
     return (
         <section className="bg-linear-to-b from-light-bg via-[#FFFBEE] to-[#E6EFFF]">
@@ -88,7 +94,7 @@ const HeroSection = () => {
                 {/* Right - Product Images Grid */}
                 <div className="mt-12 md:mt-0">
                     <div className="grid grid-cols-2 gap-5 pb-6">
-                        {productImages.map((product, index) => (
+                        {sortedProductImages.map((product, index) => (
                             <div key={index} className="group relative">
                                 <img
                                     alt={product.alt}

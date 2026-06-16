@@ -1,73 +1,14 @@
-import { Link } from "react-router-dom";
-import { assets } from "../assets/assets";
+import { Link, useParams } from "react-router-dom";
+import { assets, productData, reviews, seller } from "../assets/assets";
 import { useState } from "react";
 import RelatedProducts from "../components/RelatedProducts";
 
 const ProductDetails = () => {
     const [activeTab, setActiveTab] = useState("reviews")
+    const { id } = useParams()
+    const productId = Number(id)
 
-    // Hardcoded product data for visualization
-    const product = {
-        _id: "1",
-        name: "MacBook Pro M2",
-        category: "Electronics",
-        price: 12999,
-        offerPrice: 10995,
-        averageRating: 4.2,
-        reviewCount: 128,
-        inStock: true,
-        seller: "Apple Inc.",
-        image: [
-            "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500",
-            "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=500",
-            "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=500"
-        ],
-        description: [
-            "Apple M2 chip with 8-core CPU and 10-core GPU",
-            "256GB SSD storage",
-            "8GB unified memory",
-            "13.6-inch Liquid Retina display",
-            "Up to 18 hours of battery life",
-            "Space Gray color",
-            "Apple 1 year warranty"
-        ]
-    }
-
-    // Hardcoded seller data
-    const seller = {
-        name: "Apple Inc.",
-        rating: 4.2,
-        avatar: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=100",
-        joinedDate: "29 July, 2022",
-        totalProducts: 1221,
-        totalReviews: 131
-    }
-
-    // Hardcoded reviews
-    const reviews = [
-        {
-            id: 1,
-            userName: "John Doe",
-            stars: 5,
-            comment: "Amazing laptop! The M2 chip is incredibly fast and battery life is outstanding.",
-            createdAt: "2024-01-15"
-        },
-        {
-            id: 2,
-            userName: "Sarah Smith",
-            stars: 4,
-            comment: "Great performance but a bit expensive. The display is gorgeous though!",
-            createdAt: "2024-01-10"
-        },
-        {
-            id: 3,
-            userName: "Mike Johnson",
-            stars: 5,
-            comment: "Best laptop I've ever owned. Highly recommended for developers and creators.",
-            createdAt: "2024-01-05"
-        }
-    ]
-
+    const product = productData.find((item) => item.id === productId)
 
 
     const renderStars = (count) => (
@@ -96,7 +37,7 @@ const ProductDetails = () => {
                 {/* Product Images */}
                 <div className="flex gap-3">
                     <div className="flex flex-col gap-3">
-                        {product.image.map((image, index) => (
+                        {product.image_Url.map((image, index) => (
                             <div key={index} className="border max-w-24 border-gray-500/30 rounded overflow-hidden cursor-pointer hover:border-primary transition">
                                 <img src={image} alt={`Thumbnail ${index + 1}`}
                                     width={96}
@@ -108,7 +49,7 @@ const ProductDetails = () => {
                     </div>
 
                     <div className="border border-gray-500/30 max-w-100 rounded overflow-hidden">
-                        <img src={product.image[0]} alt="Selected product" width={400} height={400}
+                        <img src={product.image_Url[0].url} alt="Selected product" width={400} height={400}
                             className="w-full h-full object-cover" />
                     </div>
                 </div>
@@ -151,7 +92,7 @@ const ProductDetails = () => {
                     {/* Price */}
                     <div className="mt-6">
                         <p className="text-gray-500/70 line-through">MRP: ${product.price}</p>
-                        <p className="text-2xl font-medium text-primary">${product.offerPrice}</p>
+                        <p className="text-2xl font-medium text-primary">${product.discount_price}</p>
                         <span className="text-gray-500/70 text-xs">(inclusive of all taxes)</span>
                     </div>
 
