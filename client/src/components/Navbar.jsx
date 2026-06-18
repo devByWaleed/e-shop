@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useState, useRef, useEffect } from 'react'
 import { assets } from '../assets/assets'
-import { useTheme } from '../context/ThemeContext'
+import { toggleTheme } from '../redux/slices/themeSlice'
 
 const Navbar = () => {
     const nav_links = [
@@ -16,12 +16,13 @@ const Navbar = () => {
     const [search, setSearch] = useState('')
     const [showMobileSearch, setShowMobileSearch] = useState(false)
     const [showMobileCategories, setShowMobileCategories] = useState(false)
-    const { darkMode, toggleDarkMode } = useTheme() // Use theme context
     const searchInputRef = useRef(null)
 
     const dispatch = useDispatch()
     const navigate = useNavigate()
+
     const { isAuthenticated, user, loading } = useSelector((state) => state.user)
+    const { theme } = useSelector((state) => state.theme)
 
     const categories = [
         { label: 'All Categories', value: '' },
@@ -44,7 +45,7 @@ const Navbar = () => {
     return (
         <>
             {/* ── HEADER ── */}
-            <header className="bg-white  border-b border-light-border 
+            <header className="bg-white dark:bg-dark border-b border-light-border dark:border-gray-700 text-text dark:text-white
                 px-4 md:px-16 lg:px-24 xl:px-32 py-2.5
                 flex items-center justify-between gap-3 transition-colors duration-300">
 
@@ -55,8 +56,8 @@ const Navbar = () => {
 
                 {/* Desktop Search - Hidden on mobile */}
                 <div className="hidden md:flex flex-1 max-w-120 items-center
-                    gap-2.5 bg-light-bg  h-10 px-4 rounded-full
-                    border-[1.5px] border-primary dark:border-primary/50">
+                    gap-2.5 bg-light-bg dark:bg-[#1f2937] h-10 px-4 rounded-full
+                    border-[1.5px] border-primary ">
                     <input
                         type="text"
                         value={search}
@@ -64,7 +65,7 @@ const Navbar = () => {
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
                         placeholder="Search the products..."
                         className="flex-1 bg-transparent outline-none text-sm
-                            text-text  placeholder-text-muted"
+                            text-text dark:text-white placeholder-text-muted dark:placeholder:text-gray-400"
                     />
                     <button onClick={handleSearch}
                         className="w-7 h-7 rounded-full bg-primary flex
@@ -83,7 +84,7 @@ const Navbar = () => {
                 <button
                     onClick={() => { setOpen(false); navigate('/seller-signup') }}
                     className="hidden md:flex items-center gap-2 bg-dark
-                    hover:bg-dark-dull dark:bg-primary dark:hover:bg-primary-dull
+                    hover:bg-dark-dull 
                     transition-colors text-white text-sm
                     font-medium px-5 py-2 rounded-full shrink-0 cursor-pointer">
                     <span className="w-4.5 h-4.5 rounded-full bg-accent
@@ -98,13 +99,13 @@ const Navbar = () => {
 
                 {/* Desktop Theme Toggle */}
                 <button
-                    onClick={toggleDarkMode}
+                    onClick={() => dispatch(toggleTheme())}
                     className="hidden md:flex items-center justify-center w-9 h-9 rounded-full
-                        bg-primary/10 dark:bg-white/10 hover:bg-primary/20 dark:hover:bg-white/20
+                        bg-primary/10  hover:bg-primary/20 
                         transition-colors cursor-pointer"
                     aria-label="Toggle theme"
                 >
-                    {darkMode ? (
+                    {theme === "dark" ? (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="12" r="5" />
                             <line x1="12" y1="1" x2="12" y2="3" />
@@ -126,9 +127,9 @@ const Navbar = () => {
                 {/* Mobile Icons Group */}
                 <div className="flex md:hidden items-center gap-3">
                     {/* Mobile Theme Toggle */}
-                    <button onClick={toggleDarkMode}
+                    <button onClick={() => dispatch(toggleTheme())}
                         className="text-primary " aria-label="Toggle theme">
-                        {darkMode ? (
+                        {theme === "dark" ? (
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="12" cy="12" r="5" />
                                 <line x1="12" y1="1" x2="12" y2="3" />
@@ -205,9 +206,9 @@ const Navbar = () => {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Search products..."
-                            className="flex-1 bg-white  h-10 px-4 rounded-full
-                                border border-primary dark:border-primary/50 outline-none text-sm
-                                text-text "
+                            className="flex-1 bg-white dark:bg-[#1f2937] h-10 px-4 rounded-full
+                                border border-primary outline-none text-sm
+                                text-text dark:text-white placeholder-text-muted dark:placeholder:text-gray-400 "
                         />
                         <button type="submit"
                             className="bg-primary text-white px-4 rounded-full text-sm font-medium">
@@ -223,7 +224,7 @@ const Navbar = () => {
             )}
 
             {/* ── DESKTOP NAVBAR ── */}
-            <nav className="bg-primary dark:bg-primary/90 px-6 md:px-16 lg:px-24 xl:px-32
+            <nav className="bg-primary  px-6 md:px-16 lg:px-24 xl:px-32
                 h-16 hidden md:flex items-center justify-between sticky top-0 z-50">
 
                 {/* Categories Dropdown - Desktop */}
@@ -238,7 +239,7 @@ const Navbar = () => {
                         }}
                     >
                         {categories.map((cat, idx) => (
-                            <option key={idx} value={cat.value} className="bg-dark dark:bg-dark/95 text-white/90">
+                            <option key={idx} value={cat.value} className="bg-dark  text-white/90">
                                 {cat.label}
                             </option>
                         ))}
@@ -337,11 +338,11 @@ const Navbar = () => {
 
             {/* ── MOBILE MENU ── */}
             {open && (
-                <div className="md:hidden fixed inset-0 z-50 bg-light-bg text-primary">
+                <div className="md:hidden fixed inset-0 z-50 bg-light-bg dark:bg-dark text-text dark:text-white">
                     {/* Mobile Menu Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-light-border dark:border-dark-dull">
+                    <div className="flex items-center justify-between p-4 border-b border-light-border dark:border-gray-700">
                         <img src={assets.zenvio} className='h-8' alt="Zenvio Logo" />
-                        <button onClick={() => setOpen(false)} className="text-text dark:text-white/80">
+                        <button onClick={() => setOpen(false)} className="text-text ">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M18 6L6 18M6 6l12 12" />
                             </svg>
@@ -353,8 +354,8 @@ const Navbar = () => {
                         <button
                             onClick={() => setShowMobileCategories(!showMobileCategories)}
                             className="w-full flex items-center justify-between py-2">
-                            <span className="font-semibold text-text dark:text-white/80">Categories</span>
-                            <svg className={`w-5 h-5 transition-transform ${showMobileCategories ? 'rotate-180' : ''} text-text dark:text-white/80`}
+                            <span className="font-semibold text-text ">Categories</span>
+                            <svg className={`w-5 h-5 transition-transform ${showMobileCategories ? 'rotate-180' : ''} text-text `}
                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path d="M19 9l-7 7-7-7" strokeWidth="2" strokeLinecap="round" />
                             </svg>
@@ -370,7 +371,7 @@ const Navbar = () => {
                                             setOpen(false)
                                             setShowMobileCategories(false)
                                         }}
-                                        className="block w-full text-left py-2 px-2 text-sm text-text/70 dark:text-white/60 hover:text-primary hover:bg-primary/5 rounded">
+                                        className="block w-full text-left py-2 px-2 text-sm text-text/70  hover:text-primary hover:bg-primary/5 rounded">
                                         {cat.label}
                                     </button>
                                 ))}
@@ -386,7 +387,7 @@ const Navbar = () => {
                                     onClick={() => setOpen(false)}
                                     className={({ isActive }) =>
                                         `block py-2 px-2 rounded transition-colors
-                                        ${isActive ? 'text-primary font-medium bg-primary/5' : 'text-text dark:text-white/70 hover:bg-primary/5'}`
+                                        ${isActive ? 'text-primary font-medium bg-primary/5' : 'text-text  hover:bg-primary/5'}`
                                     }>
                                     {label}
                                 </NavLink>
@@ -400,7 +401,7 @@ const Navbar = () => {
                             setOpen(false)
                             navigate('/seller-signup')
                         }}
-                            className="w-full bg-dark dark:bg-primary hover:bg-dark-dull dark:hover:bg-primary-dull
+                            className="w-full bg-dark  hover:bg-dark-dull 
                             transition-colors text-white text-sm font-medium
                             px-5 py-2.5 rounded-full">
                             Become a Seller
@@ -425,8 +426,8 @@ const Navbar = () => {
                                         alt="Profile" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-text dark:text-white/80 font-medium">{user?.name || 'User'}</p>
-                                    <p className="text-xs text-text/50 dark:text-white/40">{user?.email}</p>
+                                    <p className="text-text  font-medium">{user?.name || 'User'}</p>
+                                    <p className="text-xs text-text/50">{user?.email}</p>
                                 </div>
                                 <button className="text-secondary hover:text-secondary-dull text-sm">
                                     Logout

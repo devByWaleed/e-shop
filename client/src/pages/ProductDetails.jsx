@@ -11,17 +11,6 @@ const ProductDetails = () => {
     const product = productData.find((item) => item.id === productId)
 
 
-    const renderStars = (count) => (
-        Array(5).fill('').map((_, i) => (
-            <img
-                key={i}
-                src={i < Math.round(count) ? assets.star_icon : assets.star_dull_icon}
-                alt="star"
-                className="w-4"
-            />
-        ))
-    )
-
     return (
         <section className="mt-12 max-w-7xl mx-auto px-4">
             {/* Breadcrumb */}
@@ -60,9 +49,14 @@ const ProductDetails = () => {
 
                     {/* Rating */}
                     <div className="flex items-center gap-0.5 mt-1">
-                        {renderStars(product.averageRating)}
+                        <div
+                            className="star-rating"
+                            data-rating={product.rating}
+                            style={{ "--rating-percent": `${(product.rating / 5) * 100}%` }}
+                            aria-label={`Rated ${product.rating} out of 5 stars`}
+                        ></div>
                         <p className="text-base ml-1 text-gray-500">
-                            {product.averageRating} ({product.reviewCount} reviews)
+                            {product.rating.toFixed(1)} ({product.total_sell} sold)
                         </p>
                     </div>
 
@@ -77,7 +71,12 @@ const ProductDetails = () => {
                             <div>
                                 <p className="font-medium text-gray-800">{seller.name}</p>
                                 <div className="flex items-center gap-1">
-                                    {renderStars(seller.rating)}
+                                    <div
+                                        className="star-rating"
+                                        data-rating={seller.rating}
+                                        style={{ "--rating-percent": `${(seller.rating / 5) * 100}%` }}
+                                        aria-label={`Rated ${seller.rating} out of 5 stars`}
+                                    ></div>
                                     <span className="text-xs text-gray-500">({seller.rating})</span>
                                 </div>
                             </div>
@@ -185,7 +184,17 @@ const ProductDetails = () => {
                                                 <div>
                                                     <p className="font-medium text-gray-800">{review.userName}</p>
                                                     <div className="flex items-center gap-0.5 mt-0.5">
-                                                        {renderStars(review.stars)}
+                                                        <div className="flex items-center gap-0.5 mt-1">
+                                                            <div
+                                                                className="star-rating"
+                                                                data-rating={review.stars}
+                                                                style={{ "--rating-percent": `${(review.stars / 5) * 100}%` }}
+                                                                aria-label={`Rated ${review.stars} out of 5 stars`}
+                                                            ></div>
+                                                            <p className="text-base ml-1 text-gray-500">
+                                                                {review.stars.toFixed(1)}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <p className="text-xs text-gray-400">
@@ -213,7 +222,17 @@ const ProductDetails = () => {
                             <div className="text-center pb-6 border-b border-gray-100">
                                 <h3 className="text-xl font-semibold text-gray-800">{seller.name}</h3>
                                 <div className="flex items-center justify-center gap-1 mt-2">
-                                    {renderStars(seller.rating)}
+                                    <div className="flex items-center gap-0.5 mt-1">
+                                        <div
+                                            className="star-rating"
+                                            data-rating={seller.rating}
+                                            style={{ "--rating-percent": `${(seller.rating / 5) * 100}%` }}
+                                            aria-label={`Rated ${seller.rating} out of 5 stars`}
+                                        ></div>
+                                        {/* <p className="text-base ml-1 text-gray-500">
+                                            {product.averageRating} ({product.reviewCount} reviews)
+                                        </p> */}
+                                    </div>
                                     <span className="text-sm text-gray-500 ml-1">({seller.rating}) Ratings</span>
                                 </div>
                             </div>

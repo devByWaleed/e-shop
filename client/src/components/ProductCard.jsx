@@ -5,7 +5,7 @@ const ProductCard = ({ product, index }) => {
     const navigate = useNavigate()
 
     return (
-        <section onClick={() => { navigate(`/products/${product.category.toLowerCase()}/${product.id}`); scrollTo(0, 0); }} key={index} className="border border-zinc-200 hover:border-zinc-300 transition-colors rounded-xl p-4 flex flex-col w-50 relative cursor-pointer">
+        <section onClick={() => { navigate(`/products/${product.category.toLowerCase()}/${product.id}`); scrollTo(0, 0); }} key={index} className="border border-zinc-200 hover:border-zinc-300 transition-colors rounded-xl p-4 flex flex-col w-72 md:w-50 relative cursor-pointer">
             {/* Action Buttons - Column layout on top left */}
             <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
                 {/* Quick View Button */}

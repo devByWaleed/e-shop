@@ -19,44 +19,54 @@
     --color-gradient-to: #F8F7FF;
 }
 
-/* Dark theme variables */
 .dark {
-    --color-primary: #6C63FF;
-    --color-primary-dull: #5A52D5;
-    --color-secondary: #FF6584;
-    --color-secondary-dull: #E04E6A;
-    --color-accent: #43E97B;
-    --color-accent-dull: #32C463;
-    --color-dark: #1A1A2E;
-    --color-dark-dull: #12121F;
-    --color-light-bg: #0F0F1A;
-    --color-light-border: #2A2A3D;
-    --color-text: #E8E8F0;
-    --color-text-muted: #6B6B80;
-    --color-white: #1A1A2E;
-    --color-gradient-from: #1A1A2E;
-    --color-gradient-to: #0F0F1A;
-    color-scheme: dark;
+    --color-light-bg: #0F172A;
+    --color-light-border: #334155;
+    --color-text: #ffffff;
+    --color-text-muted: #ffffff;
+    --color-white: #0F172A;
+    --color-gradient-from: #0F172A;
+    --color-gradient-to: #111827;
 }
 
-/* Apply theme variables globally */
-:root {
-    background-color: var(--color-light-bg);
-}
-
-body {
-    background-color: var(--color-light-bg);
-    color: var(--color-text);
-}
 
 /* Smooth transitions */
 * {
-    transition: background-color 0.3s ease,
-        border-color 0.3s ease,
-        color 0.2s ease,
-        box-shadow 0.3s ease;
+    @apply transition-colors duration-200;
 }
 
 .no-scrollbar::-webkit-scrollbar {
     display: none;
+}
+
+.star-rating {
+    display: inline-block;
+    font-size: 2rem;
+    /* Control the size of your stars here */
+    font-family: Times, serif;
+    /* Ensures clean unicode star rendering */
+    line-height: 1;
+}
+
+.star-rating::after {
+    content: "★★★★★";
+    /* Adds a clean gap between the stars */
+
+    /* Make the text transparent so the background shows through */
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    /* Required for WebKit/Safari engines */
+
+    /* Clip the background layout precisely to the shape of the text shapes */
+    background-clip: text;
+    -webkit-background-clip: text;
+    /* Required for WebKit/Safari engines */
+
+    /* The dynamic gradient fill that reads your HTML percentage variable */
+    background-image: linear-gradient(90deg,
+            #6C63FF var(--rating-percent),
+            /* Filled Star Color (Gold/Yellow) */
+            #e0e0e0 var(--rating-percent)
+            /* Empty Star Color (Light Grey) */
+        );
 }

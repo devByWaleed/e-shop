@@ -13,6 +13,7 @@ import ProtectedLayout from './components/ProtectedLayout';
 import Loading from './components/Loading'
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
+import Navbar1 from './components/Navbar1'
 import Events from './pages/Events';
 import Faqs from './pages/Faqs';
 import ProductDetails from './pages/ProductDetails';
@@ -23,6 +24,10 @@ import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import BestDealsPage from './pages/BestDealsPage';
 import AllProducts from './pages/AllProducts';
+import Sidebar from './components/Sidebar';
+import SellerDashboard from './pages/seller/SellerDashboard';
+import SellerProducts from './pages/seller/SellerProducts';
+import SellerLayout from './components/SellerLayout';
 
 
 // Send cookies
@@ -38,7 +43,9 @@ const App = () => {
     '/user-login',
     '/user-signup',
     '/seller-login',
-    '/seller-signup'
+    '/seller-signup',
+    '/seller-dashboard',
+    '/seller-products'
   ]
 
   const shouldHideNavFooter = hideNavFooterPages.includes(useLocation().pathname);
@@ -66,7 +73,8 @@ const App = () => {
   return (
     <>
       <Toaster />
-      {!shouldHideNavFooter && <Navbar />}
+      {/* {!shouldHideNavFooter && <Navbar />} */}
+      {!shouldHideNavFooter && <Navbar1 />}
 
       <Routes>
         {/* Public Rotes */}
@@ -85,6 +93,11 @@ const App = () => {
         {/* Seller Auth Routes */}
         <Route path='/seller-login' element={<SellerLogin />} />
         <Route path='/seller-signup' element={<SellerSignup />} />
+
+        <Route element={<SellerLayout />}>
+          <Route path="/seller-dashboard" element={<SellerDashboard />} />
+          <Route path="/seller-products" element={<SellerProducts />} />
+        </Route>
 
         {/* Hybrid Routes  User Protected Routes */}
         <Route path='/cart' element={<Cart />} />
