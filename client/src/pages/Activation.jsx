@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useParams, NavLink } from 'react-router-dom'
+import { useParams, NavLink, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import toast from "react-hot-toast";
 import axios from 'axios'
 import Home from './Home'
+import { loadUser } from '../redux/actions/userAction';
 
 
 const Activation = () => {

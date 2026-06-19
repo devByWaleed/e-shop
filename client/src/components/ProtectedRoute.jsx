@@ -3,11 +3,11 @@ import { useSelector } from 'react-redux';
 
 const ProtectedRoute = ({
     children,
-    requiredRole = null,  // 'user', 'seller', or null for any authenticated
-    requireAuth = true     // If false, allows guests (hybrid mode) 
+    requiredRole = null,
+    requireAuth = true
 
 }) => {
-    const { isAuthenticated, loading, user } = useSelector((state) => state.user);
+    const { isAuthenticated, loading: userLoading, user } = useSelector((state) => state.user);
     const location = useLocation();
 
     if (loading) {

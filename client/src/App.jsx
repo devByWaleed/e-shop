@@ -21,13 +21,14 @@ import SellerSignup from './pages/seller/SellerSignup';
 import SellerLogin from './pages/seller/SellerLogin';
 import Wishlist from './pages/Wishlist';
 import Cart from './pages/Cart';
-import Profile from './pages/Profile';
 import BestDealsPage from './pages/BestDealsPage';
 import AllProducts from './pages/AllProducts';
 import Sidebar from './components/Sidebar';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerProducts from './pages/seller/SellerProducts';
 import SellerLayout from './components/SellerLayout';
+import UserProfile from './pages/UserProfile';
+import SellerProfile from './pages/seller/SellerProfile';
 
 
 // Send cookies
@@ -45,7 +46,8 @@ const App = () => {
     '/seller-login',
     '/seller-signup',
     '/seller-dashboard',
-    '/seller-products'
+    '/seller-products',
+    '/seller-profile',
   ]
 
   const shouldHideNavFooter = hideNavFooterPages.includes(useLocation().pathname);
@@ -97,6 +99,7 @@ const App = () => {
         <Route element={<SellerLayout />}>
           <Route path="/seller-dashboard" element={<SellerDashboard />} />
           <Route path="/seller-products" element={<SellerProducts />} />
+          <Route path="/seller-profile" element={<SellerProfile />} />
         </Route>
 
         {/* Hybrid Routes  User Protected Routes */}
@@ -105,7 +108,7 @@ const App = () => {
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
         <Route element={<ProtectedLayout requireAuth={true} />}>
-          <Route path='/profile' element={<Profile />} />
+          <Route path='/user-profile' element={<UserProfile />} />
         </Route>
       </Routes>
       {!shouldHideNavFooter && <Footer />}

@@ -213,6 +213,7 @@ const Navbar1 = () => {
                                     src={user.avatar ? `${import.meta.env.VITE_BACKEND_URL}/${user.avatar}` : assets.profile}
                                     alt="Profile"
                                     className="w-full h-full object-cover"
+                                    onClick={() => navigate("/user-profile")}
                                 />
                             </div>
                         ) : (
