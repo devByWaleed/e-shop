@@ -96,10 +96,12 @@ const App = () => {
         <Route path='/seller-login' element={<SellerLogin />} />
         <Route path='/seller-signup' element={<SellerSignup />} />
 
-        <Route element={<SellerLayout />}>
-          <Route path="/seller-dashboard" element={<SellerDashboard />} />
-          <Route path="/seller-products" element={<SellerProducts />} />
-          <Route path="/seller-profile" element={<SellerProfile />} />
+        <Route element={<ProtectedLayout requireAuth={true} requiredRole="seller" />}>
+          <Route element={<SellerLayout />}>
+            <Route path="/seller-dashboard" element={<SellerDashboard />} />
+            <Route path="/seller-products" element={<SellerProducts />} />
+            <Route path="/seller-profile" element={<SellerProfile />} />
+          </Route>
         </Route>
 
         {/* Hybrid Routes  User Protected Routes */}
@@ -107,7 +109,7 @@ const App = () => {
         <Route path='/wishlist' element={<Wishlist />} />
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
-        <Route element={<ProtectedLayout requireAuth={true} />}>
+        <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>
           <Route path='/user-profile' element={<UserProfile />} />
         </Route>
       </Routes>

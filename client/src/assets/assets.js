@@ -175,8 +175,8 @@ export const productData = [
             "512GB high-speed SSD storage",
             "Space Gray premium finish"
         ],
-        image_Url: [{ public_id: "mac_pro_14", url: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80" }],
-        shop: { name: "Apple Official", shop_avatar: { public_id: "avatar_apple", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80" }, ratings: 4.9 },
+        image_Url: [{ public_id: "mac_pro_14", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/laptop1-removebg-preview_l5sbkg.png" }],
+        shop: { name: "Apple Official", shop_avatar: { public_id: "avatar_apple", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg" }, ratings: 4.9 },
         price: 1999,
         discount_price: 1849,
         rating: 5,
@@ -199,7 +199,7 @@ export const productData = [
             "256GB SSD storage",
             "Midnight deep color profile"
         ],
-        image_Url: [{ public_id: "mac_air_13", url: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "mac_air_13", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/laptop2-removebg-preview_gjxx6u.png" }],
         shop: { name: "Apple Official", shop_avatar: { public_id: "avatar_apple", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80" }, ratings: 4.9 },
         price: 1099,
         discount_price: 999,
@@ -292,7 +292,7 @@ export const productData = [
             "Generous 256GB internal storage capacity",
             "Premium surgical-grade stainless steel and glass design"
         ],
-        image_Url: [{ public_id: "iphone_14_silver", url: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "iphone_14_silver", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969016/mobile1-removebg-preview_oj1bbl.png" }],
         shop: { name: "Amazon Ltd", shop_avatar: { public_id: "avatar_amazon", url: "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150&auto=format&fit=crop&q=80" }, ratings: 4.7 },
         price: 1199,
         discount_price: 1099,
@@ -314,7 +314,7 @@ export const productData = [
             "Driven by the ultimate Snapdragon custom processor architecture",
             "Massive 512GB storage capacity in Phantom Black"
         ],
-        image_Url: [{ public_id: "s23_ultra", url: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "s23_ultra", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/mobile2-removebg-preview_uqinjg.png" }],
         shop: { name: "Samsung Hub", shop_avatar: { public_id: "avatar_sam", url: "https://images.unsplash.com/photo-1537498424460-1ea4844c3a47?w=150&auto=format&fit=crop&q=80" }, ratings: 4.8 },
         price: 1379,
         discount_price: 1249,
@@ -406,7 +406,7 @@ export const productData = [
             "Customizable, rich RGB lighting elements",
             "Ergonomic lightweight D-shaped ear cushions"
         ],
-        image_Url: [{ public_id: "gaming_headphone_1", url: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "gaming_headphone_1", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/headphone1-removebg-preview_eboiik.png" }],
         shop: { name: "Asus Official", shop_avatar: { public_id: "avatar_asus", url: "https://images.unsplash.com/photo-1618424181497-157f25b6ddd5?w=150&auto=format&fit=crop&q=80" }, ratings: 4.5 },
         price: 200,
         discount_price: 169,
@@ -428,7 +428,7 @@ export const productData = [
             "Ultra-comfortable lightweight leather fit configuration",
             "Long-lasting wireless structural battery systems"
         ],
-        image_Url: [{ public_id: "sony_xm5", url: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "sony_xm5", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/headphone2-removebg-preview_reteto.png" }],
         shop: { name: "Sony Store", shop_avatar: { public_id: "avatar_sony", url: "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150&auto=format&fit=crop&q=80" }, ratings: 4.8 },
         price: 399,
         discount_price: 348,
@@ -520,7 +520,7 @@ export const productData = [
             "Comfortable, breathable upper fabrics",
             "White base accented with aggressive red layouts"
         ],
-        image_Url: [{ public_id: "nike_air_max", url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "nike_air_max", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969016/shoes1-removebg-preview_ij4fb3.png" }],
         shop: { name: "Alisha Shoes Mart", shop_avatar: { public_id: "avatar_alisha", url: "https://images.unsplash.com/photo-1537498424460-1ea4844c3a47?w=150&auto=format&fit=crop&q=80" }, ratings: 4.3 },
         price: 160,
         discount_price: 129,
@@ -542,7 +542,7 @@ export const productData = [
             "Durable multi-surface traction outsoles",
             "Sleek Core Black styling"
         ],
-        image_Url: [{ public_id: "adidas_ultra", url: "https://images.unsplash.com/photo-1587563871167-1ee9c131fadc?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "adidas_ultra", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969016/shoes2-removebg-preview_khrrd8.png" }],
         shop: { name: "Foot Locker Store", shop_avatar: { public_id: "avatar_foot", url: "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150&auto=format&fit=crop&q=80" }, ratings: 4.5 },
         price: 190,
         discount_price: 159,
@@ -634,7 +634,7 @@ export const productData = [
             "Polished durable stainless steel protective enclosure housing",
             "Sleek and clear minimalist white display face"
         ],
-        image_Url: [{ public_id: "watch_classic", url: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "watch_classic", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/watch1-removebg-preview_yywqgv.png" }],
         shop: { name: "Shahriar Watch House", shop_avatar: { public_id: "avatar_watch", url: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=150&auto=format&fit=crop&q=80" }, ratings: 4.4 },
         price: 120,
         discount_price: 89,
@@ -656,7 +656,7 @@ export const productData = [
             "Deep atmospheric water-resistant protection ratings",
             "Stunning gold-tone plating finish for elegant statement wear"
         ],
-        image_Url: [{ public_id: "watch_gold", url: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&auto=format&fit=crop&q=80" }],
+        image_Url: [{ public_id: "watch_gold", url: "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/watch2-removebg-preview_qpnjda.png" }],
         shop: { name: "Shahriar Watch House", shop_avatar: { public_id: "avatar_watch", url: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=150&auto=format&fit=crop&q=80" }, ratings: 4.4 },
         price: 250,
         discount_price: 199,

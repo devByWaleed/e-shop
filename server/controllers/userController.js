@@ -125,7 +125,7 @@ export const activateAccount = async (req, res) => {
         const user = new UserModel({ name, email, password, avatar })
         await user.save()
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
             expiresIn: "7d"
         })
 
@@ -139,7 +139,7 @@ export const activateAccount = async (req, res) => {
 
         return res.json({
             success: true,
-            user: { email: user.email, name: user.name }
+            user: { email: user.email, name: user.name, role: user.role }
         })
 
     } catch (error) {
@@ -189,7 +189,7 @@ export const login = async (req, res) => {
             })
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" })
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" })
 
         // res.cookie("token", token, {
         //     httpOnly: true, secure: process.env.NODE_ENV === "production",

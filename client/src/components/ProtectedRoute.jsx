@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 
 const ProtectedRoute = ({
     children,
@@ -10,7 +11,7 @@ const ProtectedRoute = ({
     const { isAuthenticated, loading: userLoading, user } = useSelector((state) => state.user);
     const location = useLocation();
 
-    if (loading) {
+    if (userLoading) {
         return <div>Loading...</div>;
     }
 
@@ -27,6 +28,7 @@ const ProtectedRoute = ({
 
     // Role-based access control
     if (requiredRole && user?.role !== requiredRole) {
+        toast.error("Sellers only")
         return <Navigate to="/" replace />;
     }
 
