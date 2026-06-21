@@ -5,10 +5,21 @@ import RelatedProducts from "../components/RelatedProducts";
 
 const ProductDetails = () => {
     const [activeTab, setActiveTab] = useState("reviews")
+    const [count, setCount] = useState(0)
     const { id } = useParams()
     const productId = Number(id)
 
     const product = productData.find((item) => item.id === productId)
+
+    const incrementCount = () => {
+        setCount((prev) => prev + 1)
+    }
+
+    const decrementCount = () => {
+        if (count > 0) {
+            setCount((prev) => prev - 1)
+        }
+    }
 
 
     return (
@@ -107,11 +118,11 @@ const ProductDetails = () => {
                     <div className="mt-6 relative">
                         <p className="text-sm font-medium text-gray-700 mb-2">Quantity</p>
                         <div className="flex items-center gap-3 mb-4">
-                            <button className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
+                            <button onClick={decrementCount} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
                                 -
                             </button>
-                            <span className="w-8 text-center font-medium">1</span>
-                            <button className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
+                            <span className="w-8 text-center font-medium">{count}</span>
+                            <button onClick={incrementCount} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
                                 +
                             </button>
                         </div>

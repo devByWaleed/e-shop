@@ -1,12 +1,16 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { productData } from '../assets/assets';
 import ProductCard from './ProductCard';
 
 const BestDeals = () => {
 
-    const products = productData
-        .filter(product => product.bestDeal)
-        .slice(0, 5);
+    const [products, setProducts] = useState([])
+
+    useEffect(() => {
+        const d = productData && productData.sort((a, b) => b.total_sell - a.total_sell)
+        const firstFive = d.slice(0, 5)
+        setProducts(firstFive)
+    }, [])
 
     return (
         <>

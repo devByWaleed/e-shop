@@ -1,8 +1,14 @@
+import { useEffect, useState } from 'react';
 import { productData } from '../assets/assets';
 import ProductCard from '../components/ProductCard';
 
 const BestDealsPage = () => {
-    const products = productData.filter(product => product.bestDeal);
+    const [products, setProducts] = useState([])
+
+    useEffect(() => {
+        const d = productData && productData.sort((a, b) => b.total_sell - a.total_sell)
+        setProducts(d)
+    }, [])
 
     return (
         <section className="bg-white flex flex-col items-center justify-center px-4 py-16">

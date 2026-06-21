@@ -1,7 +1,7 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRef, useState } from 'react'
-import { assets } from '../assets/assets'
+import { assets, productData, categories } from '../assets/assets'
 
 const Navbar1 = () => {
     const nav_links = [
@@ -12,7 +12,10 @@ const Navbar1 = () => {
         { label: 'FAQ', to: '/faqs' },
     ]
     const [open, setOpen] = useState(false)
-    const [search, setSearch] = useState('')
+    const [searchTerm, setSearchTerm] = useState("")
+    const [searchData, setSearchData] = useState("")
+
+
     const [showMobileSearch, setShowMobileSearch] = useState(false)
     const [showMobileCategories, setShowMobileCategories] = useState(false)
     const searchInputRef = useRef(null)
@@ -21,16 +24,15 @@ const Navbar1 = () => {
     const navigate = useNavigate()
 
     const { isAuthenticated, user, loading } = useSelector((state) => state.user)
-    // const { theme } = useSelector((state) => state.theme)
 
-    const categories = [
-        { label: 'All Categories', value: '' },
-        { label: '💻 Computers & Laptops', value: '/category/computers-laptops' },
-        { label: '📱 Mobile & Tablets', value: '/category/mobile-tablets' },
-        { label: '🎮 Music & Gaming', value: '/category/music-gaming' },
-        { label: '👟 Shoes', value: '/category/shoes' },
-        { label: '⌚ Accessories', value: '/category/accessories' },
-    ]
+    const handleSearchChange = (e) => {
+        const term = e.target.value
+        setSearchTerm(term)
+    }
+
+    const filteredProducts = productData && productData.filter((product) =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     return (
         <>
@@ -45,13 +47,13 @@ const Navbar1 = () => {
                 </NavLink>
 
                 {/* Search */}
-                <div className="flex-1 max-w-120 hidden sm:flex items-center
+                <div className="relative flex-1 max-w-120 hidden sm:flex items-center
                     gap-2.5 bg-white h-10 px-4 rounded-full
                     border-[1.5px] border-primary">
                     <input
                         type="text"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        value={searchTerm}
+                        onChange={handleSearchChange}
                         placeholder="Search the products..."
                         className="flex-1 bg-transparent outline-none text-sm
                             text-text placeholder-text-muted"
@@ -66,6 +68,26 @@ const Navbar1 = () => {
                                 strokeWidth="1.4" strokeLinecap="round" />
                         </svg>
                     </button>
+
+                    {
+                        searchTerm && filteredProducts.length !== 0 ? (
+                            <div className='absolute left-0 top-full mt-2 w-full max-h-75 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl z-99999' >
+                                {filteredProducts.map((i, index) => {
+                                    const d = i.name
+                                    const productName = d.replace(/\s+/g, "-")
+
+                                    return (
+                                        <Link key={index} to={`/products/${productName}`} onClick={() => setSearchTerm("")}>
+                                            <div className="w-full flex items-center py-2.5 px-4 hover:bg-slate-100 transition-colors border-b border-gray-50 last:border-b-0">
+                                                <img src={i.image_Url?.[0]?.url || assets.profile} alt="" className='w-10 h-10 mr-3 object-cover rounded shrink-0' />
+                                                <span className="text-sm text-text font-medium truncate">{d}</span>
+                                            </div>
+                                        </Link>
+                                    )
+                                })}
+                            </div>
+                        ) : null
+                    }
                 </div>
 
                 {/* Become Seller */}
@@ -110,12 +132,13 @@ const Navbar1 = () => {
                         defaultValue=""
                         onChange={(e) => {
                             if (e.target.value) {
-                                navigate(e.target.value)
+                                navigate(e.target.value);
                             }
                         }}
                     >
+                        <option value="" disabled hidden>Choose Category</option>
                         {categories.map((cat, idx) => (
-                            <option key={idx} value={cat.value} className="bg-dark  text-white/90">
+                            <option key={idx} value={cat.value} className="bg-dark text-white/90">
                                 {cat.label}
                             </option>
                         ))}
@@ -161,7 +184,9 @@ const Navbar1 = () => {
                 <div className="flex items-center gap-1.5">
 
                     {/* Wishlist */}
-                    <button className="relative w-9 h-9 rounded-lg bg-white/12
+                    <button
+                        onClick={() => { navigate("/wishlist") }}
+                        className="relative w-9 h-9 rounded-lg bg-white/12
                         flex items-center justify-center cursor-pointer
                         hover:bg-white/20 transition-colors"
                         aria-label="Wishlist">
@@ -179,7 +204,9 @@ const Navbar1 = () => {
                     </button>
 
                     {/* Cart */}
-                    <button className="relative w-9 h-9 rounded-lg bg-white/12
+                    <button
+                        onClick={() => { navigate("/cart") }}
+                        className="relative w-9 h-9 rounded-lg bg-white/12
                         flex items-center justify-center cursor-pointer
                         hover:bg-white/20 transition-colors"
                         aria-label="Cart">

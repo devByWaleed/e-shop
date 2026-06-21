@@ -19,7 +19,7 @@ import Faqs from './pages/Faqs';
 import ProductDetails from './pages/ProductDetails';
 import SellerSignup from './pages/seller/SellerSignup';
 import SellerLogin from './pages/seller/SellerLogin';
-import Wishlist from './pages/Wishlist';
+import WishlistCard from './components/WishlistCard';
 import Cart from './pages/Cart';
 import BestDealsPage from './pages/BestDealsPage';
 import AllProducts from './pages/AllProducts';
@@ -29,6 +29,7 @@ import SellerProducts from './pages/seller/SellerProducts';
 import SellerLayout from './components/SellerLayout';
 import UserProfile from './pages/UserProfile';
 import SellerProfile from './pages/seller/SellerProfile';
+import WishlistPage from './pages/WishlistPage';
 
 
 // Send cookies
@@ -106,7 +107,7 @@ const App = () => {
 
         {/* Hybrid Routes  User Protected Routes */}
         <Route path='/cart' element={<Cart />} />
-        <Route path='/wishlist' element={<Wishlist />} />
+        <Route path='/wishlist' element={<WishlistPage />} />
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
         <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>
