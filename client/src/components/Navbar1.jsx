@@ -2,6 +2,8 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRef, useState } from 'react'
 import { assets, productData, categories } from '../assets/assets'
+import Cart from './Cart'
+import Wishlist from './Wishlist'
 
 const Navbar1 = () => {
     const nav_links = [
@@ -15,6 +17,8 @@ const Navbar1 = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const [searchData, setSearchData] = useState("")
 
+    const [openCart, setOpenCart] = useState(false)
+    const [openWishlist, setOpenWishlist] = useState(false)
 
     const [showMobileSearch, setShowMobileSearch] = useState(false)
     const [showMobileCategories, setShowMobileCategories] = useState(false)
@@ -185,7 +189,8 @@ const Navbar1 = () => {
 
                     {/* Wishlist */}
                     <button
-                        onClick={() => { navigate("/wishlist") }}
+                        onClick={() => setOpenWishlist(true)}
+                        title='Wishlist'
                         className="relative w-9 h-9 rounded-lg bg-white/12
                         flex items-center justify-center cursor-pointer
                         hover:bg-white/20 transition-colors"
@@ -205,7 +210,8 @@ const Navbar1 = () => {
 
                     {/* Cart */}
                     <button
-                        onClick={() => { navigate("/cart") }}
+                        onClick={() => setOpenCart(true)}
+                        title='User Cart'
                         className="relative w-9 h-9 rounded-lg bg-white/12
                         flex items-center justify-center cursor-pointer
                         hover:bg-white/20 transition-colors"
@@ -223,6 +229,10 @@ const Navbar1 = () => {
                             1
                         </span>
                     </button>
+
+                    {openCart && <Cart openCart={openCart} setOpenCart={setOpenCart} />}
+
+                    {openWishlist && <Wishlist openWishlist={openWishlist} setOpenWishlist={setOpenWishlist} />}
 
                     {/* Divider */}
                     <div className="w-px h-5 mx-1 bg-white/25" aria-hidden="true" />

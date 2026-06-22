@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { productData } from "../assets/assets";
 import ProductCard from './ProductCard';
 
@@ -7,6 +7,8 @@ const RelatedProducts = () => {
     const [relatedProducts, setRelatedProducts] = useState([]);
     const { id } = useParams()
     const productId = Number(id)
+
+    const navigate = useNavigate()
 
     useEffect(() => {
         const currentProduct = productData.find((item) => item.id === productId)
@@ -39,7 +41,9 @@ const RelatedProducts = () => {
                 ))}
             </div>
 
-            <button className="mx-auto cursor-pointer px-12 my-16 py-2.5 border rounded text-primary-dark hover:bg-primary/10 transition">
+            <button
+                onClick={() => navigate("/products")}
+                className="mx-auto cursor-pointer px-12 my-16 py-2.5 border rounded text-primary-dark hover:bg-primary/10 transition">
                 See More
             </button>
         </div>

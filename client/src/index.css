@@ -35,10 +35,49 @@
     @apply transition-colors duration-200;
 }
 
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
+
+/* 
+---------------------------------
+-----------
+Scrollbar Color
+-----------
+---------------------------------
+*/
+/* Target the entire document */
+html::-webkit-scrollbar {
+    width: 8px;
+    /* Width of the vertical scrollbar */
+    height: 8px;
+    /* Height of the horizontal scrollbar */
 }
 
+/* Style the draggable thumb handle */
+html::-webkit-scrollbar-thumb {
+    background-color: #1c1672;
+    border-radius: 9999px;
+    /* Makes the edges round */
+}
+
+/* Optional: Style the scrollbar track background */
+html::-webkit-scrollbar-track {
+    background: transparent;
+    /* Keeps the background clean */
+}
+
+/* Standard support for Firefox */
+html {
+    scrollbar-color: #1c1672 transparent;
+    scrollbar-width: thin;
+}
+
+
+/* 
+---------------------------------
+-----------
+Star Ratings
+-----------
+---------------------------------
+*/
 .star-rating {
     display: inline-block;
     font-size: 2rem;

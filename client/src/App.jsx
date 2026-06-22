@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Toaster } from 'react-hot-toast'
 import axios from "axios";
@@ -19,8 +19,6 @@ import Faqs from './pages/Faqs';
 import ProductDetails from './pages/ProductDetails';
 import SellerSignup from './pages/seller/SellerSignup';
 import SellerLogin from './pages/seller/SellerLogin';
-import WishlistCard from './components/WishlistCard';
-import Cart from './pages/Cart';
 import BestDealsPage from './pages/BestDealsPage';
 import AllProducts from './pages/AllProducts';
 import Sidebar from './components/Sidebar';
@@ -29,7 +27,6 @@ import SellerProducts from './pages/seller/SellerProducts';
 import SellerLayout from './components/SellerLayout';
 import UserProfile from './pages/UserProfile';
 import SellerProfile from './pages/seller/SellerProfile';
-import WishlistPage from './pages/WishlistPage';
 
 
 // Send cookies
@@ -84,8 +81,10 @@ const App = () => {
         <Route path='/loader' element={<Loading />} />
         <Route path='/' element={<Home />} />
         <Route path='/products' element={<AllProducts />} />
-        <Route path='/user-login' element={<Login />} />
-        <Route path='/user-signup' element={<SignUp />} />
+        <Route element={isAuthenticated ? <Navigate to="/" replace /> : <Outlet />}>
+          <Route path='/user-login' element={<Login />} />
+          <Route path='/user-signup' element={<SignUp />} />
+        </Route>
         <Route path='/activation/:activation_token' element={<Activation />} />
         <Route path='/products/:category/:id' element={<ProductDetails />} />
         <Route path='/events' element={<Events />} />
@@ -106,8 +105,8 @@ const App = () => {
         </Route>
 
         {/* Hybrid Routes  User Protected Routes */}
-        <Route path='/cart' element={<Cart />} />
-        <Route path='/wishlist' element={<WishlistPage />} />
+        {/* <Route path='/cart' element={<Cart />} /> */}
+        {/* <Route path='/wishlist' element={<WishlistPage />} /> */}
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
         <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>
