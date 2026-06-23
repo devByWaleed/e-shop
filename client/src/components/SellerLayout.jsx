@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 const SellerLayout = () => {
     return (
         // FIX: Using inline flex-row layouts to ensure components sit side-by-side smoothly
-        <div className="flex min-h-screen w-full bg-light-bg font-sans">
+        <div className="flex flex-col md:flex-row min-h-screen w-full bg-light-bg font-sans">
             {/* Persisted left navigation panel */}
             <Sidebar />
 

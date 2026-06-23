@@ -6,7 +6,7 @@ const Sidebar = () => {
 
     return (
         <div
-            className="min-h-screen bg-white border-r transition-all duration-300 flex flex-col relative shadow-sm border-light-border"
+            className=" bg-white border-r transition-all duration-300 flex md:flex-col flex-row dow-sm border-light-border"
             style={{ width: isOpen ? '170px' : '70px' }} // Dynamic execution requirement
         >
             {/* Header Area */}
@@ -22,7 +22,7 @@ const Sidebar = () => {
             </div>
 
             {/* Navigation Routes */}
-            <ul className='mt-4 flex flex-col gap-1 px-2'>
+            <ul className='min-w-screen mt-4 flex md:flex-col flex-row gap-1 px-2'>
                 <NavLink
                     className={({ isActive }) => `flex items-center gap-4 py-3 px-3.5 rounded-lg font-medium transition-all cursor-pointer group ${isActive ? 'bg-primary text-white' : 'text-text hover:bg-light-bg'
                         }`}

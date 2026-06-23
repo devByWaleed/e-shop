@@ -25,8 +25,8 @@ import Sidebar from './components/Sidebar';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerProducts from './pages/seller/SellerProducts';
 import SellerLayout from './components/SellerLayout';
-import UserProfile from './pages/UserProfile';
 import SellerProfile from './pages/seller/SellerProfile';
+import Profile from './pages/Profile';
 
 
 // Send cookies
@@ -96,13 +96,14 @@ const App = () => {
         <Route path='/seller-login' element={<SellerLogin />} />
         <Route path='/seller-signup' element={<SellerSignup />} />
 
-        <Route element={<ProtectedLayout requireAuth={true} requiredRole="seller" />}>
-          <Route element={<SellerLayout />}>
-            <Route path="/seller-dashboard" element={<SellerDashboard />} />
-            <Route path="/seller-products" element={<SellerProducts />} />
-            <Route path="/seller-profile" element={<SellerProfile />} />
-          </Route>
+        {/* <Route element={<ProtectedLayout requireAuth={true} requiredRole="seller" />}> */}
+        {/* <Route element={<ProtectedLayout />}> */}
+        <Route element={<SellerLayout />}>
+          <Route path="/seller-dashboard" element={<SellerDashboard />} />
+          <Route path="/seller-products" element={<SellerProducts />} />
+          <Route path="/seller-profile" element={<SellerProfile />} />
         </Route>
+        {/* </Route> */}
 
         {/* Hybrid Routes  User Protected Routes */}
         {/* <Route path='/cart' element={<Cart />} /> */}
@@ -110,7 +111,8 @@ const App = () => {
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
         <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>
-          <Route path='/user-profile' element={<UserProfile />} />
+          {/* <Route path='/user-profile' element={<UserProfile />} /> */}
+          <Route path='/user-profile' element={<Profile />} />
         </Route>
       </Routes>
       {!shouldHideNavFooter && <Footer />}
