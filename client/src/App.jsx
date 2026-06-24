@@ -13,7 +13,6 @@ import ProtectedLayout from './components/ProtectedLayout';
 import Loading from './components/Loading'
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
-import Navbar1 from './components/Navbar1'
 import Events from './pages/Events';
 import Faqs from './pages/Faqs';
 import ProductDetails from './pages/ProductDetails';
@@ -73,8 +72,7 @@ const App = () => {
   return (
     <>
       <Toaster />
-      {/* {!shouldHideNavFooter && <Navbar />} */}
-      {!shouldHideNavFooter && <Navbar1 />}
+      {!shouldHideNavFooter && <Navbar />}
 
       <Routes>
         {/* Public Rotes */}
@@ -97,7 +95,6 @@ const App = () => {
         <Route path='/seller-signup' element={<SellerSignup />} />
 
         {/* <Route element={<ProtectedLayout requireAuth={true} requiredRole="seller" />}> */}
-        {/* <Route element={<ProtectedLayout />}> */}
         <Route element={<SellerLayout />}>
           <Route path="/seller-dashboard" element={<SellerDashboard />} />
           <Route path="/seller-products" element={<SellerProducts />} />
@@ -105,13 +102,8 @@ const App = () => {
         </Route>
         {/* </Route> */}
 
-        {/* Hybrid Routes  User Protected Routes */}
-        {/* <Route path='/cart' element={<Cart />} /> */}
-        {/* <Route path='/wishlist' element={<WishlistPage />} /> */}
-
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
         <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>
-          {/* <Route path='/user-profile' element={<UserProfile />} /> */}
           <Route path='/user-profile' element={<Profile />} />
         </Route>
       </Routes>

@@ -5,10 +5,9 @@ import UserOrders from '../components/profile/UserOrders';
 import UserRefunds from '../components/profile/UserRefunds';
 import TrackOrder from '../components/profile/TrackOrder';
 import PaymentMethods from '../components/profile/PaymentMethods';
-// import AddressSettings from '../components/profile/AddressSettings';
+import AddressSettings from '../components/profile/AddressSettings';
 
 const Profile = () => {
-    // 1 = Profile, 2 = Orders, 3 = Refunds, etc.
     const [active, setActive] = useState(1);
 
     return (
@@ -27,7 +26,7 @@ const Profile = () => {
                     {active === 3 && <UserRefunds />}
                     {active === 5 && <TrackOrder />}
                     {active === 6 && <PaymentMethods />}
-                    {/* {active === 7 && <AddressSettings />} */}
+                    {active === 7 && <AddressSettings />}
                 </div>
 
             </div>

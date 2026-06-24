@@ -23,7 +23,7 @@ const ProtectedRoute = ({
     // FULL PROTECTION: Redirect unauthenticated users
     if (!isAuthenticated) {
         // Save the attempted URL for redirect after login
-        return <Navigate to="/user-login" state={{ from: location }} replace />;
+        return <Navigate to="/" state={{ from: location }} replace />;
     }
 
     // Role-based access control

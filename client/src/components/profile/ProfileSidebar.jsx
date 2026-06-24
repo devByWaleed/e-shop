@@ -10,9 +10,30 @@ import {
     FiHome,
     FiLogOut
 } from 'react-icons/fi';
+import toast from "react-hot-toast";
+import axios from "axios";
+import { LoadUserFail } from '../../redux/slices/userSlice';
+import { useDispatch } from 'react-redux';
 
 const ProfileSidebar = ({ active, setActive }) => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const logout = async () => {
+        try {
+            const { data } = await axios.post("/api/user/logout")
+
+            if (data.success) {
+                dispatch(LoadUserFail(null))
+                toast.success(data.message)
+                navigate("/")
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
 
     const menuItems = [
         { id: 1, label: "Profile", icon: <FiUser size={20} /> },
@@ -26,6 +47,11 @@ const ProfileSidebar = ({ active, setActive }) => {
     ];
 
     const handleNavigation = (item) => {
+        if (item.label === "Logout") {
+            logout();
+            return;
+        }
+
         setActive(item.id);
         if (item.path) {
             navigate(item.path);
@@ -43,8 +69,8 @@ const ProfileSidebar = ({ active, setActive }) => {
                         key={item.id}
                         onClick={() => handleNavigation(item)}
                         className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl whitespace-nowrap transition-all duration-200 cursor-pointer ${isSelected
-                                ? "bg-secondary/10 text-secondary md:bg-gray-50"
-                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50/50"
+                            ? "bg-secondary/10 text-secondary md:bg-gray-50"
+                            : "text-gray-500 hover:text-gray-900 hover:bg-gray-50/50"
                             }`}
                     >
                         <span className={isSelected ? "text-secondary" : "text-gray-400"}>
