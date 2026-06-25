@@ -6,6 +6,7 @@ import "dotenv/config"
 import userRouter from "./routes/userRoutes.js";
 import { fileURLToPath } from "url"
 import path from "path"
+import sellerRouter from "./routes/sellerRoutes.js"
 
 
 // Configuring server
@@ -53,6 +54,7 @@ app.use("/", express.static(path.join(__dirname, "uploads")));
 // API endpoints
 app.get('/', (req, res) => res.send("API Working!!!"));
 app.use('/api/user', userRouter);
+app.use('/api/seller', sellerRouter);
 
 
 await connectDB();

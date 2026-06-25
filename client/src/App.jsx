@@ -6,6 +6,7 @@ import axios from "axios";
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Activation from './pages/Activation'
+import SellerActivation from './pages/seller/SellerActivation'
 import Home from './pages/Home'
 import store from './redux/store'
 import { loadUser } from './redux/actions/userAction'
@@ -93,14 +94,15 @@ const App = () => {
         {/* Seller Auth Routes */}
         <Route path='/seller-login' element={<SellerLogin />} />
         <Route path='/seller-signup' element={<SellerSignup />} />
+        <Route path='/seller-activation/:activation_token' element={<SellerActivation />} />
 
-        {/* <Route element={<ProtectedLayout requireAuth={true} requiredRole="seller" />}> */}
-        <Route element={<SellerLayout />}>
-          <Route path="/seller-dashboard" element={<SellerDashboard />} />
-          <Route path="/seller-products" element={<SellerProducts />} />
-          <Route path="/seller-profile" element={<SellerProfile />} />
+        <Route element={<ProtectedLayout requireAuth={true} requiredRole="seller" />}>
+          <Route element={<SellerLayout />}>
+            <Route path="/seller-dashboard" element={<SellerDashboard />} />
+            <Route path="/seller-products" element={<SellerProducts />} />
+            <Route path="/seller-profile" element={<SellerProfile />} />
+          </Route>
         </Route>
-        {/* </Route> */}
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
         <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>

@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import axios from "axios";
 import toast from "react-hot-toast";
 // import { loadUser } from "../redux/actions/userAction.js";
-// import useLoading from "../hooks/useLoading.js";
+import useLoading from "../../hooks/useLoading.js";
 
 
 const SellerLogin = () => {
@@ -16,29 +16,28 @@ const SellerLogin = () => {
 
     const navigate = useNavigate()
     const dispatch = useDispatch()
-    // const { withLoading } = useLoading();
+    const { withLoading } = useLoading();
 
     const onSubmitHandler = async (e) => {
-        // e.preventDefault();
+        e.preventDefault();
 
-        // // Wrap login logic with loading
-        // await withLoading(
-        //     async () => {
-        //         const { data } = await axios.post('/api/user/login', {
-        //             email, password
-        //         });
+        // Wrap login logic with loading
+        await withLoading(
+            async () => {
+                const { data } = await axios.post('/api/seller/login', {
+                    email, password
+                });
 
-        //         if (data.success) {
-        //             await dispatch(loadUser());
-        //             toast.success(data.message);
-        //             navigate("/");
-        //         } else {
-        //             toast.error(data.message);
-        //             throw new Error(data.message);
-        //         }
-        //     },
-        //     { message: "Logging you in..." }
-        // );
+                if (data.success) {
+                    toast.success(data.message);
+                    navigate("/seller-dashboard");
+                } else {
+                    toast.error(data.message);
+                    throw new Error(data.message);
+                }
+            },
+            { message: "Logging you in..." }
+        );
     };
 
     return (
@@ -46,7 +45,7 @@ const SellerLogin = () => {
             <form onSubmit={onSubmitHandler} onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-88 text-gray-500 rounded-lg shadow-xl border border-gray-200 bg-white">
                 <NavLink to="/" className="text-primary font-bold">← Homepage</NavLink>
                 <p className="text-2xl font-medium m-auto">
-                    Login to your account
+                    Login to your Shop
                 </p>
 
                 <div className="w-full ">

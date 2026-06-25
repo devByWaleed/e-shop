@@ -3,6 +3,7 @@ import { assets } from '../../assets/assets.js'
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios"
 import toast from "react-hot-toast";
+import useLoading from "../../hooks/useLoading.js"
 
 
 const SellerSignup = () => {
@@ -10,10 +11,15 @@ const SellerSignup = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
+    const [phoneNumber, setPhoneNumber] = useState(0);
+    const [address, setAddress] = useState("");
+    const [zipCode, setZipCode] = useState(0);
     const [avatar, setAvatar] = useState(null);
 
+    const [showPassword, setShowPassword] = useState(false);
+
     const navigate = useNavigate()
+    const { withLoading } = useLoading();
 
     const handleFileInputChange = (e) => {
         const file = e.target.files[0]
@@ -21,29 +27,38 @@ const SellerSignup = () => {
     }
 
     const onSubmitHandler = async (e) => {
+        e.preventDefault();
+        const config = { headers: { "Content-Type": "multipart/form-data" } }
 
-        // e.preventDefault();
-        // const config = { headers: { "Content-Type": "multipart/form-data" } }
+        const newForm = new FormData()
+        newForm.append("file", avatar)
+        newForm.append("name", name)
+        newForm.append("email", email)
+        newForm.append("password", password)
+        newForm.append("zipCode", zipCode)
+        newForm.append("address", address)
+        newForm.append("phoneNumber", phoneNumber)
 
-        // const newForm = new FormData()
-        // newForm.append("file", avatar)
-        // newForm.append("name", name)
-        // newForm.append("email", email)
-        // newForm.append("password", password)
+        await withLoading(
+            async () => {
+                const { data } = await axios.post("/api/seller/register", newForm, config)
 
-        // await withLoading(
-        //     async () => {
-        //         const { data } = await axios.post("/api/user/register", newForm, config)
-
-        //         if (data.success) {
-        //             toast.success(data.message);
-        //         } else {
-        //             toast.error(data.message);
-        //             throw new Error(data.message);
-        //         }
-        //     },
-        //     { message: "Creating account..." }
-        // );
+                if (data.success) {
+                    toast.success(data.message);
+                    setName("");
+                    setEmail("");
+                    setPassword("");
+                    setAvatar(null);
+                    setPhoneNumber(0);
+                    setAddress("");
+                    setZipCode(0);
+                } else {
+                    toast.error(data.message);
+                    throw new Error(data.message);
+                }
+            },
+            { message: "Creating account..." }
+        );
     }
 
     return (
@@ -51,7 +66,7 @@ const SellerSignup = () => {
             <form onSubmit={onSubmitHandler} onClick={(e) => e.stopPropagation()} className="flex flex-col gap-4 m-auto items-start p-8 py-12 w-80 sm:w-88 text-gray-500 rounded-lg shadow-xl border border-gray-200 bg-white">
                 <NavLink to="/" className="text-primary font-bold">← Homepage</NavLink>
                 <p className="text-2xl font-medium m-auto">
-                    Register a new account
+                    Register As A Seller
                 </p>
 
                 <div className="w-full">
@@ -59,8 +74,20 @@ const SellerSignup = () => {
                     <input onChange={(e) => setName(e.target.value)} value={name} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="text" required />
                 </div>
                 <div className="w-full ">
-                    <p>Email</p>
+                    <p>Shop Email</p>
                     <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="email" required />
+                </div>
+                <div className="w-full ">
+                    <p>Shop Number</p>
+                    <input onChange={(e) => setPhoneNumber(e.target.value)} value={phoneNumber} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="number" required />
+                </div>
+                <div className="w-full ">
+                    <p>Shop Address</p>
+                    <input onChange={(e) => setAddress(e.target.value)} value={address} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="text" required />
+                </div>
+                <div className="w-full ">
+                    <p>Zip Code</p>
+                    <input onChange={(e) => setZipCode(e.target.value)} value={zipCode} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="number" required />
                 </div>
                 <div className="w-full">
                     <p>Password</p>
