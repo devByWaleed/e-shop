@@ -45,7 +45,7 @@ const ProductCard = ({ product, index }) => {
 
             {/* Product Image - Centered with more top padding to accommodate buttons */}
             <div className="flex items-center justify-center h-32 mb-2 pt-4">
-                <img src={product.image_Url[0].url ? product.image_Url[0].url : "https://assets.prebuiltui.com/images/components/card/card-speaker-image.png"} alt={product.category} className="max-h-full max-w-full object-contain" />
+                {/* <img src={product.image_Url[0].url ? product.image_Url[0].url : "https://assets.prebuiltui.com/images/components/card/card-speaker-image.png"} alt={product.category} className="max-h-full max-w-full object-contain" /> */}
             </div>
 
             <h5 className="pt-3 text-[15px] text-blue-400 pb-3">Seller</h5>

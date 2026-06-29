@@ -1,13 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from './slices/userSlice';
 import loadingReducer from './slices/loadingSlice';
-// import themeReducer from './slices/themeSlice';
+import sellerReducer from './slices/sellerSlice';
 
 const store = configureStore({
     reducer: {
         user: userReducer,
         loading: loadingReducer,
-        // theme: themeReducer
+        seller: sellerReducer
     },
     // Redux Toolkit automatically adds thunk middleware and devTools
 });

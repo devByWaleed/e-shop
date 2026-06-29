@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 
-const userAuth = async (req, res, next) => {
-    const sellerToken = req.cookies?.sellerToken;  // Safe navigation
+const sellerAuth = async (req, res, next) => {
+    const sellerToken = req.cookies?.sellerToken;  // Use the seller cookie name set by seller login
 
     if (!sellerToken) {
         return res.json({
@@ -32,4 +32,4 @@ const userAuth = async (req, res, next) => {
     }
 }
 
-export default userAuth;
+export default sellerAuth;

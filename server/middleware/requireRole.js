@@ -2,14 +2,16 @@ import jwt from "jsonwebtoken"
 
 const requiredRole = (...allowedRoles) => {
     return (req, res, next) => {
-        if (!req.userRole) {
+        const role = req.userRole || req.sellerRole
+
+        if (!role) {
             return res.json({
                 success: false,
                 message: "Not Authorized. Login Again"
             })
         }
 
-        if (!allowedRoles.includes(req.userRole)) {
+        if (!allowedRoles.includes(role)) {
             return res.json({
                 success: false,
                 message: "Not Authorized for this action"

@@ -18,7 +18,7 @@ const createActivationToken = (seller) => {
 }
 
 // Seller registration : /api/seller/register
-export const register = async (req, res) => {
+export const sellerRegister = async (req, res) => {
 
     try {
         const { name, email, password, address, zipCode, phoneNumber } = req.body;
@@ -141,15 +141,15 @@ export const activateAccount = async (req, res) => {
 
         res.cookie("sellerToken", sellerToken, {
             httpOnly: true,
-            secure: false,  // false for localhost
-            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
             maxAge: 7 * 24 * 3600 * 1000,
             path: "/"
         })
 
         return res.json({
             success: true,
-            seller: { email: seller.email, name: seller.name, role: seller.role }
+            seller: { email: seller.email, name: seller.name, role: seller.role, id: seller._id }
         })
 
     } catch (error) {
@@ -169,7 +169,7 @@ export const activateAccount = async (req, res) => {
 
 
 // Seller login : /api/seller/login
-export const login = async (req, res) => {
+export const sellerLogin = async (req, res) => {
 
     try {
         const { email, password } = req.body;
@@ -207,8 +207,8 @@ export const login = async (req, res) => {
         // })
         res.cookie("sellerToken", sellerToken, {
             httpOnly: true,
-            secure: false,           // false for localhost (HTTP)
-            sameSite: "lax",         // Use "lax" not "strict" for cross-origin
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
             maxAge: 7 * 24 * 3600 * 1000,
             path: "/",               // IMPORTANT: available on all routes
             domain: "localhost"      // Explicitly set domain
@@ -216,7 +216,7 @@ export const login = async (req, res) => {
 
         return res.json({
             success: true,
-            seller: { email: seller.email, name: seller.name }
+            seller: { email: seller.email, name: seller.name, id: seller._id }
         })
     }
 
@@ -255,7 +255,7 @@ export const sellerProfile = async (req, res) => {
 
 
 // Seller logout : /api/seler/logout
-export const logout = async (req, res) => {
+export const sellerLogout = async (req, res) => {
 
     try {
         res.clearCookie("sellerToken", {

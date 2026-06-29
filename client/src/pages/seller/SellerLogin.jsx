@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
 import axios from "axios";
 import toast from "react-hot-toast";
-// import { loadUser } from "../redux/actions/userAction.js";
+import { loadSeller } from "../../redux/actions/sellerAction.js";
 import useLoading from "../../hooks/useLoading.js";
 
 
@@ -24,13 +24,14 @@ const SellerLogin = () => {
         // Wrap login logic with loading
         await withLoading(
             async () => {
-                const { data } = await axios.post('/api/seller/login', {
+                const { data } = await axios.post('/api/seller/seller-login', {
                     email, password
                 });
 
                 if (data.success) {
+                    await dispatch(loadSeller());
                     toast.success(data.message);
-                    navigate("/seller-dashboard");
+                    navigate(`/shop/${data.seller.id}`);
                 } else {
                     toast.error(data.message);
                     throw new Error(data.message);

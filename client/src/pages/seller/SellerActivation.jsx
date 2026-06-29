@@ -27,7 +27,7 @@ const Activation = () => {
 
                     if (data.success) {
                         toast.success(data.message);
-                        navigate("/seller-login");
+                        navigate(`/shop/${data.seller.id}`)
                     } else {
                         toast.error(data.message);
                         if (data.message.includes("expired")) {

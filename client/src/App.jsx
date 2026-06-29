@@ -10,7 +10,9 @@ import SellerActivation from './pages/seller/SellerActivation'
 import Home from './pages/Home'
 import store from './redux/store'
 import { loadUser } from './redux/actions/userAction'
+import { loadSeller } from './redux/actions/sellerAction'
 import ProtectedLayout from './components/ProtectedLayout';
+import SellerProtectedLayout from './components/seller/SellerProtectedLayout';
 import Loading from './components/Loading'
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
@@ -22,19 +24,9 @@ import SellerLogin from './pages/seller/SellerLogin';
 import BestDealsPage from './pages/BestDealsPage';
 import AllProducts from './pages/AllProducts';
 import Sidebar from './components/Sidebar';
-import SellerDashboard from './pages/seller/SellerDashboard';
-import SellerProducts from './pages/seller/SellerProducts';
-import SellerLayout from './components/SellerLayout';
 import SellerProfile from './pages/seller/SellerProfile';
 import Profile from './pages/Profile';
-
-
-// Send cookies
-axios.defaults.withCredentials = true
-
-// Backend URL
-axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL
-// axios.defaults.baseURL = process.env.BACKEND_URL
+import SellerHomepage from './pages/seller/SellerHomepage';
 
 
 const App = () => {
@@ -53,6 +45,7 @@ const App = () => {
 
   const { isLoading } = useSelector((state) => state.loading)
   const { isAuthenticated, user, loading: userLoading } = useSelector((state) => state.user)
+  const { sellerAuthenticated, seller, sellerLoading } = useSelector((state) => state.seller)
 
   const dispatch = useDispatch()
 
@@ -63,6 +56,14 @@ const App = () => {
 
   console.log("Auth Status:", isAuthenticated)
   console.log("User Data:", user)
+
+  // Load Seller
+  useEffect(() => {
+    dispatch(loadSeller())
+  }, [dispatch])
+
+  console.log("Auth Status:", sellerAuthenticated)
+  console.log("Seller Data:", seller)
 
   // Don't show main content while loading user data on app start
   if (userLoading && !user) {
@@ -92,16 +93,15 @@ const App = () => {
         <Route path='/product-detail' element={<ProductDetails />} />
 
         {/* Seller Auth Routes */}
-        <Route path='/seller-login' element={<SellerLogin />} />
-        <Route path='/seller-signup' element={<SellerSignup />} />
+        <Route element={sellerAuthenticated ? <Navigate to="/" replace /> : <Outlet />}>
+          <Route path='/seller-login' element={<SellerLogin />} />
+          <Route path='/seller-signup' element={<SellerSignup />} />
+        </Route>
         <Route path='/seller-activation/:activation_token' element={<SellerActivation />} />
 
-        <Route element={<ProtectedLayout requireAuth={true} requiredRole="seller" />}>
-          <Route element={<SellerLayout />}>
-            <Route path="/seller-dashboard" element={<SellerDashboard />} />
-            <Route path="/seller-products" element={<SellerProducts />} />
-            <Route path="/seller-profile" element={<SellerProfile />} />
-          </Route>
+        <Route element={<SellerProtectedLayout requireAuth={true} requiredRole="seller" />}>
+          <Route path="/shop/:id" element={<SellerHomepage />} />
+          <Route path="/seller-profile" element={<SellerProfile />} />
         </Route>
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}

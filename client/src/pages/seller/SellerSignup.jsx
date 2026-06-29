@@ -41,7 +41,7 @@ const SellerSignup = () => {
 
         await withLoading(
             async () => {
-                const { data } = await axios.post("/api/seller/register", newForm, config)
+                const { data } = await axios.post("/api/seller/seller-register", newForm, config)
 
                 if (data.success) {
                     toast.success(data.message);

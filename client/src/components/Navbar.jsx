@@ -5,7 +5,7 @@ import { assets, productData, categories } from '../assets/assets'
 import Cart from './Cart'
 import Wishlist from './Wishlist'
 
-const Navbar1 = () => {
+const Navbar = () => {
     const nav_links = [
         { label: 'Home', to: '/' },
         { label: 'Best Selling', to: '/best-deals' },
@@ -161,7 +161,7 @@ const Navbar1 = () => {
 
             {/* ── MOBILE SEARCH PANEL ── */}
             {showMobileSearch && (
-                <div className="sm:hidden px-4 py-3 bg-white border-b border-light-border relative z-[9999]">
+                <div className="sm:hidden px-4 py-3 bg-white border-b border-light-border relative z-9999">
                     <div className="relative flex items-center bg-white h-10 px-4 rounded-full border border-primary">
                         <input
                             ref={searchInputRef}
@@ -186,7 +186,7 @@ const Navbar1 = () => {
                     </div>
                     {/* Live Dropdown Matching Functionality for Mobile */}
                     {searchTerm && filteredProducts.length !== 0 && (
-                        <div className='absolute left-4 right-4 top-full mt-1 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl z-[100000]' >
+                        <div className='absolute left-4 right-4 top-full mt-1 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl z-100000' >
                             {filteredProducts.map((i, index) => {
                                 const d = i.name
                                 const productName = d.replace(/\s+/g, "-")
@@ -432,4 +432,4 @@ const Navbar1 = () => {
     )
 }
 
-export default Navbar1
+export default Navbar

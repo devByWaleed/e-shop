@@ -6,6 +6,13 @@ import { BrowserRouter } from 'react-router-dom'
 import store from './redux/store.js'
 import { Provider } from 'react-redux'
 // import ThemeProvider from './components/ThemeProvider.jsx'
+import axios from "axios";
+
+// Send cookies
+axios.defaults.withCredentials = true
+
+// Backend URL
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
