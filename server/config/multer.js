@@ -1,28 +1,16 @@
-import multer from "multer"
-import path from "path"
-import fs from "fs"
-import { fileURLToPath } from "url"
+import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-const uploadDir = path.join(__dirname, "../uploads")
-console.log("Upload dir:", uploadDir) // ← check this
-
-// ✅ Auto-create if missing
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true })
-}
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir)
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        const filename = file.originalname.split(".")[0];
-        cb(null, filename + "-" + uniqueSuffix + ".png")
-    }
+// Configure Cloudinary with your credentials globally
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-export const upload = multer({ storage: storage })
+// Setup pure memory storage. 
+// This keeps files inside RAM as temporary buffers (req.files[i].buffer)
+const storage = multer.memoryStorage();
+
+// Export the upload middleware
+export const upload = multer({ storage: storage });

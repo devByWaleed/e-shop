@@ -7,6 +7,8 @@ import userRouter from "./routes/userRoutes.js";
 import { fileURLToPath } from "url"
 import path from "path"
 import sellerRouter from "./routes/sellerRoutes.js"
+import productRouter from "./routes/productRoutes.js"
+import connectCloudinary from "./config/cloudinary.js"
 
 
 // Configuring server
@@ -55,10 +57,11 @@ app.use("/", express.static(path.join(__dirname, "uploads")));
 app.get('/', (req, res) => res.send("API Working!!!"));
 app.use('/api/user', userRouter);
 app.use('/api/seller', sellerRouter);
+app.use('/api/product', productRouter);
 
 
+await connectCloudinary();
 await connectDB();
-// await connectCloudinary();
 
 
 // app.use((err, req, res, next) => {

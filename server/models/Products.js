@@ -16,13 +16,14 @@ const ProductSchema = new mongoose.Schema({
     },
     tags: {
         type: String,
+        required: [true, "Please enter your product tags!"],
     },
     originalPrice: {
         type: Number,
     },
     discountPrice: {
         type: Number,
-        required: [true, "Please enter your product price!"],
+        required: [true, "Please enter your product discount!"],
     },
     stock: {
         type: Number,
@@ -30,39 +31,9 @@ const ProductSchema = new mongoose.Schema({
     },
     images: [
         {
-            public_id: {
-                type: String,
-                required: true,
-            },
-            urls: {
-                type: Array,
-                required: true,
-            },
+            type: String
         },
     ],
-    reviews: [
-        {
-            user: {
-                type: Object,
-            },
-            rating: {
-                type: Number,
-            },
-            comment: {
-                type: String,
-            },
-            productId: {
-                type: String,
-            },
-            createdAt: {
-                type: Date,
-                default: Date.now(),
-            }
-        },
-    ],
-    ratings: {
-        type: Number,
-    },
     shopId: {
         type: String,
         required: true,
@@ -75,29 +46,6 @@ const ProductSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-
-    // --- Best Deals / Featured: admin-controlled, not seller-set ---
-    isFeatured: {
-        type: Boolean,
-        default: false,
-    },
-    isBestDeal: {
-        type: Boolean,
-        default: false,
-    },
-
-    // --- Event / Flash Sale: seller-controlled, time-bound ---
-    isEvent: {
-        type: Boolean,
-        default: false,
-    },
-    eventStartsAt: {
-        type: Date,
-    },
-    eventEndsAt: {
-        type: Date,
-    },
-
     createdAt: {
         type: Date,
         default: Date.now(),

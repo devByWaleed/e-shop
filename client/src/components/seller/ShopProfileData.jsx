@@ -57,7 +57,7 @@ const ShopProfileData = ({ isOwner }) => {
                 {activeTab === 1 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                         {productData && productData.map((product, index) => (
-                            <ProductCard data={product} key={index} isShop={true} />
+                            <ProductCard product={product} key={index} isShop={true} />
                         ))}
                         {(!productData || productData.length === 0) && (
                             <p className="text-gray-500 col-span-full py-8 text-center">No products available for this shop yet.</p>
