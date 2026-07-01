@@ -1,14 +1,14 @@
+import "dotenv/config"
 import express from "express"
 import cookieParser from "cookie-parser"
 import cors from "cors"
 import connectDB from "./config/mongodb.js"
-import "dotenv/config"
 import userRouter from "./routes/userRoutes.js";
-import { fileURLToPath } from "url"
-import path from "path"
 import sellerRouter from "./routes/sellerRoutes.js"
 import productRouter from "./routes/productRoutes.js"
 import connectCloudinary from "./config/cloudinary.js"
+import { fileURLToPath } from "url"
+import path from "path"
 
 
 // Configuring server
@@ -47,11 +47,13 @@ app.use(express.json());
 app.use(cookieParser());
 
 
+await connectCloudinary();
+await connectDB();
+
 // static files
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 app.use("/", express.static(path.join(__dirname, "uploads")));
-
 
 // API endpoints
 app.get('/', (req, res) => res.send("API Working!!!"));
@@ -60,8 +62,6 @@ app.use('/api/seller', sellerRouter);
 app.use('/api/product', productRouter);
 
 
-await connectCloudinary();
-await connectDB();
 
 
 // app.use((err, req, res, next) => {

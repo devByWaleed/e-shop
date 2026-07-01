@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-// Replace this with your actual ProductCard import path
 import ProductCard from '../ProductCard';
 import { productData } from '../../assets/assets';
 
@@ -9,7 +8,7 @@ const ShopProfileData = ({ isOwner }) => {
 
     const [activeTab, setActiveTab] = useState(1);
 
-    // Tab Definitions exactly matching image_cc8dfc.png
+    // Tab Definitions
     const tabs = [
         { id: 1, label: "Shop Products" },
         { id: 2, label: "Running Events" },

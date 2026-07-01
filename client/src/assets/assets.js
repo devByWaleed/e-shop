@@ -48,11 +48,11 @@ export const faqs = [
 // categories data
 export const categories = [
     { label: 'All Categories', value: '/products' },
-    { label: '💻 Computers and Laptops', value: '/products?category=Computers and Laptops' },
-    { label: '📱 Mobile and Tablets', value: '/products?category=Mobile and Tablets' },
-    { label: '🎮 Music and Gaming', value: '/products?category=Music and Gaming' },
-    { label: '👟 Shoes', value: '/products?category=Shoes' },
-    { label: '⌚ Accessories', value: '/products?category=Accessories' },
+    { label: 'Computers and Laptops', value: '/products?category=Computers and Laptops' },
+    { label: 'Mobile and Tablets', value: '/products?category=Mobile and Tablets' },
+    { label: 'Music and Gaming', value: '/products?category=Music and Gaming' },
+    { label: 'Shoes', value: '/products?category=Shoes' },
+    { label: 'Accessories', value: '/products?category=Accessories' },
 ]
 
 

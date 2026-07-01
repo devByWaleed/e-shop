@@ -12,8 +12,7 @@ import {
     FiPackage,
     FiFolderPlus,
     FiMail,
-    FiSettings,
-    FiLogOut
+    FiSettings
 } from 'react-icons/fi';
 import { MdOutlineLocalOffer, MdOutlinePercent, MdEventNote } from 'react-icons/md';
 import { VscNewFile } from 'react-icons/vsc';
@@ -25,22 +24,6 @@ const DashboardSidebar = ({ active, setActive }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const logout = async () => {
-        // try {
-        //     // Updated endpoint to look like a seller/shop clean route if needed
-        //     const { data } = await axios.post("/api/seller/logout"); 
-
-        //     if (data.success) {
-        //         dispatch(LoadUserFail(null)); // Update to your LoadSellerFail if needed
-        //         toast.success(data.message || "Logged out successfully!");
-        //         navigate("/");
-        //     } else {
-        //         toast.error(data.message);
-        //     }
-        // } catch (error) {
-        //     toast.error(error.message || "Something went wrong");
-        // }
-    };
 
     // Cleaned up icons to perfectly match your SellerProfile routing map (IDs 1-11)
     const menuItems = [
@@ -55,15 +38,9 @@ const DashboardSidebar = ({ active, setActive }) => {
         { id: 9, label: "Discount Codes", icon: <MdOutlinePercent size={20} /> },
         { id: 10, label: "Refunds", icon: <AiOutlineRotateLeft size={20} /> },
         { id: 11, label: "Settings", icon: <FiSettings size={20} /> },
-        { id: 12, label: "Logout", icon: <FiLogOut size={20} /> },
     ];
 
     const handleNavigation = (item) => {
-        if (item.label === "Logout") {
-            logout();
-            return;
-        }
-
         setActive(item.id);
         if (item.path) {
             navigate(item.path);

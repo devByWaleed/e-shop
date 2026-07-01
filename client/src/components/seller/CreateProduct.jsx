@@ -50,8 +50,16 @@ const CreateProduct = () => {
         images.forEach((image) => {
             newForm.append("images", image)
         })
+
+        // Split textarea into lines, trim, and drop blank lines
+        const descriptionLines = description
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0)
+
+        descriptionLines.forEach((line) => newForm.append("description", line))
+
         newForm.append("name", name)
-        newForm.append("description", description)
         newForm.append("category", category)
         newForm.append("tags", tags)
         newForm.append("originalPrice", originalPrice)
@@ -110,7 +118,6 @@ const CreateProduct = () => {
                             onChange={(e) => setCategory(e.target.value)}
                             className="w-full h-11 px-4 border border-light-border rounded-lg text-sm bg-light-bg text-text focus:outline-none focus:border-primary transition-colors appearance-none cursor-pointer"
                         >
-                            <option value="">Select a category</option>
                             {categories.map((cat, i) => (
                                 <option key={i} value={cat.label}>{cat.label}</option>
                             ))}
@@ -120,7 +127,7 @@ const CreateProduct = () => {
                     {/* Tags */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-sm font-semibold text-text">
-                            Tags <span className="text-secondary">*</span>
+                            Tags
                         </label>
                         <input
                             type="text"

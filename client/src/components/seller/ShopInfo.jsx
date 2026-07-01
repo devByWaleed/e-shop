@@ -1,9 +1,14 @@
+import axios from 'axios';
 import React from 'react';
+import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const ShopInfo = ({ isOwner }) => {
     // Accessing seller data from Redux state
     const { seller } = useSelector((state) => state.seller);
+
+    const navigate = useNavigate();
 
     // Fallback data mapping to look exactly like image_cc15be_2.png if Redux is loading
     const shopName = seller?.name || "Becodemy";
@@ -16,6 +21,22 @@ const ShopInfo = ({ isOwner }) => {
     const joinedDate = seller?.createdAt
         ? new Date(seller.createdAt).toISOString().slice(0, 10)
         : "2023-03-17";
+
+
+    const handleLogout = async () => {
+        try {
+            const { data } = await axios.post("/api/seller/seller-logout");
+
+            if (data.success) {
+                toast.success(data.message);
+                navigate("/");
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -76,7 +97,9 @@ const ShopInfo = ({ isOwner }) => {
                     <button className="w-full h-11.25 bg-black hover:bg-gray-800 text-white font-medium rounded-lg text-sm transition-colors duration-200 cursor-pointer">
                         Edit Shop
                     </button>
-                    <button className="w-full h-11.25 mt-5 bg-black hover:bg-gray-800 text-white font-medium rounded-lg text-sm transition-colors duration-200 cursor-pointer">
+                    <button className="w-full h-11.25 mt-5 bg-black hover:bg-gray-800 text-white font-medium rounded-lg text-sm transition-colors duration-200 cursor-pointer"
+                        onClick={handleLogout}
+                    >
                         Logout
                     </button>
                 </div>

@@ -6,6 +6,7 @@ const productSlice = createSlice({
         success: false,
         productLoading: false,
         product: null,
+        allProducts: null,
         productError: null
     },
     reducers: {
@@ -33,9 +34,41 @@ const productSlice = createSlice({
             state.productLoading = false
             state.product = null
             state.productError = null
-        }
+        },
+        getAllProductsRequest: (state) => {
+            state.productLoading = true
+            state.success = false
+            state.productError = null
+        },
+        getAllProductsSuccess: (state, action) => {
+            state.success = true
+            state.productLoading = false
+            state.allProducts = action.payload
+            state.productError = null
+        },
+        getAllProductsFail: (state, action) => {
+            state.success = false
+            state.productLoading = false
+            state.productError = action.payload
+        },
+        deleteProductRequest: (state) => {
+            state.productLoading = true
+            state.success = false
+            state.productError = null
+        },
+        deleteProductSuccess: (state, action) => {
+            state.success = true
+            state.productLoading = false
+            state.message = action.payload
+            state.productError = null
+        },
+        deleteProductFail: (state, action) => {
+            state.success = false
+            state.productLoading = false
+            state.productError = action.payload
+        },
     }
 })
 
-export const { CreateProductRequest, CreateProductSuccess, CreateProductFail, ClearError, ResetProductState } = productSlice.actions
+export const { CreateProductRequest, CreateProductSuccess, CreateProductFail, ClearError, ResetProductState, getAllProductsRequest, getAllProductsSuccess, getAllProductsFail, deleteProductRequest, deleteProductSuccess, deleteProductFail } = productSlice.actions
 export default productSlice.reducer
