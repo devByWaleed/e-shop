@@ -14,10 +14,10 @@ const ProductDetails = () => {
     const navigate = useNavigate()
 
     // Fallback images array for testing if your static mock data only has 1 image
-    const imagesGallery = product?.image_Url && product.image_Url.length > 1
-        ? product.image_Url
+    const imagesGallery = product?.images && product.images.length > 1
+        ? product.images
         : [
-            product?.image_Url?.[0].url || "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop&q=80",
+            product?.images?.[0] || "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop&q=80",
             "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80" // 2nd Image from Unsplash/Google for testing
         ];
 
@@ -44,7 +44,7 @@ const ProductDetails = () => {
             <p className="text-sm text-gray-500">
                 <Link to={"/"} className="hover:text-primary">Home</Link> /
                 <Link to={"/products"} className="hover:text-primary"> Products</Link> /
-                <Link to={`/products/${product.category.toLowerCase()}`} className="hover:text-primary"> {product.category}</Link> /
+                <Link to={`/products?category=${encodeURIComponent(product.category)}`} className="hover:text-primary"> {product.category}</Link> /
                 <span className="text-primary"> {product.name}</span>
             </p>
 
@@ -135,8 +135,9 @@ const ProductDetails = () => {
 
                     {/* Price */}
                     <div className="mt-6">
-                        <p className="text-gray-500/70 line-through">MRP: ${product.price}</p>
-                        <p className="text-2xl font-medium text-primary">${product.discount_price}</p>
+                        <p className="text-gray-500/70 line-through">MRP: ${product.originalPrice
+                        }</p>
+                        <p className="text-2xl font-medium text-primary">${product.discountPrice}</p>
                         <span className="text-gray-500/70 text-xs">(inclusive of all taxes)</span>
                     </div>
 

@@ -4,20 +4,25 @@ import ProductCard from '../components/ProductCard';
 import { useSearchParams } from 'react-router-dom';
 
 const AllProducts = () => {
-    const [data, setData] = useState([]) // Make sure you map over 'data' instead of 'products'
+    // Make sure you map over 'data' instead of 'products'
+    const [data, setData] = useState([])
     const [searchParams] = useSearchParams()
-    const categoryData = searchParams.get("category")
+    const activeCategory = searchParams.get("category")
+
+    // const displayedProducts = activeCategory
+    //     ? productData.filter(product => product.category === activeCategory)
+    //     : productData;
 
     useEffect(() => {
-        if (categoryData === null) {
+        if (activeCategory === null) {
             // Use spread operator [...] to avoid mutating the original assets array with .sort()
             const d = productData && [...productData].sort((a, b) => a.total_sell - b.total_sell)
             setData(d)
         } else {
-            const d = productData && productData.filter((i) => i.category === categoryData)
+            const d = productData && productData.filter((i) => i.category === activeCategory)
             setData(d)
         }
-    }, [categoryData]) // <-- Fixed: Triggers filter logic whenever the URL parameter changes
+    }, [activeCategory]) // <-- Fixed: Triggers filter logic whenever the URL parameter changes
 
     return (
         <section className="bg-white flex flex-col items-center justify-center px-4 py-16">
@@ -37,7 +42,7 @@ const AllProducts = () => {
             </div>
 
             {data && data.length === 0 ? (
-                <h1 className='text-center w-full pb-[100px] text-20px'>No Products Found!!</h1>
+                <h1 className='text-center w-full pb-25 text-20px'>No Products Found!!</h1>
             ) : null}
         </section>
     );

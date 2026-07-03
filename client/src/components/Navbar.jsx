@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRef, useState } from 'react'
 import { assets, productData, categories } from '../assets/assets'
@@ -25,6 +25,10 @@ const Navbar = () => {
 
     const navigate = useNavigate()
     const { user } = useSelector((state) => state.user)
+
+    const [searchParams] = useSearchParams();
+    const currentCategoryInUrl = searchParams.get('category');
+
 
     const handleSearchChange = (e) => {
         const term = e.target.value
@@ -217,16 +221,18 @@ const Navbar = () => {
                 <div className="relative min-w-45">
                     <select
                         className="w-full flex items-center gap-3 text-white text-sm font-medium pl-10 pr-8 py-4 rounded-xl bg-white/15 border border-white/30 cursor-pointer hover:bg-white/25 hover:border-white/50 transition-all duration-200 appearance-none"
-                        defaultValue=""
+                        value={currentCategoryInUrl || ""}
                         onChange={(e) => {
-                            if (e.target.value) {
-                                navigate(e.target.value);
+                            if (e.target.value === "") {
+                                navigate("/products");
+                            } else {
+                                navigate(`/products?category=${encodeURIComponent(e.target.value)}`);
                             }
                         }}
                     >
-                        <option value="" disabled hidden>Choose Category</option>
+                        <option value="" disabled className="bg-dark text-white/60">All Categories</option>
                         {categories.map((cat, idx) => (
-                            <option key={idx} value={cat.value} className="bg-dark text-white/90">
+                            <option key={idx} value={cat.label} className="bg-dark text-white/90">
                                 {cat.label}
                             </option>
                         ))}
@@ -372,11 +378,14 @@ const Navbar = () => {
                                     <button
                                         key={idx}
                                         onClick={() => {
-                                            if (cat.value) navigate(cat.value)
-                                            setOpen(false)
-                                            setShowMobileCategories(false)
+                                            navigate(`/products?category=${encodeURIComponent(cat.label)}`);
+                                            setOpen(false);
+                                            setShowMobileCategories(false);
                                         }}
-                                        className="block w-full text-left py-2 px-2 text-sm text-text/70 hover:text-primary hover:bg-primary/5 rounded">
+                                        className={`block w-full text-left py-2 px-2 text-sm rounded transition-colors ${currentCategoryInUrl === cat.value
+                                            ? 'text-primary font-medium bg-primary/5'
+                                            : 'text-text/70 hover:text-primary hover:bg-primary/5'
+                                            }`}>
                                         {cat.label}
                                     </button>
                                 ))}

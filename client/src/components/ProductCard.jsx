@@ -45,7 +45,7 @@ const ProductCard = ({ product, index }) => {
 
             {/* Product Image - Centered with more top padding to accommodate buttons */}
             <div className="flex items-center justify-center h-32 mb-2 pt-4">
-                {/* <img src={product.image_Url[0].url ? product.image_Url[0].url : "https://assets.prebuiltui.com/images/components/card/card-speaker-image.png"} alt={product.category} className="max-h-full max-w-full object-contain" /> */}
+                <img src={product.images ? product.images : "https://assets.prebuiltui.com/images/components/card/card-speaker-image.png"} alt={product.name} className="max-h-full max-w-full object-contain" />
             </div>
 
             <h5 className="pt-3 text-[15px] text-blue-400 pb-3">Seller</h5>
@@ -57,9 +57,10 @@ const ProductCard = ({ product, index }) => {
 
             {/* Price */}
             <div className="flex items-center gap-2 px-2 mt-auto">
-                <span className="text-sm font-semibold text-neutral-800">${product.discount_price}</span>
-                <span className="text-xs font-bold text-secondary line-through">${product.price}</span>
-                <span className="text-sm p-1 rounded text-accent">{product.total_sell} sold</span>
+                <span className="text-sm font-semibold text-neutral-800">${product.discountPrice}</span>
+                <span className="text-xs font-bold text-secondary line-through">${product.originalPrice
+                }</span>
+                <span className="text-sm p-1 rounded text-accent">{product.soldOut} sold</span>
             </div>
         </section>
     )

@@ -73,16 +73,16 @@ const Cart = ({ openCart, setOpenCart }) => {
 
     return (
         <>
-            {/* Backdrop Dimmed Layer */}
+            {/* Backdrop Dimmed Layer - Fixed to match image overlay exactly */}
             <div
-                className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-50 transition-opacity duration-300 ${openCart ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-9999 transition-opacity duration-300 ${openCart ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                     }`}
                 onClick={onClose}
             />
 
             {/* Sidebar Slide-out Drawer */}
             <aside
-                className={`fixed right-0 top-0 h-full w-full sm:w-100 max-w-md bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 transform border-l border-gray-200 ${openCart ? "translate-x-0" : "translate-x-full"
+                className={`fixed right-0 top-0 h-full w-full sm:w-100 max-w-md bg-white shadow-2xl z-10000 flex flex-col transition-transform duration-300 transform border-l border-gray-200 ${openCart ? "translate-x-0" : "translate-x-full"
                     }`}
                 aria-modal="true"
                 role="dialog"
@@ -124,7 +124,7 @@ const Cart = ({ openCart, setOpenCart }) => {
                         cartArray.map((item) => (
                             <div key={item._id} className="flex items-center gap-4 py-5 first:pt-3 last:pb-3 group relative">
 
-                                {/* Vertical Stepper Controller (Left Side) */}
+                                {/* Vertical Stepper Controller */}
                                 <div className="flex flex-col items-center justify-between bg-gray-50 rounded-full border border-gray-200 p-0.5 w-7 shrink-0">
                                     <button
                                         onClick={() => handleQuantityChange(item._id, 1)}
@@ -165,7 +165,7 @@ const Cart = ({ openCart, setOpenCart }) => {
                                     </div>
                                 </div>
 
-                                {/* Inline Close/Remove Button (Right Side) */}
+                                {/* Inline Close Button */}
                                 <button
                                     onClick={() => handleRemoveItem(item._id)}
                                     className="absolute right-1 top-5 text-gray-400 hover:text-secondary text-xs p-1 transition-colors cursor-pointer"
@@ -186,9 +186,7 @@ const Cart = ({ openCart, setOpenCart }) => {
                             <span className="text-secondary text-lg">{currency}{subtotal}</span>
                         </div>
                         <button
-                            onClick={() => {
-                                onClose();
-                            }}
+                            onClick={() => onClose()}
                             className="w-full py-3 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dull transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer text-center"
                         >
                             Proceed To Checkout

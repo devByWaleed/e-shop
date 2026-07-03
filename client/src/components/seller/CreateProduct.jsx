@@ -29,7 +29,18 @@ const CreateProduct = () => {
 
         if (success) {
             toast.success("Product Created Successfully")
-            navigate("/dashboard")
+
+            // Reset States
+            setName("");
+            setDescription("");
+            setCategory("");
+            setTags("");
+            setOriginalPrice(0);
+            setDiscountPrice(0);
+            setStock(0);
+            setImages([]);
+
+            navigate("/seller-profile")
         }
     }, [dispatch, productError, success, navigate])
 

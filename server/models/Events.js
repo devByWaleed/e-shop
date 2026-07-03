@@ -1,18 +1,30 @@
 import mongoose from "mongoose"
 
 // Creating product schema
-const ProductSchema = new mongoose.Schema({
+const EventSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: [true, "Please enter your product name!"]
+        required: [true, "Please enter your event product name!"]
     },
     description: {
         type: Array,
-        required: [true, "Please enter your product description!"],
+        required: [true, "Please enter your event product description!"],
     },
     category: {
         type: String,
-        required: [true, "Please enter your product category!"],
+        required: [true, "Please enter your event product category!"],
+    },
+    start_Date: {
+        type: Date,
+        required: true
+    },
+    finish_Date: {
+        type: Date,
+        required: true
+    },
+    status: {
+        type: String,
+        default: "running"
     },
     tags: {
         type: String,
@@ -22,11 +34,11 @@ const ProductSchema = new mongoose.Schema({
     },
     discountPrice: {
         type: Number,
-        required: [true, "Please enter your product discount!"],
+        required: [true, "Please enter your event product discount!"],
     },
     stock: {
         type: Number,
-        required: [true, "Please enter your product stock!"],
+        required: [true, "Please enter your event product stock!"],
     },
     images: [
         {
@@ -49,11 +61,10 @@ const ProductSchema = new mongoose.Schema({
         type: Date,
         default: Date.now(),
     },
-
 })
 
 
 // .model gets collection name & schema
-const ProductModel = mongoose.models.product || mongoose.model("product", ProductSchema)
+const EventModel = mongoose.models.event || mongoose.model("event", EventSchema)
 
-export default ProductModel
+export default EventModel

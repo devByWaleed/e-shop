@@ -10,6 +10,8 @@ import DiscountCodes from '../../components/seller/DiscountCodes';
 import Refunds from '../../components/seller/Refunds';
 import ShopSettings from '../../components/seller/ShopSettings';
 import Navbar from '../../components/seller/Navbar';
+import CreateEvent from '../../components/seller/CreateEvent';
+import WithdrawMoney from '../../components/seller/WithdrawMoney';
 
 
 

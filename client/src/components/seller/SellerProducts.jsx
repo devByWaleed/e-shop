@@ -31,7 +31,7 @@ const SellerProducts = () => {
     };
 
     return (
-        <div className='w-full max-w-7xl mx-auto p-4 md:p-6'>
+        <section className='w-full max-w-7xl mx-auto p-4 md:p-6'>
 
             <div className='bg-white border rounded-xl text-sm shadow-sm border-light-border overflow-hidden'>
 
@@ -111,7 +111,7 @@ const SellerProducts = () => {
                                 {/* Sold Out Column */}
                                 <div className='flex justify-between items-center md:block'>
                                     <span className='md:hidden text-text-muted'>Total Sold:</span>
-                                    <p className='text-text-muted md:text-text'>{item.sold_out || 0}</p>
+                                    <p className='text-text-muted md:text-text'>{item.soldOut || 0}</p>
                                 </div>
 
                                 {/* Desktop Preview Icon */}
@@ -146,7 +146,7 @@ const SellerProducts = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </section>
     );
 };
 

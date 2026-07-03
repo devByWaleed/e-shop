@@ -92,3 +92,683 @@ Text:        #2D2D3A  (Dark Charcoal)
 --------------------
 
 Throttling navigation to prevent the browser from hanging. See https://crbug.com/1038223. Command line switch --disable-ipc-flooding-protection can be used to bypass the protection
+
+--------------------
+
+I want to display real data from database instead of dummy one. Help me to fix the issue.
+
+
+
+Also I want upload data directly as a document 
+
+[
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e911"
+
+        },
+
+        "name": "Apple MacBook Pro 14\" (M2 Pro, 16GB RAM, 512GB SSD) - Space Gray",
+
+        "description": [
+
+            "Supercharged by the Apple M2 Pro chip",
+
+            "Delivers exceptional performance plug-in or on battery",
+
+            "Stunning 14-inch Liquid Retina XDR display",
+
+            "16GB unified memory",
+
+            "512GB high-speed SSD storage",
+
+            "Space Gray premium finish"
+
+        ],
+
+        "category": "Computers and Laptops",
+
+        "originalPrice": 1999,
+
+        "discountPrice": 1849,
+
+        "stock": 15,
+
+        "images": [
+
+            {
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/laptop1-removebg-preview_l5sbkg.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "6a3d3027ad6118b5577d5df2",
+
+        "shop": {
+
+            "name": "Apple Official",
+
+            "avatar_public_id": "avatar_apple",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e912"
+
+        },
+
+        "name": "Apple MacBook Air 13\" (M2 Chip, 8GB RAM, 256GB SSD) - Midnight",
+
+        "description": [
+
+            "Strikingly thin and lightweight design",
+
+            "Impressive speed and power efficiency with Apple M2 chip",
+
+            "Durable aluminum enclosure",
+
+            "Built to handle productivity tasks effortlessly on the move",
+
+            "8GB unified memory",
+
+            "256GB SSD storage",
+
+            "Midnight deep color profile"
+
+        ],
+
+        "category": "Computers and Laptops",
+
+        "originalPrice": 1099,
+
+        "discountPrice": 999,
+
+        "stock": 25,
+
+        "images": [
+
+            {
+
+                "public_id": "mac_air_13",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/laptop2-removebg-preview_gjxx6u.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_apple_001",
+
+        "shop": {
+
+            "name": "Apple Official",
+
+            "avatar_public_id": "avatar_apple",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e913"
+
+        },
+
+        "name": "Apple iPhone 14 Pro Max - 256GB, Silver",
+
+        "description": [
+
+            "Features Dynamic Island interactive layout notifications",
+
+            "Advanced 48MP main triple camera setup",
+
+            "Highly efficient A16 Bionic computing processor chip",
+
+            "Generous 256GB internal storage capacity",
+
+            "Premium surgical-grade stainless steel and glass design"
+
+        ],
+
+        "category": "Mobile and Tablets",
+
+        "originalPrice": 1199,
+
+        "discountPrice": 1099,
+
+        "stock": 14,
+
+        "images": [
+
+            {
+
+                "public_id": "iphone_14_silver",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969016/mobile1-removebg-preview_oj1bbl.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_amazon_002",
+
+        "shop": {
+
+            "name": "Amazon Ltd",
+
+            "avatar_public_id": "avatar_amazon",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e914"
+
+        },
+
+        "name": "Samsung Galaxy S23 Ultra - 512GB, Phantom Black",
+
+        "description": [
+
+            "Includes an integrated responsive S-Pen stylus",
+
+            "Industry-leading 200MP camera resolution sensor",
+
+            "Incredible Nightography dark light capture software features",
+
+            "Driven by the ultimate Snapdragon custom processor architecture",
+
+            "Massive 512GB storage capacity in Phantom Black"
+
+        ],
+
+        "category": "Mobile and Tablets",
+
+        "originalPrice": 1379,
+
+        "discountPrice": 1249,
+
+        "stock": 18,
+
+        "images": [
+
+            {
+
+                "public_id": "s23_ultra",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/mobile2-removebg-preview_uqinjg.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_samsung_003",
+
+        "shop": {
+
+            "name": "Samsung Hub",
+
+            "avatar_public_id": "avatar_sam",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e915"
+
+        },
+
+        "name": "ASUS ROG Delta S Gaming Headset - RGB, Hi-Res Audio",
+
+        "description": [
+
+            "Equipped with industry-leading hi-fi grade ESS 9281 Quad DAC processors",
+
+            "Integrated crystal clear AI Noise-Canceling Microphone arrays",
+
+            "Pristine, immersive sound profiles for gaming communication",
+
+            "Customizable, rich RGB lighting elements",
+
+            "Ergonomic lightweight D-shaped ear cushions"
+
+        ],
+
+        "category": "Music and Gaming",
+
+        "originalPrice": 200,
+
+        "discountPrice": 169,
+
+        "stock": 40,
+
+        "images": [
+
+            {
+
+                "public_id": "gaming_headphone_1",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/headphone1-removebg-preview_eboiik.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_asus_004",
+
+        "shop": {
+
+            "name": "Asus Official",
+
+            "avatar_public_id": "avatar_asus",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e916"
+
+        },
+
+        "name": "Sony WH-1000XM5 Wireless Noise Canceling Headphones",
+
+        "description": [
+
+            "Industry-leading premium active noise cancellation",
+
+            "Engineered with two internal core processors and eight microphone tracks",
+
+            "Stunning high-resolution audio fidelity outputs",
+
+            "Ultra-comfortable lightweight leather fit configuration",
+
+            "Long-lasting wireless structural battery systems"
+
+        ],
+
+        "category": "Music and Gaming",
+
+        "originalPrice": 399,
+
+        "discountPrice": 348,
+
+        "stock": 16,
+
+        "images": [
+
+            {
+
+                "public_id": "sony_xm5",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/headphone2-removebg-preview_reteto.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_sony_005",
+
+        "shop": {
+
+            "name": "Sony Store",
+
+            "avatar_public_id": "avatar_sony",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e917"
+
+        },
+
+        "name": "Nike Air Max 270 Lifestyle Sneakers - White/Red",
+
+        "description": [
+
+            "Nike's first dedicated lifestyle Air Max fashion shoe",
+
+            "Delivers striking sport style, cushioning, and bold attitude",
+
+            "Features a prominent wrap-around visible air unit heel window",
+
+            "Comfortable, breathable upper fabrics",
+
+            "White base accented with aggressive red layouts"
+
+        ],
+
+        "category": "Shoes",
+
+        "originalPrice": 160,
+
+        "discountPrice": 129,
+
+        "stock": 12,
+
+        "images": [
+
+            {
+
+                "public_id": "nike_air_max",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969016/shoes1-removebg-preview_ij4fb3.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_alisha_006",
+
+        "shop": {
+
+            "name": "Alisha Shoes Mart",
+
+            "avatar_public_id": "avatar_alisha",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e918"
+
+        },
+
+        "name": "Adidas Ultraboost Light Running Shoes - Core Black",
+
+        "description": [
+
+            "Experience epic responsive kinetic energy feedback systems",
+
+            "Newest generation of ultra-lightweight Boost cushioning material configurations",
+
+            "Crafted carefully alongside breathable snug Primeknit woven structures",
+
+            "Durable multi-surface traction outsoles",
+
+            "Sleek Core Black styling"
+
+        ],
+
+        "category": "Shoes",
+
+        "originalPrice": 190,
+
+        "discountPrice": 159,
+
+        "stock": 15,
+
+        "images": [
+
+            {
+
+                "public_id": "adidas_ultra",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969016/shoes2-removebg-preview_khrrd8.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_footlocker_007",
+
+        "shop": {
+
+            "name": "Foot Locker Store",
+
+            "avatar_public_id": "avatar_foot",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e919"
+
+        },
+
+        "name": "Minimalist Analog Leather Watch for Men - White Dial",
+
+        "description": [
+
+            "Clean aesthetic profile layout options",
+
+            "Genuine brown leather adjustable wrist band straps",
+
+            "High-accuracy Japanese quartz internal movement mechanisms",
+
+            "Polished durable stainless steel protective enclosure housing",
+
+            "Sleek and clear minimalist white display face"
+
+        ],
+
+        "category": "Accessories",
+
+        "originalPrice": 120,
+
+        "discountPrice": 89,
+
+        "stock": 14,
+
+        "images": [
+
+            {
+
+                "public_id": "watch_classic",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/watch1-removebg-preview_yywqgv.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_shahriar_008",
+
+        "shop": {
+
+            "name": "Shahriar Watch House",
+
+            "avatar_public_id": "avatar_watch",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    },
+
+    {
+
+        "_id": {
+
+            "$oid": "6a36b489b2b2b302fa34e920"
+
+        },
+
+        "name": "Luxury Chronograph Gold Stainless Steel Watch",
+
+        "description": [
+
+            "Premium heavy physical weight materials design configuration",
+
+            "Dual operational precision time sub-dial registers",
+
+            "Classic integrated tachymeter accent outer bezel scales",
+
+            "Deep atmospheric water-resistant protection ratings",
+
+            "Stunning gold-tone plating finish for elegant statement wear"
+
+        ],
+
+        "category": "Accessories",
+
+        "originalPrice": 250,
+
+        "discountPrice": 199,
+
+        "stock": 8,
+
+        "images": [
+
+            {
+
+                "public_id": "watch_gold",
+
+                "urls": [
+
+                    "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969017/watch2-removebg-preview_qpnjda.png"
+
+                ]
+
+            }
+
+        ],
+
+        "shopId": "shop_shahriar_008",
+
+        "shop": {
+
+            "name": "Shahriar Watch House",
+
+            "avatar_public_id": "avatar_watch",
+
+            "avatar_url": "https://res.cloudinary.com/dhlfmjd3y/image/upload/v1781969662/seller_bzwz61.jpg"
+
+        }
+
+    }
+
+]
+
+
+
+change the fields to match + the data not present in database pic, remove them. Finally give me pdated array so that I can insert it directly

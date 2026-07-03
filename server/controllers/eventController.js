@@ -1,14 +1,15 @@
 import { getCloudinaryPublicId } from "../config/cloudinary.js";
-import ProductModel from "../models/Products.js";
+import EventModel from "../models/Events.js";
 import SellerModel from "../models/Sellers.js";
 import { v2 as cloudinary } from "cloudinary";
 
-// Create Product : /api/product/create-product
-export const createProduct = async (req, res) => {
+
+// Create Event Product : /api/event/event-product
+export const eventProduct = async (req, res) => {
     let uploadedPublicIds = []; // tracks successful uploads for rollback
 
     try {
-        const { shopID, name, category, discountPrice, stock } = req.body;
+        const { shopID, name, category, discountPrice, stock, status, finish_Date, start_Date } = req.body;
 
         // --- Validate everything BEFORE touching Cloudinary ---
         if (!shopID) {
@@ -50,25 +51,28 @@ export const createProduct = async (req, res) => {
             imagesURL.push(result.secure_url);
         }
 
-        const productData = {
+        const eventData = {
             name,
             description,
             category,
+            finish_Date,
+            start_Date,
+            status,
             tags: req.body.tags,
             originalPrice: Number(req.body.originalPrice),
             discountPrice: Number(discountPrice),
             stock: Number(stock),
             images: imagesURL,
             shopId: shop._id,
-            shop: shop
+            shop: shop,
         };
 
-        const product = await ProductModel.create(productData);
+        const eventProduct = await EventModel.create(eventData);
 
-        return res.json({ success: true, message: "Product Added Successfully", product });
+        return res.json({ success: true, message: "Event Product Added Successfully", eventProduct });
 
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+        console.log("Error inside eventProduct:", error.message);
 
         // Roll back any images that were uploaded before the failure happened
         if (uploadedPublicIds.length > 0) {
@@ -85,14 +89,14 @@ export const createProduct = async (req, res) => {
 };
 
 
-// Get All Products : /api/product/get-all-products
-export const getAllProducts = async (req, res) => {
+// Get All Event : /api/event/get-all-events
+export const getAllEvents = async (req, res) => {
     try {
-        const products = await ProductModel.find({ shopId: req.params.id })
+        const events = await EventModel.find({ shopId: req.params.id })
 
         res.json({
             success: true,
-            products
+            events
         });
     } catch (error) {
         console.log("Error inside createProduct:", error.message);
@@ -104,24 +108,24 @@ export const getAllProducts = async (req, res) => {
 }
 
 
-// Delete Product : /api/product/delete-shop-product
-export const deleteProducts = async (req, res) => {
+// Delete Event : /api/event/delete-event
+export const deleteEvents = async (req, res) => {
     try {
-        const productID = req.params.id
+        const eventID = req.params.id
 
-        // Get the product Data
-        const product = await ProductModel.findById(productID)
+        // Get the event data
+        const event = await EventModel.findById(eventID)
 
-        if (!product) {
+        if (!event) {
             return res.json({
                 success: false,
-                message: "Product not found"
+                message: "Event not found"
             });
         }
 
-        // Checking for images & Gather all Public IDs for bulk deletion
-        if (product.images && product.images.length > 0) {
-            const publicIds = product.images
+        // Checking & Gather all Public IDs for bulk deletion
+        if (event.images && event.images.length > 0) {
+            const publicIds = event.images
                 .map(imgUrl => getCloudinaryPublicId(imgUrl))
                 .filter(id => id !== null);
 
@@ -135,12 +139,12 @@ export const deleteProducts = async (req, res) => {
             }
         }
 
-        // Delete the product
-        await ProductModel.findByIdAndDelete(productID)
+        // Delete the event
+        await EventModel.findByIdAndDelete(eventID);
 
         res.json({
             success: true,
-            message: "Product deleted successfully"
+            message: "Event deleted successfully"
         });
 
 

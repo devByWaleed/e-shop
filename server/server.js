@@ -6,9 +6,11 @@ import connectDB from "./config/mongodb.js"
 import userRouter from "./routes/userRoutes.js";
 import sellerRouter from "./routes/sellerRoutes.js"
 import productRouter from "./routes/productRoutes.js"
-import connectCloudinary from "./config/cloudinary.js"
 import { fileURLToPath } from "url"
 import path from "path"
+import eventRouter from "./routes/eventRoutes.js"
+import { connectCloudinary } from "./config/cloudinary.js"
+import couponRouter from "./routes/couponRoutes.js"
 
 
 // Configuring server
@@ -60,6 +62,8 @@ app.get('/', (req, res) => res.send("API Working!!!"));
 app.use('/api/user', userRouter);
 app.use('/api/seller', sellerRouter);
 app.use('/api/product', productRouter);
+app.use('/api/event', eventRouter);
+app.use('/api/coupon', couponRouter);
 
 
 

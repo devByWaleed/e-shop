@@ -41,25 +41,24 @@ const Wishlist = ({ openWishlist, setOpenWishlist }) => {
             {/* Dark Background Overlay (Backdrop Shadow) */}
             <div
                 onClick={() => setOpenWishlist(false)}
-                className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${openWishlist ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-9999 transition-opacity duration-300 ${openWishlist ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                     }`}
             />
 
             {/* Sidebar Slide-over Panel */}
-            <div className={`fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${openWishlist ? "translate-x-0" : "translate-x-full"
-                }`}>
-
+            <div
+                className={`fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-10000 flex flex-col transition-transform duration-300 ease-in-out ${openWishlist ? "translate-x-0" : "translate-x-full"
+                    }`}
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
                     <div className="flex items-center gap-2 text-gray-800 font-medium">
-                        {/* Heart Icon */}
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-red-500 fill-red-500/10">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                         </svg>
-                        <span className="text-lg">{wishlistItems.length} items</span>
+                        <span className="text-lg font-bold">{wishlistItems.length} items</span>
                     </div>
 
-                    {/* Fixed Close Button */}
                     <button
                         onClick={() => setOpenWishlist(false)}
                         className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 transition cursor-pointer"
@@ -79,8 +78,7 @@ const Wishlist = ({ openWishlist, setOpenWishlist }) => {
                     ) : (
                         wishlistItems.map((item) => (
                             <div key={item._id} className="flex items-center p-4 gap-4 relative group hover:bg-gray-50/50 transition">
-
-                                {/* Remove Cross Button (Left side aligned) */}
+                                {/* Remove Button */}
                                 <button
                                     onClick={() => handleRemoveItem(item._id)}
                                     className="text-gray-400 hover:text-red-500 cursor-pointer transition text-xs p-1"
@@ -109,19 +107,16 @@ const Wishlist = ({ openWishlist, setOpenWishlist }) => {
                                     </p>
                                 </div>
 
-                                {/* Add to Cart Icon Action (Right side aligned) */}
+                                {/* Add to Cart Button */}
                                 <button
                                     onClick={() => handleAddToCart(item.name)}
                                     className="p-2 border border-gray-200 hover:border-gray-400 rounded text-gray-700 hover:bg-white hover:shadow-sm transition cursor-pointer shrink-0"
                                     title="Add to Cart"
                                 >
-                                    {/* Simple Cart Plus SVG Icon */}
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9h4.5m-4.5 0a4.5 4.5 0 0 1 4.5 4.5M12 9V4.5m0 4.5a4.5 4.5 0 0 0 4.5 4.5M12 9H7.5m4.5 0a4.5 4.5 0 0 0-4.5 4.5M12 9V13.5m0-4.5a4.5 4.5 0 0 1-4.5 4.5" />
                                     </svg>
                                 </button>
-
                             </div>
                         ))
                     )}
