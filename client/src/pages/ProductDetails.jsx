@@ -1,42 +1,73 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { assets, productData, reviews, seller } from "../assets/assets";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RelatedProducts from "../components/RelatedProducts";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllProducts } from "../redux/actions/productAction";
 
 const ProductDetails = () => {
-    const [activeTab, setActiveTab] = useState("reviews")
-    const [count, setCount] = useState(0)
-    const { id } = useParams()
-    const productId = Number(id)
+    const { seller } = useSelector((state) => state.seller);
+    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
 
-    const product = productData.find((item) => item.id === productId)
+    const [activeTab, setActiveTab] = useState("reviews");
+    const [count, setCount] = useState(0);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const { id } = useParams();
 
-    const navigate = useNavigate()
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-    // Fallback images array for testing if your static mock data only has 1 image
-    const imagesGallery = product?.images && product.images.length > 1
-        ? product.images
-        : [
-            product?.images?.[0] || "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop&q=80",
-            "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80" // 2nd Image from Unsplash/Google for testing
-        ];
+    // Real product data, pulled from the DB-backed Redux store instead of mock assets
+    const product = allProducts?.find((item) => item._id === id);
 
-    // State to hold the currently selected preview image URL
-    const [selectedImage, setSelectedImage] = useState(imagesGallery[0]);
+    // Only real DB images — no fake/static fallback image anymore.
+    // Empty array if the product has no images at all.
+    const imagesGallery = product?.images?.length > 0 ? product.images : [];
+
+    // All hooks must run unconditionally, on every render, in the same order —
+    // so this now sits ABOVE the early `return`s below, instead of after them.
+    useEffect(() => {
+        if (seller?._id) {
+            dispatch(getAllProducts(seller._id));
+        }
+    }, [dispatch, seller]);
+
+    // Keep the selected preview image in sync once the product (and its images) load in,
+    // since imagesGallery is empty on the very first render before allProducts populates.
+    useEffect(() => {
+        if (imagesGallery.length > 0) {
+            setSelectedImage(imagesGallery[0]);
+        }
+    }, [product?._id]);
 
     const incrementCount = () => {
-        setCount((prev) => prev + 1)
-    }
+        setCount((prev) => prev + 1);
+    };
 
     const decrementCount = () => {
         if (count > 0) {
-            setCount((prev) => prev - 1)
+            setCount((prev) => prev - 1);
         }
+    };
+
+    if (productLoading) {
+        return <div className="text-center py-12 text-gray-400">Loading product...</div>;
+    }
+
+    if (productError) {
+        return <div className="text-center py-12 text-secondary">{productError}</div>;
     }
 
     if (!product) {
         return <div className="text-center py-12">Product not found</div>;
     }
+
+    // The product's embedded shop info, straight from the DB (ProductSchema.shop),
+    // instead of a separately imported mock seller object
+    const shop = product.shop;
+
+    // Products belonging to the same shop, derived from the already-fetched list —
+    // real DB-derived count instead of a hardcoded/mock "totalProducts" value
+    const shopProductCount = allProducts.filter((p) => p.shopId === product.shopId).length;
 
     return (
         <section className="mt-12 max-w-7xl mx-auto px-4">
@@ -53,75 +84,84 @@ const ProductDetails = () => {
 
                 {/* Product Images Layout */}
                 <div className="flex flex-col-reverse sm:flex-row gap-3 w-full md:w-1/2">
-                    {/* Thumbnails Sidebar */}
-                    <div className="flex flex-row sm:flex-col gap-3 overflow-x-auto sm:overflow-x-visible">
-                        {imagesGallery.map((image, index) => {
-                            // Determine if string URL or structured nested object asset
-                            const imgUrl = typeof image === "string" ? image : image.url;
-                            const isSelected = selectedImage === imgUrl;
+                    {imagesGallery.length > 0 ? (
+                        <>
+                            {/* Thumbnails Sidebar — only rendered when real images exist */}
+                            <div className="flex flex-row sm:flex-col gap-3 overflow-x-auto sm:overflow-x-visible">
+                                {imagesGallery.map((image, index) => {
+                                    const imgUrl = typeof image === "string" ? image : image.url;
+                                    const isSelected = selectedImage === imgUrl;
 
-                            return (
-                                <div
-                                    key={index}
-                                    onClick={() => setSelectedImage(imgUrl)}
-                                    className={`border w-20 h-20 sm:w-24 sm:h-24 rounded overflow-hidden cursor-pointer transition shrink-0 ${isSelected ? "border-primary ring-1 ring-primary" : "border-gray-300/60 hover:border-primary"
-                                        }`}
-                                >
-                                    <img
-                                        src={imgUrl}
-                                        alt={`Thumbnail ${index + 1}`}
-                                        className="w-full h-full object-cover select-none"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
+                                    return (
+                                        <div
+                                            key={index}
+                                            onClick={() => setSelectedImage(imgUrl)}
+                                            className={`border w-20 h-20 sm:w-24 sm:h-24 rounded overflow-hidden cursor-pointer transition shrink-0 ${isSelected ? "border-primary ring-1 ring-primary" : "border-gray-300/60 hover:border-primary"
+                                                }`}
+                                        >
+                                            <img
+                                                src={imgUrl}
+                                                alt={`Thumbnail ${index + 1}`}
+                                                className="w-full h-full object-cover select-none"
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
 
-                    {/* Main Featured Image Preview Box */}
-                    <div className="border border-gray-200 w-full aspect-square max-w-120 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
-                        <img
-                            src={selectedImage}
-                            alt="Selected product preview"
-                            className="w-full h-full object-cover transition-all duration-300"
-                        />
-                    </div>
+                            {/* Main Featured Image Preview Box */}
+                            <div className="border border-gray-200 w-full aspect-square max-w-120 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
+                                <img
+                                    src={selectedImage}
+                                    alt="Selected product preview"
+                                    className="w-full h-full object-cover transition-all duration-300"
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        // No images on this product at all — show a plain empty state
+                        // instead of a fake stock photo.
+                        <div className="border border-gray-200 w-full aspect-square max-w-120 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center text-gray-400 text-sm">
+                            No image available
+                        </div>
+                    )}
                 </div>
 
                 {/* Product Info */}
                 <div className="text-sm w-full md:w-1/2">
                     <h1 className="text-3xl font-medium">{product.name}</h1>
 
-                    {/* Rating */}
+                    {/* Rating — not part of ProductSchema, so this stays a dummy inline value */}
                     <div className="flex items-center gap-0.5 mt-1">
                         <div
                             className="star-rating"
-                            data-rating={product.rating}
-                            style={{ "--rating-percent": `${(product.rating / 5) * 100}%` }}
-                            aria-label={`Rated ${product.rating} out of 5 stars`}
+                            data-rating={4.5}
+                            style={{ "--rating-percent": `${(4.5 / 5) * 100}%` }}
+                            aria-label="Rated 4.5 out of 5 stars"
                         ></div>
                         <p className="text-base ml-1 text-gray-500">
-                            {product.rating.toFixed(1)} ({product.total_sell} sold)
+                            {(4.5).toFixed(1)} ({(128).toLocaleString()} sold)
                         </p>
                     </div>
 
-                    {/* Seller Info Card */}
+                    {/* Seller Info Card — sourced from product.shop (DB), not a mock seller import */}
                     <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl mt-4">
                         <div className="flex items-center gap-3">
                             <img
-                                src={seller.avatar}
-                                alt={seller.name}
+                                src={`${import.meta.env.VITE_BACKEND_URL}/${shop?.avatar}`}
+                                alt={shop?.name}
                                 className="w-12 h-12 rounded-full object-cover"
                             />
                             <div>
-                                <p className="font-medium text-gray-800">{seller.name}</p>
+                                <p className="font-medium text-gray-800">{shop?.name}</p>
                                 <div className="flex items-center gap-1">
                                     <div
                                         className="star-rating"
-                                        data-rating={seller.rating}
-                                        style={{ "--rating-percent": `${(seller.rating / 5) * 100}%` }}
-                                        aria-label={`Rated ${seller.rating} out of 5 stars`}
+                                        data-rating={4.5}
+                                        style={{ "--rating-percent": `${(4.5 / 5) * 100}%` }}
+                                        aria-label="Rated 4.5 out of 5 stars"
                                     ></div>
-                                    <span className="text-xs text-gray-500">({seller.rating})</span>
+                                    <span className="text-xs text-gray-500">(4.5)</span>
                                 </div>
                             </div>
                         </div>
@@ -135,8 +175,7 @@ const ProductDetails = () => {
 
                     {/* Price */}
                     <div className="mt-6">
-                        <p className="text-gray-500/70 line-through">MRP: ${product.originalPrice
-                        }</p>
+                        <p className="text-gray-500/70 line-through">MRP: ${product.originalPrice}</p>
                         <p className="text-2xl font-medium text-primary">${product.discountPrice}</p>
                         <span className="text-gray-500/70 text-xs">(inclusive of all taxes)</span>
                     </div>
@@ -206,16 +245,47 @@ const ProductDetails = () => {
 
                 {/* Single Content Div - Changes based on active tab */}
                 <div className="mt-6">
-                    {/* Product Reviews Content */}
+                    {/* Product Reviews Content — no Review model exists yet, so this list is
+                        inline dummy data directly in JSX rather than pulled from Redux/DB */}
                     {activeTab === "reviews" && (
                         <div id="reviews">
-                            {reviews.length === 0 ? (
+                            {[
+                                {
+                                    id: 1,
+                                    userName: "Alex Johnson",
+                                    stars: 5,
+                                    comment: "Great quality, exactly as described. Would buy again!",
+                                    createdAt: "2026-05-12"
+                                },
+                                {
+                                    id: 2,
+                                    userName: "Priya Sharma",
+                                    stars: 4,
+                                    comment: "Good product overall, shipping took a bit longer than expected.",
+                                    createdAt: "2026-04-28"
+                                }
+                            ].length === 0 ? (
                                 <p className="text-gray-400 text-sm py-6 text-center">
                                     No reviews yet. Be the first to review this product!
                                 </p>
                             ) : (
                                 <div className="flex flex-col gap-4">
-                                    {reviews.map((review) => (
+                                    {[
+                                        {
+                                            id: 1,
+                                            userName: "Alex Johnson",
+                                            stars: 5,
+                                            comment: "Great quality, exactly as described. Would buy again!",
+                                            createdAt: "2026-05-12"
+                                        },
+                                        {
+                                            id: 2,
+                                            userName: "Priya Sharma",
+                                            stars: 4,
+                                            comment: "Good product overall, shipping took a bit longer than expected.",
+                                            createdAt: "2026-04-28"
+                                        }
+                                    ].map((review) => (
                                         <div key={review.id} className="border border-gray-200 rounded-xl p-5">
                                             <div className="flex items-center justify-between mb-2">
                                                 <div>
@@ -250,21 +320,23 @@ const ProductDetails = () => {
                         </div>
                     )}
 
-                    {/* Seller Information Content */}
+                    {/* Seller Information Content — real fields (name, avatar, joined date,
+                        product count) come from product.shop / allProducts; rating and review
+                        count stay inline dummy values since there's no rating/review model yet */}
                     {activeTab === "seller" && (
                         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm max-w-md">
                             <div className="text-center pb-6 border-b border-gray-100">
-                                <h3 className="text-xl font-semibold text-gray-800">{seller.name}</h3>
+                                <h3 className="text-xl font-semibold text-gray-800">{shop?.name}</h3>
                                 <div className="flex items-center justify-center gap-1 mt-2">
                                     <div className="flex items-center gap-0.5 mt-1">
                                         <div
                                             className="star-rating"
-                                            data-rating={seller.rating}
-                                            style={{ "--rating-percent": `${(seller.rating / 5) * 100}%` }}
-                                            aria-label={`Rated ${seller.rating} out of 5 stars`}
+                                            data-rating={4.5}
+                                            style={{ "--rating-percent": `${(4.5 / 5) * 100}%` }}
+                                            aria-label="Rated 4.5 out of 5 stars"
                                         ></div>
                                     </div>
-                                    <span className="text-sm text-gray-500 ml-1">({seller.rating}) Ratings</span>
+                                    <span className="text-sm text-gray-500 ml-1">(4.5) Ratings</span>
                                 </div>
                             </div>
 
@@ -277,19 +349,27 @@ const ProductDetails = () => {
                             <div className="py-6 space-y-4">
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-500 text-sm">Joined On:</span>
-                                    <span className="text-gray-800 font-medium">{seller.joinedDate}</span>
+                                    <span className="text-gray-800 font-medium">
+                                        {shop?.createdAt ? new Date(shop.createdAt).toLocaleDateString("en-US", {
+                                            year: "numeric",
+                                            month: "short",
+                                            day: "numeric"
+                                        }) : "—"}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-500 text-sm">Total Products:</span>
-                                    <span className="text-gray-800 font-medium">{seller.totalProducts.toLocaleString()}</span>
+                                    <span className="text-gray-800 font-medium">{shopProductCount.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-500 text-sm">Total Reviews:</span>
-                                    <span className="text-gray-800 font-medium">{seller.totalReviews.toLocaleString()}</span>
+                                    <span className="text-gray-800 font-medium">{(128).toLocaleString()}</span>
                                 </div>
                             </div>
 
-                            <button className="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dull transition">
+                            <button className="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dull transition"
+                                onClick={() => navigate(`/shop/${shop._id}`)}
+                            >
                                 Visit Shop
                             </button>
                         </div>

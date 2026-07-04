@@ -1,9 +1,10 @@
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { assets, productData, categories } from '../assets/assets'
 import Cart from './Cart'
 import Wishlist from './Wishlist'
+import { getAllProducts } from '../redux/actions/productAction'
 
 const Navbar = () => {
     const nav_links = [
@@ -24,7 +25,11 @@ const Navbar = () => {
     const searchInputRef = useRef(null)
 
     const navigate = useNavigate()
+    const dispatch = useDispatch();
+
     const { user } = useSelector((state) => state.user)
+    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
+    const { seller } = useSelector((state) => state.seller);
 
     const [searchParams] = useSearchParams();
     const currentCategoryInUrl = searchParams.get('category');
@@ -35,9 +40,15 @@ const Navbar = () => {
         setSearchTerm(term)
     }
 
-    const filteredProducts = productData && productData.filter((product) =>
+    const filteredProducts = allProducts && allProducts.filter((product) =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
+
+    useEffect(() => {
+        if (seller?._id) {
+            dispatch(getAllProducts(seller._id));
+        }
+    }, [dispatch, seller]);
 
     return (
         <>
@@ -85,7 +96,7 @@ const Navbar = () => {
                                 return (
                                     <Link key={index} to={`/products/${i.category}/${i.id}`} onClick={() => setSearchTerm("")}>
                                         <div className="w-full flex items-center py-2.5 px-4 hover:bg-slate-100 transition-colors border-b border-gray-50 last:border-b-0">
-                                            <img src={i.image_Url?.[0]?.url || assets.profile} alt="" className='w-10 h-10 mr-3 object-cover rounded shrink-0' />
+                                            <img src={i.images[0] || assets.profile} alt={i.name} className='w-10 h-10 mr-3 object-cover rounded shrink-0' />
                                             <span className="text-sm text-text font-medium truncate">{d}</span>
                                         </div>
                                     </Link>
@@ -198,7 +209,7 @@ const Navbar = () => {
                                 return (
                                     <Link key={index} to={`/products/${productName}`} onClick={() => { setSearchTerm(""); setShowMobileSearch(false); }}>
                                         <div className="w-full flex items-center py-2.5 px-4 hover:bg-slate-100 transition-colors border-b border-gray-50 last:border-b-0">
-                                            <img src={i.image_Url?.[0]?.url || assets.profile} alt="" className='w-9 h-9 mr-3 object-cover rounded shrink-0' />
+                                            <img src={i.images[0] || assets.profile} alt={i.name} className='w-9 h-9 mr-3 object-cover rounded shrink-0' />
                                             <span className="text-sm text-text font-medium truncate">{d}</span>
                                         </div>
                                     </Link>

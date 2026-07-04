@@ -35,6 +35,22 @@ const eventSlice = createSlice({
             state.event = null
             state.eventError = null
         },
+        getShopEventsRequest: (state) => {
+            state.eventLoading = true
+            state.eventSuccess = false
+            state.eventError = null
+        },
+        getShopEventsSuccess: (state, action) => {
+            state.eventSuccess = true
+            state.eventLoading = false
+            state.allEvents = action.payload
+            state.eventError = null
+        },
+        getShopEventsFail: (state, action) => {
+            state.eventSuccess = false
+            state.eventLoading = false
+            state.eventError = action.payload
+        },
         getAllEventsRequest: (state) => {
             state.eventLoading = true
             state.eventSuccess = false
@@ -70,5 +86,5 @@ const eventSlice = createSlice({
     }
 })
 
-export const { CreateEventRequest, CreateEventSuccess, CreateEventFail, ClearError, ResetEventState, getAllEventsRequest, getAllEventsSuccess, getAllEventsFail, deleteEventRequest, deleteEventSuccess, deleteEventFail } = eventSlice.actions
+export const { CreateEventRequest, CreateEventSuccess, CreateEventFail, ClearError, ResetEventState, getShopEventsRequest, getShopEventsSuccess, getShopEventsFail, getAllEventsRequest, getAllEventsSuccess, getAllEventsFail, deleteEventRequest, deleteEventSuccess, deleteEventFail } = eventSlice.actions
 export default eventSlice.reducer

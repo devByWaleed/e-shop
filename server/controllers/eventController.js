@@ -89,14 +89,33 @@ export const eventProduct = async (req, res) => {
 };
 
 
-// Get All Event : /api/event/get-all-events
-export const getAllEvents = async (req, res) => {
+// Get All Events ( Specific Shop ) : /api/event/get-shop-events
+export const getShopEvents = async (req, res) => {
     try {
         const events = await EventModel.find({ shopId: req.params.id })
 
         res.json({
             success: true,
             events
+        });
+    } catch (error) {
+        console.log("Error inside createProduct:", error.message);
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+
+// Get All Events : /api/event/get-all-events
+export const getAllEvents = async (req, res) => {
+    try {
+        const allEvents = await EventModel.find()
+
+        res.json({
+            success: true,
+            allEvents
         });
     } catch (error) {
         console.log("Error inside createProduct:", error.message);

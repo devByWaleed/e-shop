@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { deleteEvent, getAllEvents } from '../../redux/actions/eventAction';
+import { deleteEvent, getShopEvents } from '../../redux/actions/eventAction';
 
 const AllEvents = () => {
     const { seller } = useSelector((state) => state.seller);
@@ -13,7 +13,7 @@ const AllEvents = () => {
 
     useEffect(() => {
         if (seller?._id) {
-            dispatch(getAllEvents(seller._id));
+            dispatch(getShopEvents(seller._id));
         }
     }, [dispatch, seller]);
 

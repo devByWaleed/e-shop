@@ -6,6 +6,6 @@ import sellerAuth from "../middleware/sellerAuth.js";
 const couponRouter = express.Router();
 
 couponRouter.post("/create-coupon", sellerAuth, createCoupon)
-couponRouter.get("/get-coupons/", sellerAuth, getAllCoupons)
+couponRouter.get("/get-coupons/:id", sellerAuth, getAllCoupons)
 
 export default couponRouter

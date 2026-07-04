@@ -21,11 +21,28 @@ export const createEventProduct = (newForm) => async (dispatch, getState) => {
 }
 
 
+export const getShopEvents = (id) => async (dispatch, getState) => {
+    try {
+        dispatch(getAllEventsRequest())
+
+        const { data } = await axios.get(`/api/event/get-shop-events/${id}`)
+
+        if (data.success) {
+            dispatch(getAllEventsSuccess(data.events));
+        } else {
+            dispatch(getAllEventsFail(data.message));
+        }
+
+    } catch (error) {
+        dispatch(getAllEventsFail(error.message))
+    }
+}
+
 export const getAllEvents = (id) => async (dispatch, getState) => {
     try {
         dispatch(getAllEventsRequest())
 
-        const { data } = await axios.get(`/api/event/get-all-events/${id}`)
+        const { data } = await axios.get(`/api/event/get-shop-events/${id}`)
 
         if (data.success) {
             dispatch(getAllEventsSuccess(data.events));

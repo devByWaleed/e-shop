@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../ProductCard';
 import { productData } from '../../assets/assets';
+import { getAllProducts } from '../../redux/actions/productAction';
 
 const ShopProfileData = ({ isOwner }) => {
 
     const [activeTab, setActiveTab] = useState(1);
+
+    const { seller } = useSelector((state) => state.seller);
+    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
+
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     // Tab Definitions
     const tabs = [
@@ -14,6 +21,12 @@ const ShopProfileData = ({ isOwner }) => {
         { id: 2, label: "Running Events" },
         { id: 3, label: "Shop Reviews" },
     ];
+
+    useEffect(() => {
+        if (seller?._id) {
+            dispatch(getAllProducts(seller._id));
+        }
+    }, [dispatch, seller]);
 
     return (
         <div className="w-full flex flex-col">
@@ -41,7 +54,7 @@ const ShopProfileData = ({ isOwner }) => {
 
                 {/* Conditional Go Dashboard Button */}
                 {isOwner && (
-                    <Link to="/dashboard" className="self-start sm:self-auto">
+                    <Link to="/seller-profile" className="self-start sm:self-auto">
                         <button className="h-10 px-5 bg-black hover:bg-gray-800 text-white font-medium rounded-lg text-sm transition-colors duration-200 cursor-pointer whitespace-nowrap">
                             Go Dashboard
                         </button>
@@ -55,10 +68,10 @@ const ShopProfileData = ({ isOwner }) => {
                 {/* Panel 1: Shop Products Grid */}
                 {activeTab === 1 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                        {productData && productData.map((product, index) => (
+                        {allProducts && allProducts.map((product, index) => (
                             <ProductCard product={product} key={index} isShop={true} />
                         ))}
-                        {(!productData || productData.length === 0) && (
+                        {(!allProducts || allProducts.length === 0) && (
                             <p className="text-gray-500 col-span-full py-8 text-center">No products available for this shop yet.</p>
                         )}
                     </div>

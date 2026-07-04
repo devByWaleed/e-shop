@@ -1,16 +1,32 @@
 import React, { useEffect, useState } from 'react'
-import { productData } from '../assets/assets';
+import { useDispatch, useSelector } from 'react-redux'
 import ProductCard from './ProductCard';
 
 const BestDeals = () => {
 
     const [products, setProducts] = useState([])
+    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
 
     useEffect(() => {
-        const d = productData && productData.sort((a, b) => b.total_sell - a.total_sell)
-        const firstFive = d.slice(0, 5)
-        setProducts(firstFive)
-    }, [])
+        if (!allProducts) {
+            setProducts([])
+            return
+        }
+
+        // Spread into a new array before sorting — Array.sort() mutates in place,
+        // and mutating the Redux state array directly is a bug (Redux state should
+        // be treated as read-only, and mutating it can cause stale/inconsistent renders).
+        const sorted = [...allProducts].sort((a, b) => b.soldOut - a.soldOut)
+        setProducts(sorted.slice(0, 5))
+    }, [allProducts])
+
+    if (productLoading) {
+        return <div className="text-center py-12 text-gray-400">Loading deals...</div>;
+    }
+
+    if (productError) {
+        return <div className="text-center py-12 text-secondary">{productError}</div>;
+    }
 
     return (
         <>

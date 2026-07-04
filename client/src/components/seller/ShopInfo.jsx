@@ -1,26 +1,18 @@
 import axios from 'axios';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { getAllProducts } from '../../redux/actions/productAction';
+import { loadSeller } from '../../redux/actions/sellerAction';
 
 const ShopInfo = ({ isOwner }) => {
     // Accessing seller data from Redux state
     const { seller } = useSelector((state) => state.seller);
+    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
 
     const navigate = useNavigate();
-
-    // Fallback data mapping to look exactly like image_cc15be_2.png if Redux is loading
-    const shopName = seller?.name || "Becodemy";
-    const shopAddress = seller?.address || "4678 Honeysuckle Lane, Seattle";
-    const shopPhone = seller?.phoneNumber || "1783811512";
-    const totalProducts = seller?.totalProducts || 10;
-    const shopRatings = seller?.ratings || "4/5";
-
-    // Formatting standard ISO date string to YYYY-MM-DD
-    const joinedDate = seller?.createdAt
-        ? new Date(seller.createdAt).toISOString().slice(0, 10)
-        : "2023-03-17";
+    const dispatch = useDispatch();
 
 
     const handleLogout = async () => {
@@ -38,6 +30,17 @@ const ShopInfo = ({ isOwner }) => {
         }
     }
 
+    useEffect(() => {
+        dispatch(loadSeller())
+    }, [dispatch])
+
+    // Once seller is available, fetch that seller's products
+    useEffect(() => {
+        if (seller?._id) {
+            dispatch(getAllProducts(seller._id))
+        }
+    }, [seller?._id, dispatch])
+
     return (
         <div className="w-full flex flex-col items-center">
             {/* Shop Profile Image */}
@@ -45,7 +48,7 @@ const ShopInfo = ({ isOwner }) => {
                 <div className="w-37.5 h-37.5 rounded-full overflow-hidden border-2 border-gray-100 shadow-sm">
                     <img
                         src={`${import.meta.env.VITE_BACKEND_URL}/${seller.avatar}`}
-                        alt={shopName}
+                        alt={seller.name}
                         className="w-full h-full object-cover"
                     />
                 </div>
@@ -53,7 +56,7 @@ const ShopInfo = ({ isOwner }) => {
 
             {/* Shop Name */}
             <h3 className="text-xl font-bold text-gray-800 text-center mb-8">
-                {shopName}
+                {seller.name}
             </h3>
 
             {/* Information Blocks */}
@@ -62,31 +65,31 @@ const ShopInfo = ({ isOwner }) => {
                 {/* Address */}
                 <div>
                     <h5 className="font-semibold text-gray-900 text-[15px]">Address</h5>
-                    <p className="text-gray-500 text-sm mt-0.5">{shopAddress}</p>
+                    <p className="text-gray-500 text-sm mt-0.5">{seller.address}</p>
                 </div>
 
                 {/* Phone Number */}
                 <div>
                     <h5 className="font-semibold text-gray-900 text-[15px]">Phone Number</h5>
-                    <p className="text-gray-500 text-sm mt-0.5">{shopPhone}</p>
+                    <p className="text-gray-500 text-sm mt-0.5">{seller.phoneNumber}</p>
                 </div>
 
                 {/* Total Products */}
                 <div>
                     <h5 className="font-semibold text-gray-900 text-[15px]">Total Products</h5>
-                    <p className="text-gray-500 text-sm mt-0.5">{totalProducts}</p>
+                    <p className="text-gray-500 text-sm mt-0.5">{allProducts?.length ?? 0}</p>
                 </div>
 
                 {/* Shop Ratings */}
                 <div>
                     <h5 className="font-semibold text-gray-900 text-[15px]">Shop Ratings</h5>
-                    <p className="text-gray-500 text-sm mt-0.5">{shopRatings}</p>
+                    <p className="text-gray-500 text-sm mt-0.5">{4.5}</p>
                 </div>
 
                 {/* Joined On */}
                 <div>
                     <h5 className="font-semibold text-gray-900 text-[15px]">Joined On</h5>
-                    <p className="text-gray-500 text-sm mt-0.5">{joinedDate}</p>
+                    <p className="text-gray-500 text-sm mt-0.5">{new Date(seller.createdAt).toISOString().slice(0, 10)}</p>
                 </div>
 
             </div>

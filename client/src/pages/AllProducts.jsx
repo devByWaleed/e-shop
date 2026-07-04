@@ -1,28 +1,45 @@
 import React, { useEffect, useState } from 'react'
-import { productData } from '../assets/assets';
 import ProductCard from '../components/ProductCard';
 import { useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllProducts } from '../redux/actions/productAction';
 
 const AllProducts = () => {
-    // Make sure you map over 'data' instead of 'products'
+    const dispatch = useDispatch();
+    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
+
     const [data, setData] = useState([])
     const [searchParams] = useSearchParams()
     const activeCategory = searchParams.get("category")
 
-    // const displayedProducts = activeCategory
-    //     ? productData.filter(product => product.category === activeCategory)
-    //     : productData;
-
+    // Fetch products from backend on mount
     useEffect(() => {
-        if (activeCategory === null) {
-            // Use spread operator [...] to avoid mutating the original assets array with .sort()
-            const d = productData && [...productData].sort((a, b) => a.total_sell - b.total_sell)
-            setData(d)
-        } else {
-            const d = productData && productData.filter((i) => i.category === activeCategory)
-            setData(d)
+        if (!allProducts || allProducts.length === 0) {
+            dispatch(getAllProducts());
         }
-    }, [activeCategory]) // <-- Fixed: Triggers filter logic whenever the URL parameter changes
+    }, [dispatch, allProducts]);
+
+    // Handle filtering safely (lowercasing handles string mismatch bugs)
+    useEffect(() => {
+        if (!allProducts) {
+            setData([])
+            return
+        }
+
+        if (!activeCategory) {
+            setData([...allProducts])
+        } else {
+            setData(allProducts.filter((i) => i.category?.toLowerCase() === activeCategory.toLowerCase()))
+        }
+    }, [activeCategory, allProducts])
+
+    if (productLoading) {
+        return <div className="text-center py-12 text-gray-400">Loading products...</div>;
+    }
+
+    if (productError) {
+        return <div className="text-center py-12 text-secondary">{productError}</div>;
+    }
 
     return (
         <section className="bg-white flex flex-col items-center justify-center px-4 py-16">
@@ -34,16 +51,15 @@ const AllProducts = () => {
                 <div className="w-20 h-1 bg-primary rounded-full mt-2"></div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-5">
-                {/* Fixed: Map over filtered state 'data' instead of raw static array 'products' */}
-                {data.map((product, index) => (
-                    <ProductCard key={index} product={product} />
-                ))}
-            </div>
-
-            {data && data.length === 0 ? (
-                <h1 className='text-center w-full pb-25 text-20px'>No Products Found!!</h1>
-            ) : null}
+            {data.length === 0 ? (
+                <h1 className="text-center w-full pb-25 text-xl">No Products Found!!</h1>
+            ) : (
+                <div className="flex flex-wrap items-center justify-center gap-5">
+                    {data.map((product) => (
+                        <ProductCard key={product._id} product={product} />
+                    ))}
+                </div>
+            )}
         </section>
     );
 }
