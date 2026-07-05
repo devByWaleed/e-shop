@@ -1,13 +1,20 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 const ProductCard = ({ product, index }) => {
+    const { seller } = useSelector((state) => state.seller);
 
     const [click, setClick] = useState(false)
+
     const navigate = useNavigate()
 
+    const c = product.category
+    let categorySlug = c.toLowerCase()
+    categorySlug = categorySlug.replace(/\s+/g, "-")
+
     return (
-        <section onClick={() => { navigate(`/products/${product.category.toLowerCase()}/${product._id}`); scrollTo(0, 0); }} key={index} className="border border-zinc-200 hover:border-zinc-300 transition-colors rounded-xl p-4 flex flex-col w-72 md:w-50 relative cursor-pointer">
+        <section onClick={() => { navigate(`/products/${categorySlug}/${product._id}`); scrollTo(0, 0); }} key={index} className="border border-zinc-200 hover:border-zinc-300 transition-colors rounded-xl p-4 flex flex-col w-72 md:w-50 relative cursor-pointer">
             {/* Action Buttons - Column layout on top left */}
             <div className="absolute top-2 right-2 flex flex-col gap-2 z-10"
                 onClick={(e) => e.stopPropagation()}
@@ -48,7 +55,7 @@ const ProductCard = ({ product, index }) => {
                 <img src={product.images ? product.images : "https://assets.prebuiltui.com/images/components/card/card-speaker-image.png"} alt={product.name} className="max-h-full max-w-full object-contain" />
             </div>
 
-            <h5 className="pt-3 text-[15px] text-blue-400 pb-3">Seller</h5>
+            <h5 className="pt-3 text-[15px] text-blue-400 pb-3">{seller.name}</h5>
 
             {/* Product Name */}
             <p className="text-sm text-neutral-500 mb-2 px-2 line-clamp-2 min-h-10 truncate">{product.name}</p>

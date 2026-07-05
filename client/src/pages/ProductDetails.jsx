@@ -148,7 +148,7 @@ const ProductDetails = () => {
                     <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl mt-4">
                         <div className="flex items-center gap-3">
                             <img
-                                src={`${import.meta.env.VITE_BACKEND_URL}/${shop?.avatar}`}
+                                src={`${shop?.avatar}`}
                                 alt={shop?.name}
                                 className="w-12 h-12 rounded-full object-cover"
                             />
@@ -184,7 +184,7 @@ const ProductDetails = () => {
                     <p className="text-base font-medium mt-6">About Product</p>
                     <ul className="list-disc ml-4 text-gray-500/70 space-y-1">
                         {product.description.map((desc, index) => (
-                            <li key={index}>{desc}</li>
+                            <li key={index} className="marker:text-primary">{desc}</li>
                         ))}
                     </ul>
 

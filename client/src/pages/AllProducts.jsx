@@ -12,16 +12,16 @@ const AllProducts = () => {
     const [searchParams] = useSearchParams()
     const activeCategory = searchParams.get("category")
 
-    // Fetch products from backend on mount
+    // Fetch products from backend only ONCE if they aren't loaded yet
     useEffect(() => {
         if (!allProducts || allProducts.length === 0) {
             dispatch(getAllProducts());
         }
-    }, [dispatch, allProducts]);
+    }, [dispatch]); // Removed allProducts dependency to fix infinite fetch loop bugs
 
     // Handle filtering safely (lowercasing handles string mismatch bugs)
     useEffect(() => {
-        if (!allProducts) {
+        if (!allProducts || !Array.isArray(allProducts)) {
             setData([])
             return
         }
@@ -33,14 +33,6 @@ const AllProducts = () => {
         }
     }, [activeCategory, allProducts])
 
-    if (productLoading) {
-        return <div className="text-center py-12 text-gray-400">Loading products...</div>;
-    }
-
-    if (productError) {
-        return <div className="text-center py-12 text-secondary">{productError}</div>;
-    }
-
     return (
         <section className="bg-white flex flex-col items-center justify-center px-4 py-16">
 
@@ -51,12 +43,17 @@ const AllProducts = () => {
                 <div className="w-20 h-1 bg-primary rounded-full mt-2"></div>
             </div>
 
-            {data.length === 0 ? (
+            {/* In-place conditional rendering so the page structure never vanishes */}
+            {productLoading && data.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">Loading products...</div>
+            ) : productError ? (
+                <div className="text-center py-12 text-secondary">{productError}</div>
+            ) : data.length === 0 ? (
                 <h1 className="text-center w-full pb-25 text-xl">No Products Found!!</h1>
             ) : (
                 <div className="flex flex-wrap items-center justify-center gap-5">
                     {data.map((product) => (
-                        <ProductCard key={product._id} product={product} />
+                        <ProductCard key={product._id || product.id} product={product} />
                     ))}
                 </div>
             )}
@@ -64,4 +61,4 @@ const AllProducts = () => {
     );
 }
 
-export default AllProducts
+export default AllProducts;

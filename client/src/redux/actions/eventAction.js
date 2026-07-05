@@ -1,5 +1,5 @@
 import axios from "axios"
-import { CreateEventRequest, CreateEventSuccess, CreateEventFail, ClearError, ResetEventState, getAllEventsRequest, getAllEventsSuccess, getAllEventsFail, deleteEventRequest, deleteEventSuccess, deleteEventFail } from "../slices/eventSlice"
+import { CreateEventRequest, CreateEventSuccess, CreateEventFail, ClearError, ResetEventState, getShopEventsRequest, getShopEventsSuccess, getShopEventsFail, getAllEventsRequest, getAllEventsSuccess, getAllEventsFail, deleteEventRequest, deleteEventSuccess, deleteEventFail } from "../slices/eventSlice"
 
 export const createEventProduct = (newForm) => async (dispatch, getState) => {
     try {
@@ -23,29 +23,29 @@ export const createEventProduct = (newForm) => async (dispatch, getState) => {
 
 export const getShopEvents = (id) => async (dispatch, getState) => {
     try {
-        dispatch(getAllEventsRequest())
+        dispatch(getShopEventsRequest())
 
         const { data } = await axios.get(`/api/event/get-shop-events/${id}`)
 
         if (data.success) {
-            dispatch(getAllEventsSuccess(data.events));
+            dispatch(getShopEventsSuccess(data.shopEvents));
         } else {
-            dispatch(getAllEventsFail(data.message));
+            dispatch(getShopEventsFail(data.message));
         }
 
     } catch (error) {
-        dispatch(getAllEventsFail(error.message))
+        dispatch(getShopEventsFail(error.message))
     }
 }
 
-export const getAllEvents = (id) => async (dispatch, getState) => {
+export const getAllEvents = () => async (dispatch, getState) => {
     try {
         dispatch(getAllEventsRequest())
 
-        const { data } = await axios.get(`/api/event/get-shop-events/${id}`)
+        const { data } = await axios.get(`/api/event/get-all-events`)
 
         if (data.success) {
-            dispatch(getAllEventsSuccess(data.events));
+            dispatch(getAllEventsSuccess(data.allEvents));
         } else {
             dispatch(getAllEventsFail(data.message));
         }

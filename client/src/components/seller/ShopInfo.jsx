@@ -47,7 +47,7 @@ const ShopInfo = ({ isOwner }) => {
             <div className="w-full flex justify-center mb-4">
                 <div className="w-37.5 h-37.5 rounded-full overflow-hidden border-2 border-gray-100 shadow-sm">
                     <img
-                        src={`${import.meta.env.VITE_BACKEND_URL}/${seller.avatar}`}
+                        src={`${seller.avatar}`}
                         alt={seller.name}
                         className="w-full h-full object-cover"
                     />

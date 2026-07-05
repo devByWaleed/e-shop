@@ -72,3 +72,38 @@ export const getAllCoupons = async (req, res) => {
         });
     }
 }
+
+
+// Delete Coupon : /api/coupon/delete-coupon
+export const deleteCoupon = async (req, res) => {
+    try {
+        const couponID = req.params.id
+
+        // Get the event data
+        const coupon = await CouponModel.findById(couponID)
+
+        if (!coupon) {
+            return res.json({
+                success: false,
+                message: "Event not found"
+            });
+        }
+
+
+        // Delete the coupon
+        await CouponModel.findByIdAndDelete(couponID);
+
+        res.json({
+            success: true,
+            message: "Coupon deleted successfully"
+        });
+
+
+    } catch (error) {
+        console.log("Error inside createProduct:", error.message);
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+}

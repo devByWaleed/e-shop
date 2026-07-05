@@ -29,13 +29,20 @@ export const eventProduct = async (req, res) => {
             return res.json({ success: false, message: "Missing required product fields." });
         }
 
-        // Normalize description into an array (see section 2 below)
+        // Normalize description into an array
         let description = req.body.description;
         if (!description) {
             return res.json({ success: false, message: "Please add a product description." });
         }
+
+        // If it's a single string, split it by line breaks (or commas)
+        if (typeof description === 'string') {
+            description = description.split('\n');
+        }
+
         description = Array.isArray(description) ? description : [description];
         description = description.map(line => line.trim()).filter(line => line.length > 0);
+
         if (description.length === 0) {
             return res.json({ success: false, message: "Please add a product description." });
         }
@@ -92,11 +99,11 @@ export const eventProduct = async (req, res) => {
 // Get All Events ( Specific Shop ) : /api/event/get-shop-events
 export const getShopEvents = async (req, res) => {
     try {
-        const events = await EventModel.find({ shopId: req.params.id })
+        const shopEvents = await EventModel.find({ shopId: req.params.id })
 
         res.json({
             success: true,
-            events
+            shopEvents
         });
     } catch (error) {
         console.log("Error inside createProduct:", error.message);

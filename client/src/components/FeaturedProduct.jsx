@@ -1,80 +1,62 @@
-import React from 'react'
-import { productData } from '../assets/assets';
+import React, { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllProducts } from '../redux/actions/productAction';
 
 const FeaturedProduct = () => {
-    const products = productData
-        .filter(product => product.featured)
-        .slice(0, 5);
+    const dispatch = useDispatch();
+    const [featured, setFeatured] = useState([]);
+
+    // Select from the product slice state instead of the event slice state
+    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
+
+    // Fetch all products from the backend only ONCE if they aren't loaded yet
+    useEffect(() => {
+        if (!allProducts || allProducts.length === 0) {
+            dispatch(getAllProducts());
+        }
+    }, [dispatch]); // Safe from infinite fetch loops
+
+    // Algorithmically determine "Featured" by sorting by Newest Arrivals
+    useEffect(() => {
+        if (!allProducts || !Array.isArray(allProducts)) {
+            setFeatured([]);
+            return;
+        }
+
+        // Clone the array, sort by latest timestamp, and slice the top 5
+        const newestArrivals = [...allProducts]
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 5);
+
+        setFeatured(newestArrivals);
+    }, [allProducts]);
 
     return (
-        <>
-            <section className="bg-white flex flex-col items-center justify-center px-4 py-16">
+        <section className="bg-white flex flex-col items-center justify-center px-4 py-16">
+            <div className="max-w-7xl mx-auto items-start mb-10">
+                <h1 className="text-3xl md:text-4xl text-left font-extrabold text-dark">
+                    Featured <span className="text-primary">Products</span>
+                </h1>
+                <div className="w-20 h-1 bg-primary rounded-full mt-2"></div>
+            </div>
 
-                <div className="max-w-7xl mx-auto items-start mb-10">
-                    <h1 className="text-3xl md:text-4xl text-left font-extrabold text-dark">
-                        Featured <span className="text-primary">Products</span>
-                    </h1>
-                    <div className="w-20 h-1 bg-primary rounded-full mt-2"></div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center  gap-5">
-                    {products.map((product, index) => (
-                        <ProductCard key={index} product={product} />
-
-
-                        // <div key={index} className="border border-zinc-200 hover:border-zinc-300 transition-colors rounded-xl p-4 flex flex-col w-50 relative">
-                        //     {/* Action Buttons - Column layout on top left */}
-                        //     <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
-                        //         {/* Quick View Button */}
-                        //         {/* <button className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-primary hover:text-white transition-all duration-200 rounded-full shadow-md border border-zinc-200 group">
-                        //             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        //                 <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        //                 <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        //             </svg>
-                        //         </button> */}
-
-                        //         {/* Add to Cart Button */}
-                        //         <button className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-dark hover:text-white transition-all duration-200 rounded-full shadow-md border border-zinc-200 group">
-                        //             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        //                 <path d="M2 2H4L5 12H19L21 4H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        //                 <circle cx="8" cy="18" r="2" stroke="currentColor" strokeWidth="1.5" />
-                        //                 <circle cx="17" cy="18" r="2" stroke="currentColor" strokeWidth="1.5" />
-                        //                 <path d="M10 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        //                 <path d="M12 6V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        //             </svg>
-                        //         </button>
-
-                        //         {/* Wishlist Button */}
-                        //         <button className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-red-50 hover:border-red-300 transition-all duration-200 rounded-full shadow-md border border-zinc-200 group">
-                        //             <svg width="12" height="14" viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        //                 <path d="M7.357.5c.303 0 .594.117.808.325s.335.491.335.786v8.334a.54.54 0 0 1-.076.277.584.584 0 0 1-.779.205L5.067 8.995a1.17 1.17 0 0 0-1.134 0l-2.578 1.432a.584.584 0 0 1-.779-.205.54.54 0 0 1-.076-.277V1.61c0-.295.12-.577.335-.786A1.16 1.16 0 0 1 1.643.5z" stroke="#27272a" className="group-hover:stroke-red-500 transition-colors" strokeLinecap="round" strokeLinejoin="round" />
-                        //             </svg>
-                        //         </button>
-                        //     </div>
-
-                        //     {/* Product Image - Centered with more top padding to accommodate buttons */}
-                        //     <div className="flex items-center justify-center h-32 mb-2 pt-4">
-                        //         <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
-                        //     </div>
-
-                        //     <h5 className="pt-3 text-[15px] text-blue-400 pb-3">Seller</h5>
-
-                        //     {/* Product Name */}
-                        //     <p className="text-sm text-neutral-500 mb-2 px-2 line-clamp-2 min-h-10 truncate">{item.name}</p>
-
-                        //     {/* Price */}
-                        //     <div className="flex items-center gap-2 px-2 mt-auto">
-                        //         <span className="text-sm font-semibold text-neutral-800">{item.price}</span>
-                        //         <span className="text-xs font-bold text-secondary line-through">{item.oldPrice}</span>
-                        //         <span className="text-sm p-1 rounded text-accent">55 sold</span>
-                        //     </div>
-                        // </div>
+            {/* In-place status states so page structure doesn't disappear */}
+            {productLoading && featured.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">Loading featured products...</div>
+            ) : productError ? (
+                <div className="text-center py-12 text-secondary">{productError}</div>
+            ) : featured.length === 0 ? (
+                <p className="text-gray-400 text-sm py-8">No featured products available right now.</p>
+            ) : (
+                <div className="flex flex-wrap items-center justify-center gap-5">
+                    {featured.map((product) => (
+                        <ProductCard key={product._id || product.id} product={product} />
                     ))}
                 </div>
-            </section>
-        </>
-    )
-}
+            )}
+        </section>
+    );
+};
 
-export default FeaturedProduct
+export default FeaturedProduct;

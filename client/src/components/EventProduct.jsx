@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllEvents } from '../redux/actions/eventAction';
 
 
 const EventProduct = ({ product }) => {
@@ -31,15 +33,6 @@ const EventProduct = ({ product }) => {
 
     if (!product) return null;
 
-    const categoryName = product.category || "General";
-    const titleName = product.name || "Flash Sale Product";
-    const displayPrice = product.discount_price || 999;
-    const originalPrice = product.price || (product.discount_price ? product.discount_price + 50 : 1099);
-    const unitsSold = product.total_sell ?? 0;
-    const descriptionText = product.description || "Product details...";
-    const mainImage = product.image_Url?.[0]?.url
-        || "https://assets.prebuiltui.com/images/components/card/card-lamp-image.png";
-
     return (
         <div className="max-w-6xl mx-auto p-6 md:p-8">
             <div className="bg-linear-to-br from-white to-[#F8F7FF] rounded-2xl overflow-hidden shadow-xl border border-light-border">
@@ -54,14 +47,14 @@ const EventProduct = ({ product }) => {
                                 </div>
                             </div>
                             <div className="flex items-center justify-center p-8">
-                                <img src={mainImage} alt={titleName}
-                                    className="w-full max-w-sm object-contain hover:scale-105 transition-transform duration-300" />
+                                <img src={product.images[0]} alt={product.name}
+                                    className="w-full max-w-sm object-contain hover:scale-105 transition-all duration-300 ease-in-out" />
                             </div>
                             {/* Thumbnails — dynamic, not hardcoded */}
                             <div className="flex justify-center gap-3 mt-4">
-                                {product.image_Url?.slice(0, 4).map((img, i) => (
+                                {product.images.slice(0, 4).map((img, i) => (
                                     <div key={i} className="w-16 h-16 rounded-lg border-2 border-light-border hover:border-primary cursor-pointer transition-all p-1">
-                                        <img src={img.url} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover rounded" />
+                                        <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover rounded" />
                                     </div>
                                 ))}
                             </div>
@@ -71,19 +64,24 @@ const EventProduct = ({ product }) => {
                     {/* Right — Info */}
                     <div className="p-6 md:p-8 flex flex-col">
                         <div className="mb-2">
-                            <span className="text-primary text-sm font-semibold uppercase tracking-wide">{categoryName}</span>
+                            <span className="text-primary text-sm font-semibold uppercase tracking-wide">{product.category}</span>
                         </div>
 
-                        {/* Title — no more hardcoded "8/256GB | Deep Purple" */}
-                        <h1 className="text-3xl md:text-4xl font-bold text-dark mb-4">{titleName}</h1>
+                        <h1 className="text-3xl md:text-4xl font-bold text-dark mb-4">{product.name}</h1>
 
-                        <p className="text-text/70 leading-relaxed mb-6">{descriptionText}</p>
+
+                        <ul className="list-disc pl-5 space-y-2 text-text/70 leading-relaxed mb-6">
+                            {product.description?.map((des, index) => (
+                                <li key={index} className="marker:text-primary">{des}</li>
+                            ))}
+                        </ul>
 
                         <div className="mb-6">
                             <div className="flex items-center gap-3">
-                                <span className="text-3xl font-bold text-dark">${displayPrice}</span>
-                                <span className="text-xl text-secondary line-through">${originalPrice}</span>
-                                <span className="bg-accent/20 text-accent-dull px-2 py-1 rounded-md text-sm font-semibold">{unitsSold} sold</span>
+                                <span className="text-3xl font-bold text-dark">${product.discountPrice
+                                }</span>
+                                <span className="text-xl text-secondary line-through">${product.originalPrice}</span>
+                                <span className="bg-accent/20 text-accent-dull px-2 py-1 rounded-md text-sm font-semibold">{product.soldOut || 0} sold</span>
                             </div>
                         </div>
 

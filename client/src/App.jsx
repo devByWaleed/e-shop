@@ -87,6 +87,7 @@ const App = () => {
         </Route>
         <Route path='/activation/:activation_token' element={<Activation />} />
         <Route path='/products/:category/:id' element={<ProductDetails />} />
+        <Route path='/events/:category/:id' element={<Events />} />
         <Route path='/events' element={<Events />} />
         <Route path="/best-deals" element={<BestDealsPage />} />
         <Route path='/faqs' element={<Faqs />} />

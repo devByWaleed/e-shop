@@ -1,10 +1,16 @@
-import { productData } from '../assets/assets';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllEvents } from '../redux/actions/eventAction';
 import EventProduct from './EventProduct';
 
 const EventSection = () => {
-    const products = productData
-        .filter(product => product.event)
-        .slice(0, 1);
+    const dispatch = useDispatch();
+    const { allEvents } = useSelector((state) => state.event);
+
+    useEffect(() => {
+        dispatch(getAllEvents());
+    }, [dispatch]);
+
 
     return (
         <section className="bg-white flex flex-col items-center justify-center px-4 py-16">
@@ -16,9 +22,9 @@ const EventSection = () => {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-5">
-                {products.map((product, index) => (
-                    <EventProduct key={product.id ?? index} product={product} />
-                ))}
+                {allEvents?.map((product, index) => (
+                    <EventProduct key={product._id} product={product} />
+                )) || <p>No events available.</p>}
             </div>
         </section>
     );

@@ -6,7 +6,7 @@ const productSlice = createSlice({
         success: false,
         productLoading: false,
         product: null,
-        allProducts: null,
+        allProducts: [],
         productError: null
     },
     reducers: {

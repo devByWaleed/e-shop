@@ -90,14 +90,15 @@ const Navbar = () => {
                     {searchTerm && filteredProducts.length !== 0 && (
                         <div className='absolute left-0 top-full mt-2 w-full max-h-75 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl z-99999' >
                             {filteredProducts.map((i, index) => {
-                                const d = i.name
-                                const productName = d.replace(/\s+/g, "-")
+                                const c = i.category
+                                let categorySlug = c.toLowerCase()
+                                categorySlug = categorySlug.replace(/\s+/g, "-")
 
                                 return (
-                                    <Link key={index} to={`/products/${i.category}/${i.id}`} onClick={() => setSearchTerm("")}>
+                                    <Link key={index} to={`/products/${categorySlug}/${i._id}`} onClick={() => setSearchTerm("")}>
                                         <div className="w-full flex items-center py-2.5 px-4 hover:bg-slate-100 transition-colors border-b border-gray-50 last:border-b-0">
-                                            <img src={i.images[0] || assets.profile} alt={i.name} className='w-10 h-10 mr-3 object-cover rounded shrink-0' />
-                                            <span className="text-sm text-text font-medium truncate">{d}</span>
+                                            <img src={i.images[0]} alt={i.name} className='w-10 h-10 mr-3 object-cover rounded shrink-0' />
+                                            <span className="text-sm text-text font-medium truncate">{i.name}</span>
                                         </div>
                                     </Link>
                                 )
@@ -203,14 +204,14 @@ const Navbar = () => {
                     {searchTerm && filteredProducts.length !== 0 && (
                         <div className='absolute left-4 right-4 top-full mt-1 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl z-100000' >
                             {filteredProducts.map((i, index) => {
-                                const d = i.name
-                                const productName = d.replace(/\s+/g, "-")
+                                const c = i.category
+                                const categorySlug = c.toLowerCase().replace(/\s+/g, "-")
 
                                 return (
-                                    <Link key={index} to={`/products/${productName}`} onClick={() => { setSearchTerm(""); setShowMobileSearch(false); }}>
+                                    <Link key={index} to={`/products/${categorySlug}/${i._id}`} onClick={() => { setSearchTerm(""); setShowMobileSearch(false); }}>
                                         <div className="w-full flex items-center py-2.5 px-4 hover:bg-slate-100 transition-colors border-b border-gray-50 last:border-b-0">
                                             <img src={i.images[0] || assets.profile} alt={i.name} className='w-9 h-9 mr-3 object-cover rounded shrink-0' />
-                                            <span className="text-sm text-text font-medium truncate">{d}</span>
+                                            <span className="text-sm text-text font-medium truncate">{i.name}</span>
                                         </div>
                                     </Link>
                                 )
@@ -337,7 +338,7 @@ const Navbar = () => {
                             onClick={() => navigate("/user-profile")}
                         >
                             <img
-                                src={user.avatar ? `${import.meta.env.VITE_BACKEND_URL}/${user.avatar}` : assets.profile}
+                                src={user.avatar ? `${user.avatar}` : assets.profile}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                             />
@@ -436,7 +437,7 @@ const Navbar = () => {
                             <div className="flex items-center gap-3 p-3 rounded-xl bg-light-bg border border-light-border">
                                 <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border-2 border-primary"
                                     onClick={() => { setOpen(false); navigate('/user-profile'); }}>
-                                    <img src={user.avatar ? `${import.meta.env.VITE_BACKEND_URL}/${user.avatar}` : assets.profile}
+                                    <img src={user.avatar ? `${user.avatar}` : assets.profile}
                                         alt="Profile" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0" onClick={() => { setOpen(false); navigate('/user-profile'); }}>

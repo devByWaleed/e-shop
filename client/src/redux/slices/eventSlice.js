@@ -6,7 +6,8 @@ const eventSlice = createSlice({
         eventSuccess: false,
         eventLoading: false,
         event: null,
-        allEvents: null,
+        shopEvents: [],
+        allEvents: [],
         eventError: null
     },
     reducers: {
@@ -43,7 +44,7 @@ const eventSlice = createSlice({
         getShopEventsSuccess: (state, action) => {
             state.eventSuccess = true
             state.eventLoading = false
-            state.allEvents = action.payload
+            state.shopEvents = action.payload
             state.eventError = null
         },
         getShopEventsFail: (state, action) => {
