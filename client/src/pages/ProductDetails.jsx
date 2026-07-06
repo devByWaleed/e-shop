@@ -3,10 +3,15 @@ import { useEffect, useState } from "react";
 import RelatedProducts from "../components/RelatedProducts";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllProducts } from "../redux/actions/productAction";
+import toast from "react-hot-toast";
+import { addToCart } from "../redux/actions/cartAction";
+import { addToWishlist, removeFromWishlist } from "../redux/actions/wishlistAction";
 
 const ProductDetails = () => {
     const { seller } = useSelector((state) => state.seller);
     const { allProducts, productLoading, productError } = useSelector((state) => state.product);
+    const { cart } = useSelector((state) => state.cart);
+    const { wishlist } = useSelector((state) => state.wishlist);
 
     const [activeTab, setActiveTab] = useState("reviews");
     const [count, setCount] = useState(0);
@@ -39,15 +44,16 @@ const ProductDetails = () => {
         }
     }, [product?._id]);
 
-    const incrementCount = () => {
-        setCount((prev) => prev + 1);
-    };
+    // The same product's entry in the cart, if it's already been added —
+    // used to keep this page's quantity stepper in sync with the actual cart state
+    const cartItem = cart && product ? cart.find((i) => i._id === product._id) : undefined;
 
-    const decrementCount = () => {
-        if (count > 0) {
-            setCount((prev) => prev - 1);
-        }
-    };
+    // Whenever the cart quantity for this product changes (added/updated from
+    // elsewhere, e.g. the cart drawer), reflect that here instead of drifting
+    // out of sync with a purely local counter.
+    useEffect(() => {
+        setCount(cartItem ? cartItem.quantity : 1);
+    }, [cartItem?.quantity, product?._id]);
 
     if (productLoading) {
         return <div className="text-center py-12 text-gray-400">Loading product...</div>;
@@ -68,6 +74,59 @@ const ProductDetails = () => {
     // Products belonging to the same shop, derived from the already-fetched list —
     // real DB-derived count instead of a hardcoded/mock "totalProducts" value
     const shopProductCount = allProducts.filter((p) => p.shopId === product.shopId).length;
+
+    // Whether this exact product is currently in the wishlist, so the heart
+    // button can render filled/active and toggle correctly
+    const isWishlisted = !!(wishlist && wishlist.find((i) => i._id === product._id));
+
+    const handleWishlist = () => {
+        if (isWishlisted) {
+            dispatch(removeFromWishlist(product._id));
+            toast.success("Removed from wishlist");
+        } else {
+            dispatch(addToWishlist(product));
+            toast.success("Added to wishlist");
+        }
+    };
+
+    const handleCart = (id) => {
+        const isItemExists = cart && cart.find((i) => i._id === id)
+
+        if (isItemExists) {
+            toast.error("Item already exists!")
+        } else {
+            if (product.stock < count) {
+                toast.error("Product stock limited")
+            }
+            else {
+                const cartData = { ...product, quantity: count }
+                dispatch(addToCart(cartData))
+                toast.success("Item added to cart successfully")
+            }
+        }
+    }
+
+    // Single handler for both + and - buttons. If the product is already in
+    // the cart, this updates the cart's quantity directly (via the addToCart
+    // thunk, so localStorage stays in sync) instead of only changing local
+    // state — that mismatch was why the stepper looked "stuck" and never
+    // reflected what was actually in the cart.
+    const handleQuantityChange = (amount) => {
+        const newQty = count + amount;
+
+        if (newQty <= 0) return;
+
+        if (newQty > product.stock) {
+            toast.error("Product stock limited");
+            return;
+        }
+
+        if (cartItem) {
+            dispatch(addToCart({ ...product, quantity: newQty }));
+        }
+
+        setCount(newQty);
+    };
 
     return (
         <section className="mt-12 max-w-7xl mx-auto px-4">
@@ -147,13 +206,15 @@ const ProductDetails = () => {
                     {/* Seller Info Card — sourced from product.shop (DB), not a mock seller import */}
                     <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl mt-4">
                         <div className="flex items-center gap-3">
-                            <img
-                                src={`${shop?.avatar}`}
-                                alt={shop?.name}
-                                className="w-12 h-12 rounded-full object-cover"
-                            />
+                            <Link to={`/shop/${shop._id}`}>
+                                <img
+                                    src={`${shop?.avatar}`}
+                                    alt={shop?.name}
+                                    className="w-12 h-12 rounded-full object-cover"
+                                />
+                            </Link>
                             <div>
-                                <p className="font-medium text-gray-800">{shop?.name}</p>
+                                <p className="font-medium text-gray-800 hover:text-primary cursor-pointer">{shop?.name}</p>
                                 <div className="flex items-center gap-1">
                                     <div
                                         className="star-rating"
@@ -192,24 +253,31 @@ const ProductDetails = () => {
                     <div className="mt-6 relative">
                         <p className="text-sm font-medium text-gray-700 mb-2">Quantity</p>
                         <div className="flex items-center gap-3 mb-4">
-                            <button onClick={decrementCount} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
+                            <button onClick={() => handleQuantityChange(-1)} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
                                 -
                             </button>
                             <span className="w-8 text-center font-medium">{count}</span>
-                            <button onClick={incrementCount} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
+                            <button onClick={() => handleQuantityChange(1)} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition">
                                 +
                             </button>
                         </div>
                         {/* Wishlist Button */}
-                        <button title="Add To Wishlist" className="absolute top-7 right-20 w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-red-50 hover:border-red-300 transition-all duration-200 rounded-full shadow-md border border-zinc-200 group">
-                            <svg width="12" height="14" viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M7.357.5c.303 0 .594.117.808.325s.335.491.335.786v8.334a.54.54 0 0 1-.076.277.584.584 0 0 1-.779.205L5.067 8.995a1.17 1.17 0 0 0-1.134 0l-2.578 1.432a.584.584 0 0 1-.779-.205.54.54 0 0 1-.076-.277V1.61c0-.295.12-.577.335-.786A1.16 1.16 0 0 1 1.643.5z" stroke="#27272a" className="group-hover:stroke-red-500 transition-colors" strokeLinecap="round" strokeLinejoin="round" />
+                        <button
+                            onClick={handleWishlist}
+                            title={isWishlisted ? "Remove from Wishlist" : "Add To Wishlist"}
+                            className={`absolute top-7 right-20 w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-red-50 hover:border-red-300 transition-all duration-200 rounded-full shadow-md border group ${isWishlisted ? "border-red-300" : "border-zinc-200"
+                                }`}
+                        >
+                            <svg width="12" height="14" viewBox="0 0 9 11" fill={isWishlisted ? "#ef4444" : "none"} xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7.357.5c.303 0 .594.117.808.325s.335.491.335.786v8.334a.54.54 0 0 1-.076.277.584.584 0 0 1-.779.205L5.067 8.995a1.17 1.17 0 0 0-1.134 0l-2.578 1.432a.584.584 0 0 1-.779-.205.54.54 0 0 1-.076-.277V1.61c0-.295.12-.577.335-.786A1.16 1.16 0 0 1 1.643.5z" stroke={isWishlisted ? "#ef4444" : "#27272a"} className="group-hover:stroke-red-500 transition-colors" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
                     </div>
 
                     <div className="flex items-center mt-2 gap-4 text-base">
-                        <button className="w-full py-3.5 cursor-pointer font-medium bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition rounded-lg">
+                        <button
+                            onClick={() => handleCart(product._id)}
+                            className="w-full py-3.5 cursor-pointer font-medium bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition rounded-lg">
                             Add to Cart
                         </button>
                         <button className="w-full py-3.5 cursor-pointer font-medium bg-primary text-white hover:bg-primary-dull transition rounded-lg">

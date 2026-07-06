@@ -1,5 +1,5 @@
 import axios from "axios"
-import { LoadUserRequest, LoadUserSuccess, LoadUserFail } from "../slices/userSlice"
+import { LoadUserRequest, LoadUserSuccess, LoadUserFail, UpdateUserRequest, UpdateUserSuccess, UpdateUserFail } from "../slices/userSlice"
 
 export const loadUser = () => async (dispatch, getState) => {
     // Get current user state
@@ -34,3 +34,28 @@ export const loadUser = () => async (dispatch, getState) => {
         dispatch(LoadUserFail(error.message))
     }
 }
+
+
+export const updateUser = (formData) => async (dispatch) => {
+    try {
+        dispatch(UpdateUserRequest());
+
+        const { data } = await axios.put('/api/user/update-profile', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            withCredentials: true
+        });
+
+        if (data.success) {
+            dispatch(UpdateUserSuccess(data.userData));
+            return { success: true, message: data.message };
+        } else {
+            dispatch(UpdateUserFail(data.message));
+            return { success: false, message: data.message };
+        }
+
+    } catch (error) {
+        const errorMsg = error.message;
+        dispatch(UpdateUserFail(errorMsg));
+        return { success: false, message: errorMsg };
+    }
+};

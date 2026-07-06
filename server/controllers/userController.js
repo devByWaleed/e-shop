@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken"
 import path from "path";
 import { fileURLToPath } from "url"
 import transporter from "../config/nodeMailer.js";
+import { getCloudinaryPublicId } from "../config/cloudinary.js";
 
 
 const __filename = fileURLToPath(import.meta.url)
@@ -242,6 +243,92 @@ export const getProfile = async (req, res) => {
         })
     }
 }
+
+
+// Update User Profile : /api/user/update-profile
+export const updateProfile = async (req, res) => {
+    try {
+        const userID = req.userID; // Settled by userAuth middleware
+        const { name, email, password, phoneNumber, address1, address2, zipCode, country, city } = req.body;
+
+        // 1. Validate fields
+        if (!password) {
+            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+            return res.json({ success: false, message: "Password is required to update profile" });
+        }
+
+        // 2. Find user & verify password
+        const user = await UserModel.findById(userID);
+        if (!user) {
+            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+        if (!isPasswordMatch) {
+            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+            return res.json({ success: false, message: "Incorrect password. Verification failed." });
+        }
+
+        // 3. Handle Avatar File Updates
+        if (req.file) {
+            // Delete old asset from Cloudinary if it exists
+            const oldPublicId = getCloudinaryPublicId(user.avatar);
+            if (oldPublicId) {
+                await cloudinary.uploader.destroy(oldPublicId).catch((err) => console.log("Cloudinary destroy error:", err.message));
+            }
+
+            // Upload new file to Cloudinary
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: "avatars",
+            });
+            user.avatar = result.secure_url;
+
+            // Clean up temporary local upload file
+            await fs.promises.unlink(req.file.path).catch(console.log);
+        }
+
+        // 4. Update structural details
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (phoneNumber) user.phoneNumber = phoneNumber;
+
+        // Sync structure with schema address dictionary 
+        const updatedAddress = {
+            address1: address1 || "",
+            address2: address2 || "",
+            zipCode: zipCode ? Number(zipCode) : 0,
+            country: country || "",
+            city: city || "",
+            addressType: "Default"
+        };
+
+        if (user.addresses && user.addresses.length > 0) {
+            user.addresses[0] = updatedAddress;
+        } else {
+            user.addresses = [updatedAddress];
+        }
+
+        await user.save();
+
+        // Strip password out of response data
+        const userData = await UserModel.findById(userID).select("-password");
+
+        return res.json({
+            success: true,
+            message: "Profile Updated Successfully",
+            userData,
+        });
+
+    } catch (error) {
+        console.log(error.message);
+        if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 
 
 

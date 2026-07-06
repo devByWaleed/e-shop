@@ -30,6 +30,8 @@ const Navbar = () => {
     const { user } = useSelector((state) => state.user)
     const { allProducts, productLoading, productError } = useSelector((state) => state.product);
     const { seller } = useSelector((state) => state.seller);
+    const { cart } = useSelector((state) => state.cart);
+    const { wishlist } = useSelector((state) => state.wishlist);
 
     const [searchParams] = useSearchParams();
     const currentCategoryInUrl = searchParams.get('category');
@@ -139,13 +141,14 @@ const Navbar = () => {
                     {/* Mobile Wishlist */}
                     <button className="relative" aria-label="Wishlist"
                         onClick={() => { setOpenWishlist(true); setOpenCart(false); setShowMobileSearch(false); }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6C63FF" strokeWidth="1.5">
-                            <path d="M20 8.5c0 4-8 11.5-8 11.5S4 12.5 4 8.5a5.5 5.5 0 0 1 9.5-3.8A5.5 5.5 0 0 1 20 8.5z" />
+                        <svg className={`transition-colors duration-200`}
+                            width="12" height="14" viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.357.5c.303 0 .594.117.808.325s.335.491.335.786v8.334a.54.54 0 0 1-.076.277.584.584 0 0 1-.779.205L5.067 8.995a1.17 1.17 0 0 0-1.134 0l-2.578 1.432a.584.584 0 0 1-.779-.205.54.54 0 0 1-.076-.277V1.61c0-.295.12-.577.335-.786A1.16 1.16 0 0 1 1.643.5z" stroke="#27272a" className="group-hover:stroke-red-500 transition-colors" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         <span className="absolute -top-1 -right-1 bg-secondary
                             text-white text-[9px] font-medium w-3.5 h-3.5 rounded-full
                             flex items-center justify-center">
-                            2
+                            {wishlist && wishlist.length}
                         </span>
                     </button>
 
@@ -160,7 +163,7 @@ const Navbar = () => {
                         <span className="absolute -top-1 -right-1 bg-secondary
                             text-white text-[9px] font-medium w-3.5 h-3.5 rounded-full
                             flex items-center justify-center">
-                            1
+                            {cart && cart.length}
                         </span>
                     </button>
 
@@ -293,16 +296,14 @@ const Navbar = () => {
                         flex items-center justify-center cursor-pointer
                         hover:bg-white/20 transition-colors"
                         aria-label="Wishlist">
-                        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                            <path d="M10 16.5s-7-4.5-7-8.5a4 4 0 0 1 7-2.646A4
-                                4 0 0 1 17 8c0 4-7 8.5-7 8.5z"
-                                stroke="white" strokeWidth="1.4"
-                                strokeLinecap="round" strokeLinejoin="round" />
+                        <svg className={`transition-colors duration-200`}
+                            width="12" height="14" viewBox="0 0 9 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.357.5c.303 0 .594.117.808.325s.335.491.335.786v8.334a.54.54 0 0 1-.076.277.584.584 0 0 1-.779.205L5.067 8.995a1.17 1.17 0 0 0-1.134 0l-2.578 1.432a.584.584 0 0 1-.779-.205.54.54 0 0 1-.076-.277V1.61c0-.295.12-.577.335-.786A1.16 1.16 0 0 1 1.643.5z" stroke="white" className="group-hover:stroke-red-500 transition-colors" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         <span className="absolute -top-1 -right-1 bg-secondary
                             text-white text-[10px] font-medium w-4 h-4 rounded-full
                             flex items-center justify-center border-[1.5px] border-primary">
-                            2
+                            {wishlist && wishlist.length}
                         </span>
                     </button>
 
@@ -324,7 +325,7 @@ const Navbar = () => {
                         <span className="absolute -top-1 -right-1 bg-secondary
                             text-white text-[10px] font-medium w-4 h-4 rounded-full
                             flex items-center justify-center border-[1.5px] border-primary">
-                            1
+                            {cart && cart.length}
                         </span>
                     </button>
 

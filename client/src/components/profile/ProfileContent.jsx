@@ -1,30 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateUser } from '../../redux/actions/userAction';
+import toast from 'react-hot-toast'
 
 const ProfileContent = ({ active }) => {
+    const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.user);
+
     const [isEdit, setIsEdit] = useState(false);
     const [image, setImage] = useState(false);
+    const [password, setPassword] = useState("");
 
     const [userData, setUserData] = useState({
-        name: "Shahriar Islam Sajeeb",
-        email: "programmershahriarsajeeb@gmail.com",
-        phone: "+1 (555) 234-5678",
-        zipCode: "94025",
-        address1: "123 Innovation Way, Apt 4B",
-        address2: "Silicon Valley, CA",
-        gender: "Male",
-        dob: "1995-06-15",
-        image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"
+        name: "",
+        email: "",
+        phone: 0,
+        zipCode: "",
+        address1: "",
+        address2: "",
+        city: "",
+        country: "",
+        image: ""
     });
 
-    const handleSave = () => {
-        setIsEdit(false);
+    // Sync state configuration safely when data becomes available or shifts
+    useEffect(() => {
+        if (user) {
+            const addr = user.addresses && user.addresses[0] ? user.addresses[0] : {};
+            setUserData({
+                name: user.name || "",
+                email: user.email || "",
+                phone: user.phoneNumber || 0,
+                zipCode: addr.zipCode || "",
+                address1: addr.address1 || "",
+                address2: addr.address2 || "",
+                city: addr.city || "",
+                country: addr.country || "",
+                image: user.avatar || ""
+            });
+        }
+    }, [user]);
+
+    const handleSave = async () => {
+        if (!password) {
+            alert("Please enter your current password to verify updates.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("name", userData.name);
+        formData.append("email", userData.email);
+        formData.append("password", password);
+        formData.append("phoneNumber", userData.phone);
+        formData.append("address1", userData.address1);
+        formData.append("address2", userData.address2);
+        formData.append("zipCode", userData.zipCode);
+        formData.append("city", userData.city);
+        formData.append("country", userData.country);
+
+        if (image) {
+            formData.append("file", image);
+        }
+
+        const result = await dispatch(updateUser(formData));
+        if (result && result.success) {
+            toast.success("Profile successfully altered!");
+            setIsEdit(false);
+            setPassword("");
+            setImage(false);
+        } else {
+            alert(result?.message || "An error occurred while updating profile.");
+        }
     };
 
     if (active !== 1) return null;
 
     return (
         <section className="w-full bg-white border border-gray-200/80 rounded-2xl p-6 md:p-8 shadow-sm">
-            {/* Header / Avatar Block */}
+            {/* Header Block */}
             <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100">
                 <div className="relative group">
                     {isEdit ? (
@@ -32,7 +85,7 @@ const ProfileContent = ({ active }) => {
                             <img
                                 className="w-24 h-24 object-cover rounded-full border-2 border-primary/40 opacity-80 transition-opacity hover:opacity-60"
                                 src={image ? URL.createObjectURL(image) : userData.image}
-                                alt="Avatar"
+                                alt="Avatar Preview"
                             />
                             <div className="absolute inset-0 flex items-center justify-center text-lg bg-black/20 rounded-full text-white">📷</div>
                             <input
@@ -40,38 +93,43 @@ const ProfileContent = ({ active }) => {
                                 type="file"
                                 id="user-avatar"
                                 hidden
+                                accept="image/*"
                             />
                         </label>
                     ) : (
                         <img
                             className="w-24 h-24 object-cover rounded-full border border-gray-200 shadow-inner"
                             src={userData.image}
-                            alt="Profile"
+                            alt="Profile Avatar"
                         />
                     )}
                 </div>
 
                 <div className="text-center sm:text-left flex-1">
-                    <h2 className="text-xl font-bold text-gray-800">{userData.name}</h2>
+                    <h2 className="text-xl font-bold text-gray-800">{userData.name || "User Name"}</h2>
                     <p className="text-xs text-gray-400 mt-0.5">User Account Settings</p>
                 </div>
 
                 <div className="w-full sm:w-auto">
                     {isEdit ? (
-                        <button onClick={handleSave} className="w-full bg-primary hover:bg-primary-dull text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer">
-                            Save Profile
-                        </button>
+                        <div className="flex gap-2">
+                            <button onClick={() => { setIsEdit(false); setPassword(""); setImage(false); }} className="border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium px-4 py-2.5 rounded-xl transition-all cursor-pointer">
+                                Cancel
+                            </button>
+                            <button onClick={handleSave} className="bg-primary hover:bg-primary-dull text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer">
+                                Save Profile
+                            </button>
+                        </div>
                     ) : (
-                        <button onClick={() => setIsEdit(true)} className="w-full border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium px-5 py-2.5 rounded-xl transition-all cursor-pointer">
+                        <button onClick={() => setIsEdit(true)} className="border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium px-5 py-2.5 rounded-xl transition-all cursor-pointer">
                             Edit Fields
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Inputs Section Matrix */}
+            {/* Matrix Form Block */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mt-6">
-
                 {/* Full Name */}
                 <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-gray-500">Full Name</label>
@@ -144,31 +202,45 @@ const ProfileContent = ({ active }) => {
                     />
                 </div>
 
-                {/* Gender Identification */}
+                {/* City */}
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-500">Gender</label>
-                    <select
-                        disabled={!isEdit}
-                        value={userData.gender}
-                        onChange={(e) => setUserData(prev => ({ ...prev, gender: e.target.value }))}
-                        className="w-full bg-gray-50/50 border border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/60 transition-colors"
-                    >
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                    </select>
-                </div>
-
-                {/* Date of Birth */}
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-500">Date of Birth</label>
+                    <label className="text-xs font-semibold text-gray-500">City</label>
                     <input
-                        type="date"
+                        type="text"
                         disabled={!isEdit}
-                        value={userData.dob}
-                        onChange={(e) => setUserData(prev => ({ ...prev, dob: e.target.value }))}
+                        value={userData.city}
+                        onChange={(e) => setUserData(prev => ({ ...prev, city: e.target.value }))}
                         className="w-full bg-gray-50/50 border border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/60 transition-colors"
                     />
                 </div>
+
+                {/* Country */}
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-gray-500">Country</label>
+                    <input
+                        type="text"
+                        disabled={!isEdit}
+                        value={userData.country}
+                        onChange={(e) => setUserData(prev => ({ ...prev, country: e.target.value }))}
+                        className="w-full bg-gray-50/50 border border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/60 transition-colors"
+                    />
+                </div>
+
+                {/* Password field required to authorize profiles updates */}
+                {isEdit && (
+                    <div className="flex flex-col gap-1.5 md:col-span-2 bg-primary-50/40 p-4 border border-primary-200/60 rounded-xl mt-2 animate-fadeIn">
+                        <label className="text-xs font-bold text-primary">Confirm Current Password</label>
+                        <p className="text-xs text-primary mb-1">Enter your password below to securely authorize these structural account profile updates.</p>
+                        <input
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full bg-white border border-primary rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-dull transition-colors"
+                        />
+                    </div>
+                )}
             </div>
         </section>
     );

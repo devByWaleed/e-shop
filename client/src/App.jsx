@@ -100,8 +100,8 @@ const App = () => {
         </Route>
         <Route path='/seller-activation/:activation_token' element={<SellerActivation />} />
 
+        <Route path="/shop/:id" element={<SellerHomepage />} />
         <Route element={<SellerProtectedLayout requireAuth={true} requiredRole="seller" />}>
-          <Route path="/shop/:id" element={<SellerHomepage />} />
           <Route path="/seller-profile" element={<SellerProfile />} />
         </Route>
 
