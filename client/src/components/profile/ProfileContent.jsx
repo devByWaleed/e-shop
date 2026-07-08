@@ -36,7 +36,7 @@ const ProfileContent = ({ active }) => {
                 address2: addr.address2 || "",
                 city: addr.city || "",
                 country: addr.country || "",
-                image: user.avatar || ""
+                image: user.avatar
             });
         }
     }, [user]);

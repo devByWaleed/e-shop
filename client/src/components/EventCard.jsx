@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllEvents } from '../redux/actions/eventAction';
+import { useNavigate } from 'react-router-dom';
 
 
-const EventProduct = ({ product }) => {
+const EventCard = ({ product }) => {
+    const navigate = useNavigate()
+
+    const c = product.category;
+    let categorySlug = c.toLowerCase()
+    categorySlug = categorySlug.replace(/\s+/g, "-")
+
 
     const [timeLeft, setTimeLeft] = useState({ days: 3, hours: 0, minutes: 0, seconds: 0 });
 
@@ -112,7 +119,9 @@ const EventProduct = ({ product }) => {
                         </div>
 
                         <div className="flex gap-4">
-                            <button className="flex-1 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 px-6 py-3 rounded-xl font-semibold">
+                            <button
+                                onClick={() => navigate(`/events/${categorySlug}/${product._id}`)}
+                                className="flex-1 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 px-6 py-3 rounded-xl font-semibold">
                                 See Details
                             </button>
                             <button className="flex-1 bg-linear-to-r from-primary to-primary-dull text-white hover:shadow-lg transform hover:scale-105 transition-all duration-300 px-6 py-3 rounded-xl font-semibold">
@@ -126,4 +135,4 @@ const EventProduct = ({ product }) => {
     );
 };
 
-export default EventProduct;
+export default EventCard;

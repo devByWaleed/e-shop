@@ -53,6 +53,26 @@ export const createCoupon = async (req, res) => {
 };
 
 
+// Get All Coupons : /api/coupon/get-coupon-value
+export const getCouponByName = async (req, res) => {
+    try {
+        const couponName = await CouponModel.findOne({ name: req.params.name })
+
+        return res.status(201).json({
+            success: true,
+            couponName
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Internal server error occurred while creating coupon."
+        });
+    }
+}
+
+
+
 // Get All Coupons : /api/coupon/get-coupons
 export const getAllCoupons = async (req, res) => {
     try {

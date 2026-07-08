@@ -46,7 +46,7 @@ const BestDealsPage = () => {
             ) : (
                 <div className="flex flex-wrap items-center justify-center gap-5">
                     {products.map((product) => (
-                        <ProductCard key={product._id || product.id} product={product} />
+                        <ProductCard key={product._id} product={product} />
                     ))}
                 </div>
             )}

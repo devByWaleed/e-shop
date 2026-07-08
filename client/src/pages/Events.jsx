@@ -1,4 +1,4 @@
-import EventProduct from '../components/EventProduct';
+import EventProduct from '../components/EventCard';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
 import { getAllEvents } from '../redux/actions/eventAction';

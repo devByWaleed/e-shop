@@ -11,6 +11,7 @@ import path from "path"
 import eventRouter from "./routes/eventRoutes.js"
 import { connectCloudinary } from "./config/cloudinary.js"
 import couponRouter from "./routes/couponRoutes.js"
+import orderRouter from "./routes/orderRoutes.js"
 
 
 // Configuring server
@@ -45,8 +46,12 @@ app.use(cors({
 
 
 // Middleware configuration
+app.use('/api/order/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Contains Stripe Webhook
+app.use('/api/order', orderRouter);
 
 
 await connectCloudinary();

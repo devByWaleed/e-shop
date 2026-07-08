@@ -6,10 +6,9 @@ import {
     FiRotateCcw,
     FiMail,
     FiMapPin,
-    FiCreditCard,
-    FiHome,
     FiLogOut
 } from 'react-icons/fi';
+import { RiLockPasswordFill } from 'react-icons/ri';
 import toast from "react-hot-toast";
 import axios from "axios";
 import { LoadUserFail } from '../../redux/slices/userSlice';
@@ -41,9 +40,8 @@ const ProfileSidebar = ({ active, setActive }) => {
         { id: 3, label: "Refunds", icon: <FiRotateCcw size={20} /> },
         { id: 4, label: "Inbox", icon: <FiMail size={20} />, path: "/inbox" },
         { id: 5, label: "Track Order", icon: <FiMapPin size={20} /> },
-        { id: 6, label: "Payment Methods", icon: <FiCreditCard size={20} /> },
-        { id: 7, label: "Address", icon: <FiHome size={20} /> },
-        { id: 8, label: "Logout", icon: <FiLogOut size={20} /> },
+        { id: 6, label: "Change Password", icon: <RiLockPasswordFill size={20} /> },
+        { id: 7, label: "Logout", icon: <FiLogOut size={20} /> },
     ];
 
     const handleNavigation = (item) => {

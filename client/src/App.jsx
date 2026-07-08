@@ -27,6 +27,10 @@ import Sidebar from './components/Sidebar';
 import SellerProfile from './pages/seller/SellerProfile';
 import Profile from './pages/Profile';
 import SellerHomepage from './pages/seller/SellerHomepage';
+import Checkout from './pages/Checkout';
+import Payment from './pages/Payment';
+import OrderSuccess from './pages/OrderSuccess';
+import EventDetails from './pages/EventDetails';
 
 
 const App = () => {
@@ -40,7 +44,8 @@ const App = () => {
     '/seller-profile',
   ]
 
-  const shouldHideNavFooter = hideNavFooterPages.includes(useLocation().pathname);
+  const currentPath = useLocation().pathname;
+  const shouldHideNavFooter = hideNavFooterPages.includes(currentPath);
 
 
   const { isLoading } = useSelector((state) => state.loading)
@@ -66,7 +71,7 @@ const App = () => {
   console.log("Seller Data:", seller)
 
   // Don't show main content while loading user data on app start
-  if (userLoading && !user) {
+  if (userLoading && !user && currentPath !== '/success') {
     return <Loading />
   }
 
@@ -80,18 +85,23 @@ const App = () => {
         {/* Public Rotes */}
         <Route path='/loader' element={<Loading />} />
         <Route path='/' element={<Home />} />
-        <Route path='/products' element={<AllProducts />} />
         <Route element={isAuthenticated ? <Navigate to="/" replace /> : <Outlet />}>
           <Route path='/user-login' element={<Login />} />
           <Route path='/user-signup' element={<SignUp />} />
         </Route>
         <Route path='/activation/:activation_token' element={<Activation />} />
-        <Route path='/products/:category/:id' element={<ProductDetails />} />
-        <Route path='/events/:category/:id' element={<Events />} />
-        <Route path='/events' element={<Events />} />
         <Route path="/best-deals" element={<BestDealsPage />} />
         <Route path='/faqs' element={<Faqs />} />
+
+        <Route path='/products' element={<AllProducts />} />
         <Route path='/product-detail' element={<ProductDetails />} />
+        <Route path='/products/:category/:id' element={<ProductDetails />} />
+
+
+        <Route path='/events' element={<Events />} />
+        <Route path='/event-detail' element={<EventDetails />} />
+        <Route path='/events/:category/:id' element={<EventDetails />} />
+
 
         {/* Seller Auth Routes */}
         <Route element={sellerAuthenticated ? <Navigate to="/" replace /> : <Outlet />}>
@@ -106,8 +116,11 @@ const App = () => {
         </Route>
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
+        <Route path='/success' element={<OrderSuccess />} />
         <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>
           <Route path='/user-profile' element={<Profile />} />
+          <Route path='/checkout' element={<Checkout />} />
+          <Route path='/payment' element={<Payment />} />
         </Route>
       </Routes>
       {!shouldHideNavFooter && <Footer />}

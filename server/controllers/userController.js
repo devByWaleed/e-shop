@@ -331,6 +331,163 @@ export const updateProfile = async (req, res) => {
 };
 
 
+// Password reset OTP : /api/user/send-reset-otp
+export const sendResetOTP = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.json({
+            success: false,
+            message: "Email is required"
+        })
+    }
+
+    try {
+
+        const user = await UserModel.findOne({ email })
+
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "User not found"
+            })
+        }
+
+        // Generating OTP, guaranteed 6 digits
+        const otp = String(Math.floor(100000 + Math.random() * 900000))
+
+        const resetToken = jwt.sign({ email, otp }, process.env.JWT_SECRET, { expiresIn: '10m' })
+        res.cookie('resetToken', resetToken, { httpOnly: true, maxAge: 10 * 60 * 1000 })
+
+        // Sending OTP reset email
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: "Password Reset OTP",
+            text: `Your OTP Is ${otp}. Reset your password using this OTP.`
+        }
+
+        await transporter.sendMail(mailOptions);
+
+        return res.json({ success: true, message: "OTP send to your email" })
+    }
+
+    catch (error) {
+        return res.json({ success: false, message: error.message })
+    }
+}
+
+
+// Verify Reset OTP : /api/user/verify-reset-otp
+export const verifyResetOTP = async (req, res) => {
+    const { email, otp } = req.body;
+    const { resetToken } = req.cookies;
+
+    if (!email || !otp) {
+        return res.json({ success: false, message: "Email and OTP are required" });
+    }
+
+    if (!resetToken) {
+        return res.json({ success: false, message: "OTP expired. Please request a new one." });
+    }
+
+    try {
+        const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+
+        if (decoded.email !== email) {
+            return res.json({ success: false, message: "Invalid request" });
+        }
+
+        if (decoded.otp !== otp) {
+            return res.json({ success: false, message: "Invalid OTP. Please try again." });
+        }
+
+        // OTP is correct — issue a verified token so reset-password knows OTP was checked
+        const verifiedToken = jwt.sign(
+            { email, otpVerified: true },
+            process.env.JWT_SECRET,
+            { expiresIn: '10m' }
+        );
+
+        res.cookie('resetVerified', verifiedToken, {
+            httpOnly: true,
+            maxAge: 10 * 60 * 1000,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+        });
+
+        // Clear the OTP token — it's been used
+        res.clearCookie('resetToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+        });
+
+        return res.json({ success: true, message: "OTP verified" });
+
+    } catch (error) {
+        // jwt.verify throws if token is expired
+        return res.json({ success: false, message: "OTP expired. Please request a new one." });
+    }
+}
+
+
+// Reset user password : /api/user/reset-password
+export const resetPassword = async (req, res) => {
+    const { email, newPassword } = req.body;
+    const { resetVerified } = req.cookies;
+
+    if (!email || !newPassword) {
+        return res.json({
+            success: false,
+            message: "Email,OTP, new password is required"
+        })
+    }
+
+    if (!resetVerified) {
+        return res.json({
+            success: false,
+            message: "OTP not verified. Please start over."
+        });
+    }
+
+    try {
+
+        const user = await UserModel.findOne({ email })
+
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "User not found"
+            })
+        }
+
+        const decoded = jwt.verify(resetVerified, process.env.JWT_SECRET);
+
+        if (!decoded.otpVerified || decoded.email !== email) {
+            return res.json({ success: false, message: "Unauthorized. Please verify your OTP first." });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword
+
+        await user.save();
+
+        // Clean up the verified cookie
+        res.clearCookie('resetVerified', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+        });
+
+        return res.json({ success: true, message: "Password has been reset successfully" })
+    }
+
+    catch (error) {
+        return res.json({ success: false, message: error.message })
+    }
+}
+
 
 // User logout : /api/user/logout
 export const logout = async (req, res) => {

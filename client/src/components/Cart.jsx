@@ -168,7 +168,7 @@ const Cart = ({ openCart, setOpenCart }) => {
                             <span className="text-secondary text-lg">{currency}{subtotal}</span>
                         </div>
                         <button
-                            onClick={() => onClose()}
+                            onClick={() => { onClose(); navigate("/checkout") }}
                             className="w-full py-3 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dull transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer text-center"
                         >
                             Proceed To Checkout

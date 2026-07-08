@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllEvents } from '../redux/actions/eventAction';
-import EventProduct from './EventProduct';
+import EventCard from './EventCard';
 
 const EventSection = () => {
     const dispatch = useDispatch();
@@ -23,7 +23,7 @@ const EventSection = () => {
 
             <div className="flex flex-wrap items-center justify-center gap-5">
                 {allEvents?.map((product, index) => (
-                    <EventProduct key={product._id} product={product} />
+                    <EventCard key={product._id} product={product} />
                 )) || <p>No events available.</p>}
             </div>
         </section>
