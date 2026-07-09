@@ -6,6 +6,7 @@ import productReducer from './slices/productSlice';
 import eventReducer from './slices/eventSlice';
 import cartReducer from './slices/cartSlice';
 import wishlistReducer from './slices/wishlistSlice';
+import orderReducer from './slices/orderSlice';
 
 const store = configureStore({
     reducer: {
@@ -15,7 +16,8 @@ const store = configureStore({
         product: productReducer,
         event: eventReducer,
         cart: cartReducer,
-        wishlist: wishlistReducer
+        wishlist: wishlistReducer,
+        order: orderReducer,
     },
     // Redux Toolkit automatically adds thunk middleware and devTools
 });

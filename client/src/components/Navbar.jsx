@@ -109,23 +109,25 @@ const Navbar = () => {
                     )}
                 </div>
 
-                {/* Become Seller - Hidden on Mobile */}
-                <button className="hidden sm:flex items-center gap-2 bg-dark
-                    hover:bg-dark-dull transition-colors text-white text-sm
-                    font-medium px-5 py-2 rounded-full shrink-0 cursor-pointer"
-                    onClick={() => {
-                        setOpen(false)
-                        navigate('/seller-signup')
-                    }}>
-                    <span className="w-4.5 h-4.5 rounded-full bg-accent
-                        flex items-center justify-center shrink-0">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M5 2v6M2 5h6" stroke="#1A1A2E"
-                                strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                    </span>
-                    Become a Seller
-                </button>
+                {seller ? (
+                    <div className="w-9 h-9 rounded-full overflow-hidden cursor-pointer
+                            border-2 border-white/40 hover:border-white/70 transition-colors shrink-0"
+                        title="Profile"
+                        onClick={() => navigate("/seller-profile")}
+                    >
+                        <img
+                            src={seller.avatar ? `${seller.avatar}` : assets.profile}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                ) : (
+                    <button onClick={() => { setOpen(false); navigate('/seller-signup'); }}
+                        className="w-full bg-dark hover:bg-dark-dull transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-full">
+                        Become a Seller
+                    </button>
+                )}
+
 
                 {/* Mobile Action Icons Group - Visible only on Mobile (<640px) */}
                 <div className="flex sm:hidden items-center gap-3">
@@ -424,10 +426,26 @@ const Navbar = () => {
 
                     {/* Mobile Action Actions Footer Panel */}
                     <div className="p-4 bg-white border-t border-light-border space-y-3">
-                        <button onClick={() => { setOpen(false); navigate('/seller-signup'); }}
-                            className="w-full bg-dark hover:bg-dark-dull transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-full">
-                            Become a Seller
-                        </button>
+                        {/* Avatar */}
+                        {seller ? (
+                            <div className="w-9 h-9 rounded-full overflow-hidden cursor-pointer
+                            border-2 border-white/40 hover:border-white/70 transition-colors shrink-0"
+                                title="Profile"
+                                onClick={() => navigate("/seller-profile")}
+                            >
+                                <img
+                                    src={seller.avatar ? `${seller.avatar}` : assets.profile}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ) : (
+                            <button onClick={() => { setOpen(false); navigate('/seller-signup'); }}
+                                className="w-full bg-dark hover:bg-dark-dull transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-full">
+                                Become a Seller
+                            </button>
+                        )}
+
 
                         {!user ? (
                             <button onClick={() => { setOpen(false); navigate('/user-login'); }}

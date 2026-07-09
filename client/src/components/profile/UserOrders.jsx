@@ -1,28 +1,17 @@
 import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { FiShoppingBag, FiArrowRight, FiEye } from 'react-icons/fi';
+import { useEffect } from 'react';
+import { getUserOrder } from '../../redux/actions/orderAction';
+import { useNavigate } from 'react-router-dom';
 
 const UserOrders = () => {
-    // Mock order data based exactly on your schema reference
-    const orders = [
-        {
-            id: "7463hvbfbhfbrtr28820f83hfb3",
-            status: "Processing",
-            itemsQty: 1,
-            total: 120
-        },
-        {
-            id: "9284jdnfkrjfnvt64920k48fnd2",
-            status: "Delivered",
-            itemsQty: 3,
-            total: 845
-        },
-        {
-            id: "1048dhfuryfncpe84920m39dhb7",
-            status: "Canceled",
-            itemsQty: 2,
-            total: 310
-        }
-    ];
+    const dispatch = useDispatch()
+    const navigate = useNavigate();
+
+    const { user } = useSelector((state) => state.user);
+    const { orders } = useSelector((state) => state.order);
+
 
     // Helper color scheme mapper for modern badge statuses
     const getStatusStyle = (status) => {
@@ -37,6 +26,12 @@ const UserOrders = () => {
                 return 'bg-gray-50 text-gray-700 border-gray-200/60';
         }
     };
+
+    useEffect(() => {
+        if (user._id) {
+            dispatch(getUserOrder(user._id))
+        }
+    }, [user._id])
 
     return (
         <div className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 md:p-8 shadow-sm">
@@ -62,7 +57,7 @@ const UserOrders = () => {
             <div className="grid grid-cols-1 gap-4 md:hidden">
                 {orders.map((order) => (
                     <div
-                        key={order.id}
+                        key={order._id}
                         className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 flex flex-col gap-3 relative hover:border-gray-200 transition-all"
                     >
                         <div className="flex items-center justify-between">
@@ -70,22 +65,24 @@ const UserOrders = () => {
                                 {order.status}
                             </span>
                             <span className="text-sm font-bold text-gray-900">
-                                US$ {order.total}
+                                US$ {order.totalPrice}
                             </span>
                         </div>
 
                         <div className="flex flex-col gap-1">
                             <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Order ID</span>
                             <span className="text-xs font-mono text-gray-700 break-all bg-white px-2 py-1 rounded border border-gray-100">
-                                {order.id}
+                                {order._id}
                             </span>
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-gray-100/60 mt-1">
                             <span className="text-xs text-gray-500">
-                                Items Quantity: <strong className="text-gray-800">{order.itemsQty}</strong>
+                                Items Quantity: <strong className="text-gray-800">{order.cart.quantity}</strong>
                             </span>
-                            <button className="flex items-center gap-1.5 text-xs font-semibold text-secondary hover:underline cursor-pointer">
+                            <button
+                                onClick={() => navigate(`/user-order/${order._id}`)}
+                                className="flex items-center gap-1.5 text-xs font-semibold text-secondary hover:underline cursor-pointer">
                                 Details <FiArrowRight size={14} />
                             </button>
                         </div>
@@ -106,10 +103,10 @@ const UserOrders = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
-                        {orders.map((order) => (
-                            <tr key={order.id} className="hover:bg-gray-50/40 transition-colors group">
+                        {orders.map((order, index) => (
+                            <tr key={order._id} className="hover:bg-gray-50/40 transition-colors group">
                                 <td className="py-4 px-6 font-mono text-xs text-gray-500 max-w-45 truncate">
-                                    {order.id}
+                                    {order._id}
                                 </td>
                                 <td className="py-4 px-4">
                                     <span className={`inline-block text-xs font-medium px-2.5 py-0.5 rounded-md border ${getStatusStyle(order.status)}`}>
@@ -117,13 +114,15 @@ const UserOrders = () => {
                                     </span>
                                 </td>
                                 <td className="py-4 px-4 text-center font-medium text-gray-600">
-                                    {order.itemsQty}
+                                    {order.cart[index].quantity}
                                 </td>
                                 <td className="py-4 px-4 text-right font-bold text-gray-900">
-                                    US$ {order.total}
+                                    US$ {order.totalPrice}
                                 </td>
                                 <td className="py-4 px-6 text-center">
-                                    <button className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-secondary hover:bg-secondary/5 transition-all cursor-pointer">
+                                    <button
+                                        onClick={() => navigate(`/user-order/${order._id}`)}
+                                        className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-secondary hover:bg-secondary/5 transition-all cursor-pointer">
                                         <FiEye size={18} />
                                     </button>
                                 </td>

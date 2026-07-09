@@ -38,6 +38,7 @@ const EventDetails = () => {
         if (!eventItem?.finish_Date) return;
 
         const targetDate = new Date(eventItem.finish_Date);
+
         const timer = setInterval(() => {
             const now = new Date();
             const difference = targetDate - now;

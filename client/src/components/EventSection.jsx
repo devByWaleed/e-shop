@@ -11,7 +11,6 @@ const EventSection = () => {
         dispatch(getAllEvents());
     }, [dispatch]);
 
-
     return (
         <section className="bg-white flex flex-col items-center justify-center px-4 py-16">
             <div className="max-w-7xl mx-auto items-start mb-10">
@@ -22,9 +21,11 @@ const EventSection = () => {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-5">
-                {allEvents?.map((product, index) => (
-                    <EventCard key={product._id} product={product} />
-                )) || <p>No events available.</p>}
+                {allEvents && allEvents.length > 0 ? (
+                    <EventCard product={allEvents[0]} />
+                ) : (
+                    <p>No events available.</p>
+                )}
             </div>
         </section>
     );

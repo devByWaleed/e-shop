@@ -31,6 +31,8 @@ import Checkout from './pages/Checkout';
 import Payment from './pages/Payment';
 import OrderSuccess from './pages/OrderSuccess';
 import EventDetails from './pages/EventDetails';
+import SellerOrderDetails from './pages/seller/SellerOrderDetails';
+import UserOrderDetails from './pages/UserOrderDetails';
 
 
 const App = () => {
@@ -113,12 +115,14 @@ const App = () => {
         <Route path="/shop/:id" element={<SellerHomepage />} />
         <Route element={<SellerProtectedLayout requireAuth={true} requiredRole="seller" />}>
           <Route path="/seller-profile" element={<SellerProfile />} />
+          <Route path="/order/:id" element={<SellerOrderDetails />} />
         </Route>
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}
         <Route path='/success' element={<OrderSuccess />} />
         <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>
           <Route path='/user-profile' element={<Profile />} />
+          <Route path="/user-order/:id" element={<UserOrderDetails />} />
           <Route path='/checkout' element={<Checkout />} />
           <Route path='/payment' element={<Payment />} />
         </Route>

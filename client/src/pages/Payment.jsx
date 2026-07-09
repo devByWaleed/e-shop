@@ -29,8 +29,9 @@ const Payment = () => {
         // Format payloads properly to map with backend schemas
         const payload = {
             items: orderData.cart.map(item => ({
-                product: item._id || item.product,
-                quantity: item.quantity
+                product: item,
+                quantity: item.quantity,
+                shopId: item.shopId
             })),
             address: orderData.shippingAddress
         };

@@ -36,14 +36,12 @@ export const placeOrderCOD = async (req, res) => {
             const unitPrice = getProductUnitPrice(product);
 
             normalizedItems.push({
-                product: product._id,
-                quantity
+                product: product,
+                quantity,
+                seller: item.shopId
             });
             amount += unitPrice * quantity;
         }
-
-        // Add tax charge (2%)
-        amount += Math.floor(amount * 0.02);
 
         await OrderModel.create({
             cart: normalizedItems,
@@ -89,8 +87,9 @@ export const placeOrderStripe = async (req, res) => {
             const unitPrice = getProductUnitPrice(product);
 
             normalizedItems.push({
-                product: product._id,
-                quantity
+                product: product,
+                quantity,
+                seller: item.shopId
             });
 
             productData.push({
@@ -100,9 +99,6 @@ export const placeOrderStripe = async (req, res) => {
             });
             amount += unitPrice * quantity;
         }
-
-        // Add tax charge (2%)
-        amount += Math.floor(amount * 0.02);
 
         const order = await OrderModel.create({
             cart: normalizedItems,
@@ -179,7 +175,14 @@ export const stripeWebhooks = async (req, res) => {
                 // Use Promise.all to run both updates in parallel for speed
                 await Promise.all([
                     OrderModel.findByIdAndUpdate(orderId, {
-                        status: "Paid",
+                        status: "processing",
+
+
+
+
+
+
+
                         paymentInfo: {
                             type: "Online",
                             status: "Paid"
@@ -201,17 +204,32 @@ export const stripeWebhooks = async (req, res) => {
 
 
 
-// Get Orders by UserID : /api/order/user
+// Get Orders by UserID : /api/order/user-orders
 export const getUserOrders = async (req, res) => {
     try {
         const userID = req.userID;
 
         const orders = await OrderModel.find({
             user: userID,
-            $or: [{ "paymentInfo.type": "COD" }, { status: "Paid" }, { "paymentInfo.status": "Paid" }]
         }).sort({ createdAt: -1 });
 
         return res.json({ success: true, orders });
+    } catch (error) {
+        return res.json({ success: false, message: error.message })
+    }
+}
+
+
+// Get Orders by UserID : /api/order/shop-orders
+export const getShopOrders = async (req, res) => {
+    try {
+        const sellerID = req.sellerID;
+
+        const shopOrders = await OrderModel.find({
+            "cart.seller": sellerID,
+        }).sort({ createdAt: -1 });
+
+        return res.json({ success: true, shopOrders });
     } catch (error) {
         return res.json({ success: false, message: error.message })
     }
@@ -229,4 +247,54 @@ export const getAllOrders = async (req, res) => {
     } catch (error) {
         return res.json({ success: false, message: error.message })
     }
+}
+
+
+// Update Order Status: /api/order/update-order-status
+export const updateOrderStatus = async (req, res) => {
+    try {
+        const order = await OrderModel.findById(req.params.id)
+
+        if (!order) {
+            return res.json({ success: true, message: "Order not found" });
+        }
+
+        if (req.body.status === "Transferred to delivery partner") {
+            order.cart.forEach(async (o) => {
+                await updateOrder(o._id, o.quantity)
+            })
+        }
+
+        order.status = req.body.status
+
+        if (req.body.status === "Delivered" && order.paymentInfo.type === "COD") {
+            order.delivered = Date.now()
+            order.paymentInfo.type = "Paid"
+        }
+
+        await order.save({ validateBeforeSave: false })
+
+        if (req.body.status === "Delivered" && order.paymentInfo.type === "Online") {
+            order.delivered = Date.now()
+        }
+
+        await order.save({ validateBeforeSave: false })
+
+        res.json({ success: true, message: "Order status updated successfully" });
+
+
+        async function updateOrder(id, qty) {
+            const product = await ProductModel.findById(id)
+
+            product.stock -= qty
+            product.soldOut += qty
+
+            await product.save({ validateBeforeSave: false })
+        }
+
+    } catch (error) {
+        return res.json({ success: false, message: error.message })
+    }
+
+
 }

@@ -1,32 +1,31 @@
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { getAllEvents } from '../redux/actions/eventAction';
 import { useNavigate } from 'react-router-dom';
 
-
 const EventCard = ({ product }) => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
-    const c = product.category;
-    let categorySlug = c.toLowerCase()
-    categorySlug = categorySlug.replace(/\s+/g, "-")
+    const c = product?.category || "";
+    let categorySlug = c.toLowerCase();
+    categorySlug = categorySlug.replace(/\s+/g, "-");
 
-
-    const [timeLeft, setTimeLeft] = useState({ days: 3, hours: 0, minutes: 0, seconds: 0 });
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
     useEffect(() => {
-        const targetDate = new Date();
-        targetDate.setDate(targetDate.getDate() + 3);
-        targetDate.setHours(0, 0, 0, 0);
+        // If the finish_Date field isn't present, we cannot calculate a countdown
+        if (!product?.finish_Date) return;
+
+        const targetDate = new Date(product.finish_Date);
 
         const timer = setInterval(() => {
             const now = new Date();
             const difference = targetDate - now;
+
             if (difference <= 0) {
                 clearInterval(timer);
                 setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
                 return;
             }
+
             setTimeLeft({
                 days: Math.floor(difference / (1000 * 60 * 60 * 24)),
                 hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
@@ -36,7 +35,7 @@ const EventCard = ({ product }) => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, []);
+    }, [product?.finish_Date]);
 
     if (!product) return null;
 
@@ -54,12 +53,12 @@ const EventCard = ({ product }) => {
                                 </div>
                             </div>
                             <div className="flex items-center justify-center p-8">
-                                <img src={product.images[0]} alt={product.name}
+                                <img src={product.images?.[0]} alt={product.name}
                                     className="w-full max-w-sm object-contain hover:scale-105 transition-all duration-300 ease-in-out" />
                             </div>
-                            {/* Thumbnails — dynamic, not hardcoded */}
+                            {/* Thumbnails */}
                             <div className="flex justify-center gap-3 mt-4">
-                                {product.images.slice(0, 4).map((img, i) => (
+                                {product.images?.slice(0, 4).map((img, i) => (
                                     <div key={i} className="w-16 h-16 rounded-lg border-2 border-light-border hover:border-primary cursor-pointer transition-all p-1">
                                         <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover rounded" />
                                     </div>
@@ -76,7 +75,6 @@ const EventCard = ({ product }) => {
 
                         <h1 className="text-3xl md:text-4xl font-bold text-dark mb-4">{product.name}</h1>
 
-
                         <ul className="list-disc pl-5 space-y-2 text-text/70 leading-relaxed mb-6">
                             {product.description?.map((des, index) => (
                                 <li key={index} className="marker:text-primary">{des}</li>
@@ -85,8 +83,7 @@ const EventCard = ({ product }) => {
 
                         <div className="mb-6">
                             <div className="flex items-center gap-3">
-                                <span className="text-3xl font-bold text-dark">${product.discountPrice
-                                }</span>
+                                <span className="text-3xl font-bold text-dark">${product.discountPrice}</span>
                                 <span className="text-xl text-secondary line-through">${product.originalPrice}</span>
                                 <span className="bg-accent/20 text-accent-dull px-2 py-1 rounded-md text-sm font-semibold">{product.soldOut || 0} sold</span>
                             </div>
@@ -101,7 +98,7 @@ const EventCard = ({ product }) => {
                                 <span className="text-text font-semibold">Flash Sale Ends In:</span>
                             </div>
                             <div className="flex gap-3">
-                                {[['Days', timeLeft.days], ['Hours', timeLeft.hours], ['Minutes', timeLeft.minutes]].map(([label, val]) => (
+                                {[["Days", timeLeft.days], ["Hours", timeLeft.hours], ["Minutes", timeLeft.minutes]].map(([label, val]) => (
                                     <div key={label} className="text-center">
                                         <div className="bg-linear-to-br from-dark to-dark-dull text-white rounded-xl px-4 py-3 min-w-17.5">
                                             <span className="text-2xl font-bold">{String(val).padStart(2, '0')}</span>

@@ -1,6 +1,6 @@
 import express from "express"
 import userAuth from "../middleware/userAuth.js";
-import { getAllOrders, getUserOrders, placeOrderCOD, placeOrderStripe, stripeWebhooks } from "../controllers/orderController.js";
+import { getAllOrders, getUserOrders, placeOrderCOD, placeOrderStripe, stripeWebhooks, getShopOrders, updateOrderStatus } from "../controllers/orderController.js";
 import sellerAuth from "../middleware/sellerAuth.js";
 
 
@@ -10,8 +10,10 @@ orderRouter.post("/stripe/webhook", express.raw({ type: 'application/json' }), s
 
 orderRouter.post("/cod", express.json(), userAuth, placeOrderCOD);
 orderRouter.post("/stripe", express.json(), userAuth, placeOrderStripe);
-orderRouter.get("/user", userAuth, getUserOrders)
+orderRouter.get("/user-orders/:id", userAuth, getUserOrders)
+orderRouter.get("/shop-orders/:id", sellerAuth, getShopOrders)
 orderRouter.get("/seller", sellerAuth, getAllOrders)
+orderRouter.put("/update-order-status", sellerAuth, updateOrderStatus);
 
 
 export default orderRouter
