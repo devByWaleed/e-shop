@@ -190,17 +190,38 @@ const ProductDetails = () => {
                 <div className="text-sm w-full md:w-1/2">
                     <h1 className="text-3xl font-medium">{product.name}</h1>
 
-                    {/* Rating — not part of ProductSchema, so this stays a dummy inline value */}
-                    <div className="flex items-center gap-0.5 mt-1">
-                        <div
-                            className="star-rating"
-                            data-rating={4.5}
-                            style={{ "--rating-percent": `${(4.5 / 5) * 100}%` }}
-                            aria-label="Rated 4.5 out of 5 stars"
-                        ></div>
-                        <p className="text-base ml-1 text-gray-500">
-                            {(4.5).toFixed(1)} ({(128).toLocaleString()} sold)
-                        </p>
+                    {/* Rating */}
+                    <div className="flex flex-col items-center gap-0.5 mt-1">
+                        {(() => {
+                            const reviews = product.reviews || [];
+
+                            // 1. If there are no reviews, default to 0 stars
+                            if (reviews.length === 0) {
+                                return (
+                                    <div className="star-rating" data-rating="0" style={{ "--rating-percent": "0%" }} aria-label="No reviews yet"></div>
+                                );
+                            }
+
+                            // 2. Sum up all the ratings in the array
+                            const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+
+                            // 3. Calculate the average (e.g., 4.5)
+                            const averageRating = Math.round((totalRating / reviews.length) * 10) / 10;
+
+                            return (
+                                <>
+                                    <div
+                                        className="star-rating"
+                                        data-rating={averageRating}
+                                        style={{ "--rating-percent": `${(averageRating / 5) * 100}%` }}
+                                        aria-label={`Rated ${averageRating} out of 5 stars`}
+                                    ></div>
+                                    <p className="text-base ml-1 text-gray-500">
+                                        {averageRating} ({product.soldOut} sold)
+                                    </p>
+                                </>
+                            );
+                        })()}
                     </div>
 
                     {/* Seller Info Card — sourced from product.shop (DB), not a mock seller import */}
@@ -317,72 +338,51 @@ const ProductDetails = () => {
                         inline dummy data directly in JSX rather than pulled from Redux/DB */}
                     {activeTab === "reviews" && (
                         <div id="reviews">
-                            {[
-                                {
-                                    id: 1,
-                                    userName: "Alex Johnson",
-                                    stars: 5,
-                                    comment: "Great quality, exactly as described. Would buy again!",
-                                    createdAt: "2026-05-12"
-                                },
-                                {
-                                    id: 2,
-                                    userName: "Priya Sharma",
-                                    stars: 4,
-                                    comment: "Good product overall, shipping took a bit longer than expected.",
-                                    createdAt: "2026-04-28"
-                                }
-                            ].length === 0 ? (
+                            {product.reviews.length === 0 ? (
                                 <p className="text-gray-400 text-sm py-6 text-center">
                                     No reviews yet. Be the first to review this product!
                                 </p>
                             ) : (
                                 <div className="flex flex-col gap-4">
-                                    {[
-                                        {
-                                            id: 1,
-                                            userName: "Alex Johnson",
-                                            stars: 5,
-                                            comment: "Great quality, exactly as described. Would buy again!",
-                                            createdAt: "2026-05-12"
-                                        },
-                                        {
-                                            id: 2,
-                                            userName: "Priya Sharma",
-                                            stars: 4,
-                                            comment: "Good product overall, shipping took a bit longer than expected.",
-                                            createdAt: "2026-04-28"
-                                        }
-                                    ].map((review) => (
-                                        <div key={review.id} className="border border-gray-200 rounded-xl p-5">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div>
-                                                    <p className="font-medium text-gray-800">{review.userName}</p>
-                                                    <div className="flex items-center gap-0.5 mt-1">
-                                                        <div
-                                                            className="star-rating"
-                                                            data-rating={review.stars}
-                                                            style={{ "--rating-percent": `${(review.stars / 5) * 100}%` }}
-                                                            aria-label={`Rated ${review.stars} out of 5 stars`}
-                                                        ></div>
-                                                        <p className="text-base ml-1 text-gray-500">
-                                                            {review.stars.toFixed(1)}
+                                    {product.reviews?.map((review) => {
+                                        // Fallback to 0 if rating is missing to avoid calculation errors
+                                        const currentRating = review.rating || 0;
+
+                                        return (
+                                            <div key={review._id || Math.random()} className="border border-gray-200 rounded-xl p-5">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div>
+                                                        {/* Adjusted for nested user object, fallback if name is unavailable */}
+                                                        <p className="font-medium text-gray-800">
+                                                            {review.user?.name || "Anonymous User"}
                                                         </p>
+                                                        <div className="flex items-center gap-0.5 mt-1">
+                                                            <div
+                                                                className="star-rating"
+                                                                data-rating={currentRating}
+                                                                style={{ "--rating-percent": `${(currentRating / 5) * 100}%` }}
+                                                                aria-label={`Rated ${currentRating} out of 5 stars`}
+                                                            ></div>
+                                                            <p className="text-base ml-1 text-gray-500">
+                                                                {currentRating.toFixed(1)}
+                                                            </p>
+                                                        </div>
                                                     </div>
+                                                    {/* Safe date parsing in case review.createdAt is a nested MongoDB object or string */}
+                                                    <p className="text-xs text-gray-400">
+                                                        {review.createdAt ? new Date(review.createdAt).toLocaleDateString("en-US", {
+                                                            year: "numeric",
+                                                            month: "short",
+                                                            day: "numeric"
+                                                        }) : ""}
+                                                    </p>
                                                 </div>
-                                                <p className="text-xs text-gray-400">
-                                                    {new Date(review.createdAt).toLocaleDateString("en-US", {
-                                                        year: "numeric",
-                                                        month: "short",
-                                                        day: "numeric"
-                                                    })}
+                                                <p className="text-gray-600 text-sm mt-2 leading-relaxed">
+                                                    {review.comment}
                                                 </p>
                                             </div>
-                                            <p className="text-gray-600 text-sm mt-2 leading-relaxed">
-                                                {review.comment}
-                                            </p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -397,14 +397,24 @@ const ProductDetails = () => {
                                 <h3 className="text-xl font-semibold text-gray-800">{shop?.name}</h3>
                                 <div className="flex items-center justify-center gap-1 mt-2">
                                     <div className="flex items-center gap-0.5 mt-1">
-                                        <div
-                                            className="star-rating"
-                                            data-rating={4.5}
-                                            style={{ "--rating-percent": `${(4.5 / 5) * 100}%` }}
-                                            aria-label="Rated 4.5 out of 5 stars"
-                                        ></div>
+                                        {(() => {
+                                            const reviews = product.reviews || [];
+                                            const totalRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+                                            const avgRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+
+                                            return (
+                                                <>
+                                                    <div
+                                                        className="star-rating"
+                                                        data-rating={avgRating}
+                                                        style={{ "--rating-percent": `${(avgRating / 5) * 100}%` }}
+                                                        aria-label={`Rated ${avgRating.toFixed(1)} out of 5 stars`}
+                                                    ></div>
+                                                    <span className="text-sm text-gray-500 ml-1">({avgRating.toFixed(1)}) Ratings</span>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
-                                    <span className="text-sm text-gray-500 ml-1">(4.5) Ratings</span>
                                 </div>
                             </div>
 
@@ -431,7 +441,7 @@ const ProductDetails = () => {
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-500 text-sm">Total Reviews:</span>
-                                    <span className="text-gray-800 font-medium">{(128).toLocaleString()}</span>
+                                    <span className="text-gray-800 font-medium">{product.reviews?.length}</span>
                                 </div>
                             </div>
 

@@ -24,7 +24,6 @@ const SellerOrderDetails = () => {
   const orderData = shopOrders?.find((item) => item._id === id);
   console.log(orderData);
 
-
   // Sync state when order finishes loading
   useEffect(() => {
     if (orderData) {
@@ -32,29 +31,26 @@ const SellerOrderDetails = () => {
     }
   }, [orderData]);
 
-  const handleStatusUpdate = async (e) => {
-    // const newStatus = e.target.value;
-    // setStatus(newStatus);
-    // setUpdating(true);
+  const handleStatusUpdate = async () => {
+    setUpdating(true);
+    try {
+      const { data } = await axios.put(
+        `/api/order/update-order-status/${id}`,
+        { status },
+        { withCredentials: true }
+      );
 
-    // try {
-    //   const { data } = await axios.put(
-    //     `/api/order/update-order-status/${id}`,
-    //     { status: newStatus },
-    //     { withCredentials: true }
-    //   );
-
-    //   if (data.success) {
-    //     toast.success("Order status updated successfully!");
-    //     dispatch(getShopOrder(seller._id)); // Refresh data
-    //   } else {
-    //     toast.error(data.message || "Failed to update status");
-    //   }
-    // } catch (error) {
-    //   toast.error(error.response?.data?.message || "Something went wrong");
-    // } finally {
-    //   setUpdating(false);
-    // }
+      if (data.success) {
+        toast.success("Order status updated successfully!");
+        dispatch(getShopOrder(seller._id)); // Refresh data
+      } else {
+        toast.error(data.message || "Failed to update status");
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error?.message || "Something went wrong");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   if (orderLoading) {
@@ -96,12 +92,12 @@ const SellerOrderDetails = () => {
         {/* Dynamic Status Update Select Selector */}
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
           <label className="text-sm font-semibold text-gray-600 shrink-0">Update Status:</label>
-          <div className="relative w-full sm:w-48">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <select
               value={status}
               disabled={updating}
-              onChange={handleStatusUpdate}
-              className="w-full bg-white border border-gray-300 rounded-lg text-sm px-3 py-2 text-gray-700 font-medium focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100"
+              onChange={(e) => setStatus(e.target.value)}
+              className="bg-white border border-gray-300 rounded-lg text-sm px-3 py-2 text-gray-700 font-medium focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 min-w-45"
             >
               <option value="Processing">Processing</option>
               <option value="Transferred to delivery partner">Transferred to delivery partner</option>
@@ -109,6 +105,13 @@ const SellerOrderDetails = () => {
               <option value="Delivered">Delivered</option>
               <option value="Cancelled">Cancelled</option>
             </select>
+            <button
+              onClick={handleStatusUpdate}
+              disabled={updating}
+              className='px-4 py-2 text-sm font-medium cursor-pointer bg-black hover:bg-black/80 disabled:bg-gray-400 rounded-lg text-white transition-colors shrink-0'
+            >
+              {updating ? "Updating..." : "Update"}
+            </button>
           </div>
         </div>
       </div>

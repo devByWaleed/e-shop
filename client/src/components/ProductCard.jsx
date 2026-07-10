@@ -107,6 +107,35 @@ const ProductCard = ({ product, index }) => {
             {/* Product Name */}
             <p className="text-sm text-neutral-500 mb-2 px-2 line-clamp-2 min-h-10">{product.name}</p>
 
+            {/* Rating */}
+            <div className="flex flex-col items-center gap-0.5 mt-1">
+                {(() => {
+                    const reviews = product.reviews || [];
+
+                    // 1. If there are no reviews, default to 0 stars
+                    if (reviews.length === 0) {
+                        return (
+                            <div className="star-rating" data-rating="0" style={{ "--rating-percent": "0%" }} aria-label="No reviews yet"></div>
+                        );
+                    }
+
+                    // 2. Sum up all the ratings in the array
+                    const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+
+                    // 3. Calculate the average (e.g., 4.5)
+                    const averageRating = Math.round((totalRating / reviews.length) * 10) / 10;
+
+                    return (
+                        <div
+                            className="star-rating"
+                            data-rating={averageRating}
+                            style={{ "--rating-percent": `${(averageRating / 5) * 100}%` }}
+                            aria-label={`Rated ${averageRating} out of 5 stars`}
+                        ></div>
+                    );
+                })()}
+            </div>
+
             {/* Price Footer */}
             <div className="flex items-center gap-2 px-2 mt-auto">
                 <span className="text-sm font-semibold text-neutral-800">${product.discountPrice}</span>

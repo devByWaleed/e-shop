@@ -250,51 +250,72 @@ export const getAllOrders = async (req, res) => {
 }
 
 
-// Update Order Status: /api/order/update-order-status
+// Update Order Status: /api/order/update-order-status/:id
 export const updateOrderStatus = async (req, res) => {
     try {
-        const order = await OrderModel.findById(req.params.id)
+        const order = await OrderModel.findById(req.params.id);
 
         if (!order) {
-            return res.json({ success: true, message: "Order not found" });
+            return res.json({ success: false, message: "Order not found" });
         }
 
-        if (req.body.status === "Transferred to delivery partner") {
-            order.cart.forEach(async (o) => {
-                await updateOrder(o._id, o.quantity)
-            })
+        const stockAlreadyDepleted =
+            order.status === "Transferred to delivery partner" || order.status === "Delivered";
+
+        const isNowDepletingStatus =
+            req.body.status === "Transferred to delivery partner" || req.body.status === "Delivered";
+
+        // Deplete stock exactly once, whichever of the two statuses hits first
+        if (isNowDepletingStatus && !stockAlreadyDepleted) {
+            for (const item of order.cart) {
+                await updateProductStock(item.product?._id || item.product, item.quantity);
+            }
+        }
+
+        order.status = req.body.status;
+
+        if (req.body.status === "Delivered") {
+            order.deliveredAt = Date.now();
+            if (order.paymentInfo.type === "COD") {
+                order.paymentInfo.status = "Paid";
+            }
+        }
+
+        await order.save({ validateBeforeSave: false });
+
+        return res.json({ success: true, message: "Order status updated successfully" });
+
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
+    }
+};
+
+async function updateProductStock(productId, qty) {
+    const product = await ProductModel.findById(productId);
+    if (product) {
+        product.stock = Math.max(0, product.stock - qty);
+        product.soldOut += qty;
+        await product.save({ validateBeforeSave: false });
+    }
+}
+
+
+// Update Order Status: /api/order/order-refund/:id
+export const updateRefund = async (req, res) => {
+    try {
+        const order = await OrderModel.findById(req.params.id);
+
+        if (!order) {
+            return res.json({ success: false, message: "Order not found" });
         }
 
         order.status = req.body.status
 
-        if (req.body.status === "Delivered" && order.paymentInfo.type === "COD") {
-            order.delivered = Date.now()
-            order.paymentInfo.type = "Paid"
-        }
+        await order.save({ validateBeforeSave: false });
 
-        await order.save({ validateBeforeSave: false })
-
-        if (req.body.status === "Delivered" && order.paymentInfo.type === "Online") {
-            order.delivered = Date.now()
-        }
-
-        await order.save({ validateBeforeSave: false })
-
-        res.json({ success: true, message: "Order status updated successfully" });
-
-
-        async function updateOrder(id, qty) {
-            const product = await ProductModel.findById(id)
-
-            product.stock -= qty
-            product.soldOut += qty
-
-            await product.save({ validateBeforeSave: false })
-        }
+        return res.json({ success: true, message: "Order refund request successfully!", order });
 
     } catch (error) {
-        return res.json({ success: false, message: error.message })
+        return res.json({ success: false, message: error.message });
     }
-
-
 }

@@ -2,10 +2,27 @@ import mongoose from "mongoose"
 
 // Creating order schema
 const OrderSchema = new mongoose.Schema({
-    cart: {
-        type: Array,
-        required: true,
-    },
+    cart: [
+        {
+            product: {
+                type: Object,
+            },
+            quantity: {
+                type: Number,
+            },
+            seller: {
+                type: String,
+            },
+            isReviewed: {
+                type: Boolean,
+                default: false,
+            },
+            rating: {
+                type: Number,
+                default: 0,
+            },
+        }
+    ],
     shippingAddress: {
         type: Object,
         required: true,

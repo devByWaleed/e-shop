@@ -61,7 +61,9 @@ const AllOrders = () => {
                                     className='flex flex-col gap-3 p-5 md:grid md:grid-cols-[1.5fr_2fr_1fr_1fr_1fr_0.8fr_0.8fr] md:items-center hover:bg-light-bg/20 transition-colors text-left text-text cursor-pointer'
                                 >
                                     {/* Mobile Header Block / Desktop ID */}
-                                    <div className='flex justify-between items-center md:block border-b pb-2 md:pb-0 md:border-none'>
+                                    <div
+                                        onClick={() => navigate(`/order/${item._id}`)}
+                                        className='flex justify-between items-center md:block border-b pb-2 md:pb-0 md:border-none'>
                                         <span className='md:hidden font-mono text-xs text-primary font-semibold bg-primary/10 px-2 py-0.5 rounded'>
                                             ID: {item._id.slice(-6)}
                                         </span>
