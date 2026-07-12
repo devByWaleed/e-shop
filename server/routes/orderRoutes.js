@@ -1,6 +1,6 @@
 import express from "express"
 import userAuth from "../middleware/userAuth.js";
-import { getAllOrders, getUserOrders, placeOrderCOD, placeOrderStripe, stripeWebhooks, getShopOrders, updateOrderStatus, updateRefund } from "../controllers/orderController.js";
+import { getAllOrders, getUserOrders, placeOrderCOD, placeOrderStripe, stripeWebhooks, getShopOrders, updateOrderStatus, updateRefund, refundAccept } from "../controllers/orderController.js";
 import sellerAuth from "../middleware/sellerAuth.js";
 
 
@@ -15,6 +15,7 @@ orderRouter.get("/shop-orders/:id", sellerAuth, getShopOrders)
 orderRouter.get("/seller", sellerAuth, getAllOrders)
 orderRouter.put("/update-order-status/:id", sellerAuth, updateOrderStatus);
 orderRouter.put("/order-refund/:id", userAuth, updateRefund);
+orderRouter.post("/order-refund-success/:id", sellerAuth, refundAccept);
 
 
 export default orderRouter

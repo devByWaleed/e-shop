@@ -319,3 +319,39 @@ export const updateRefund = async (req, res) => {
         return res.json({ success: false, message: error.message });
     }
 }
+
+
+
+// Accept Refund : /api/seler/logout/:id
+export const refundAccept = async (req, res) => {
+    try {
+        const order = await OrderModel.findById(req.params.id)
+
+        if (!order) {
+            return res.json({ success: false, message: "Order not found" });
+        }
+
+        order.status = req.body.status
+
+        if (req.body.status === "Processing refund") {
+            for (const item of order.cart) {
+                await updateRefundStock(item.product?._id || item.product, item.quantity);
+            }
+        }
+
+        await order.save({ validateBeforeSave: false });
+
+        return res.json({ success: true, message: "Order status updated successfully" });
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
+    }
+}
+
+async function updateRefundStock(productId, qty) {
+    const product = await ProductModel.findById(productId);
+    if (product) {
+        product.stock = Math.max(0, product.stock + qty);
+        product.soldOut -= qty;
+        await product.save({ validateBeforeSave: false });
+    }
+}

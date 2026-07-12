@@ -61,6 +61,11 @@ const CreateEvent = () => {
     const onSubmitHandler = (e) => {
         e.preventDefault()
 
+        if (!seller || !seller._id) {
+        toast.error("Seller session expired. Please log in again.");
+        return;
+    }
+
         // Validation safeguards
         if (new Date(startDate) > new Date(endDate)) {
             toast.error("Finish date cannot be earlier than the start date!")

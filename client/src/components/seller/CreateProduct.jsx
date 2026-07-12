@@ -54,6 +54,11 @@ const CreateProduct = () => {
     const onSubmitHandler = (e) => {
         e.preventDefault()
 
+        if (!seller || !seller._id) {
+        toast.error("Seller session expired. Please log in again.");
+        return;
+    }
+
         dispatch(ClearError())
 
         const newForm = new FormData()

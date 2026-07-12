@@ -33,6 +33,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import EventDetails from './pages/EventDetails';
 import SellerOrderDetails from './pages/seller/SellerOrderDetails';
 import UserOrderDetails from './pages/UserOrderDetails';
+import UserOrderTrack from './pages/UserOrderTrack';
 
 
 const App = () => {
@@ -125,6 +126,7 @@ const App = () => {
           <Route path="/user-order/:id" element={<UserOrderDetails />} />
           <Route path='/checkout' element={<Checkout />} />
           <Route path='/payment' element={<Payment />} />
+          <Route path='/track-order/:id' element={<UserOrderTrack />} />
         </Route>
       </Routes>
       {!shouldHideNavFooter && <Footer />}

@@ -3,7 +3,6 @@ import ProfileSidebar from '../components/profile/ProfileSidebar';
 import ProfileContent from '../components/profile/ProfileContent';
 import UserOrders from '../components/profile/UserOrders';
 import UserRefunds from '../components/profile/UserRefunds';
-import TrackOrder from '../components/profile/TrackOrder';
 import ResetPassword from '../components/profile/ResetPassword';
 
 const Profile = () => {
@@ -23,8 +22,7 @@ const Profile = () => {
                     {active === 1 && <ProfileContent active={active} setActive={setActive} />}
                     {active === 2 && <UserOrders />}
                     {active === 3 && <UserRefunds />}
-                    {active === 5 && <TrackOrder />}
-                    {active === 6 && <ResetPassword />}
+                    {active === 5 && <ResetPassword />}
                 </div>
 
             </div>
