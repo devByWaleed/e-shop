@@ -34,7 +34,7 @@ import EventDetails from './pages/EventDetails';
 import SellerOrderDetails from './pages/seller/SellerOrderDetails';
 import UserOrderDetails from './pages/UserOrderDetails';
 import UserOrderTrack from './pages/UserOrderTrack';
-
+import ChatPage from './pages/ChatPage';
 
 const App = () => {
   const hideNavFooterPages = [
@@ -104,6 +104,7 @@ const App = () => {
         <Route path='/events' element={<Events />} />
         <Route path='/event-detail' element={<EventDetails />} />
         <Route path='/events/:category/:id' element={<EventDetails />} />
+        <Route path='/conversation/:id' element={<ChatPage />} />
 
 
         {/* Seller Auth Routes */}

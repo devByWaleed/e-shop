@@ -34,7 +34,7 @@ const DashboardSidebar = ({ active, setActive }) => {
         { id: 5, label: "All Events", icon: <MdEventNote size={20} /> },
         { id: 6, label: "Create Event", icon: <VscNewFile size={20} /> },
         { id: 7, label: "Withdraw Money", icon: <CiMoneyBill size={20} /> },
-        { id: 8, label: "Shop Inbox", icon: <FiMail size={20} />, path: "/dashboard-inbox" },
+        { id: 8, label: "Shop Inbox", icon: <FiMail size={20} /> },
         { id: 9, label: "Discount Codes", icon: <MdOutlinePercent size={20} /> },
         { id: 10, label: "Refunds", icon: <AiOutlineRotateLeft size={20} /> },
         { id: 11, label: "Settings", icon: <FiSettings size={20} /> },

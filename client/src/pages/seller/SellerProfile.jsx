@@ -12,6 +12,7 @@ import ShopSettings from '../../components/seller/ShopSettings';
 import Navbar from '../../components/seller/Navbar';
 import CreateEvent from '../../components/seller/CreateEvent';
 import WithdrawMoney from '../../components/seller/WithdrawMoney';
+import SellerInbox from '../../components/seller/SellerInbox';
 
 
 
@@ -84,7 +85,7 @@ const SellerProfile = () => {
                         {/* ID: 8 - Shop Inbox (Handled mostly via your sidebar router navigate, but caught here as fallback) */}
                         {active === 8 && (
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-800 mb-4">Shop Inbox</h2>
+                                <SellerInbox />
                             </div>
                         )}
 

@@ -6,8 +6,10 @@ import { getAllProducts } from "../redux/actions/productAction";
 import toast from "react-hot-toast";
 import { addToCart } from "../redux/actions/cartAction";
 import { addToWishlist, removeFromWishlist } from "../redux/actions/wishlistAction";
+import axios from "axios";
 
 const ProductDetails = () => {
+    const { user, isAuthenticated } = useSelector((state) => state.user);
     const { seller } = useSelector((state) => state.seller);
     const { allProducts, productLoading, productError } = useSelector((state) => state.product);
     const { cart } = useSelector((state) => state.cart);
@@ -127,6 +129,30 @@ const ProductDetails = () => {
 
         setCount(newQty);
     };
+
+
+    const handleSubmitMessage = async () => {
+        if (!isAuthenticated) {
+            toast.error("Please login to create conversation");
+        }
+        const groupTitle = id + user._id
+        const userID = user._id
+        const sellerID = seller._id
+
+        try {
+            const { data } = await axios.post(`/api/conversation/create-new-conversation`, {
+                groupTitle, userID, sellerID
+            });
+            if (data.success) {
+                navigate(`/conversation/${data.conversation._id}`)
+            } else {
+                toast.error(data.message);
+
+            }
+        } catch (error) {
+            toast.error(error?.message || "Invalid coupon code!");
+        }
+    }
 
     return (
         <section className="mt-12 max-w-7xl mx-auto px-4">
@@ -248,7 +274,7 @@ const ProductDetails = () => {
                             </div>
                         </div>
                         <button
-                            onClick={() => navigate("/inbox?conversation=57ui4fg43xv")}
+                            onClick={handleSubmitMessage}
                             className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition"
                         >
                             Send Message

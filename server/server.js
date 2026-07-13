@@ -12,6 +12,8 @@ import eventRouter from "./routes/eventRoutes.js"
 import { connectCloudinary } from "./config/cloudinary.js"
 import couponRouter from "./routes/couponRoutes.js"
 import orderRouter from "./routes/orderRoutes.js"
+import conversationRouter from "./routes/conversationRoutes.js"
+import messageRouter from "./routes/messageRoutes.js"
 
 
 // Configuring server
@@ -69,6 +71,8 @@ app.use('/api/seller', sellerRouter);
 app.use('/api/product', productRouter);
 app.use('/api/event', eventRouter);
 app.use('/api/coupon', couponRouter);
+app.use('/api/conversation', conversationRouter);
+app.use('/api/message', messageRouter);
 
 
 
