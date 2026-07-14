@@ -1,10 +1,11 @@
 import express from "express"
 import { upload } from "../config/multer.js";
-import { newMessage } from "../controllers/messageController.js";
+import { getMessages, newMessage } from "../controllers/messageController.js";
 
 
 const messageRouter = express.Router();
 
 messageRouter.post("/create-new-message", upload.single("file"), newMessage)
+messageRouter.get("/get-all-messages/:id", getMessages)
 
 export default messageRouter

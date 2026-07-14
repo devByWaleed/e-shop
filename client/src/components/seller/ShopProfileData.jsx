@@ -18,8 +18,8 @@ const ShopProfileData = ({ isOwner }) => {
     // Tab Definitions
     const tabs = [
         { id: 1, label: "Shop Products" },
-        { id: 2, label: "Running Events" },
-        { id: 3, label: "Shop Reviews" },
+        // { id: 2, label: "Running Events" },
+        // { id: 3, label: "Shop Reviews" },
     ];
 
     useEffect(() => {

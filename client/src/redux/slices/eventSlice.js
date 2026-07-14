@@ -84,8 +84,11 @@ const eventSlice = createSlice({
             state.eventLoading = false
             state.eventError = action.payload
         },
+        clearEventSuccess: (state) => {
+            state.eventSuccess = false
+        },
     }
 })
 
-export const { CreateEventRequest, CreateEventSuccess, CreateEventFail, ClearError, ResetEventState, getShopEventsRequest, getShopEventsSuccess, getShopEventsFail, getAllEventsRequest, getAllEventsSuccess, getAllEventsFail, deleteEventRequest, deleteEventSuccess, deleteEventFail } = eventSlice.actions
+export const { CreateEventRequest, CreateEventSuccess, CreateEventFail, ClearError, ResetEventState, getShopEventsRequest, getShopEventsSuccess, getShopEventsFail, getAllEventsRequest, getAllEventsSuccess, getAllEventsFail, deleteEventRequest, deleteEventSuccess, deleteEventFail, clearEventSuccess } = eventSlice.actions
 export default eventSlice.reducer

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { categories } from '../../assets/assets'
 import { createProduct } from '../../redux/actions/productAction'
-import { ClearError } from '../../redux/slices/productSlice'
+import { ClearError, clearSuccess } from '../../redux/slices/productSlice'
 import toast from "react-hot-toast";
 
 const CreateProduct = () => {
@@ -22,9 +22,18 @@ const CreateProduct = () => {
     const [discountPrice, setDiscountPrice] = useState(0)
     const [stock, setStock] = useState(0)
 
+    // Clear success state on component unmount
+    useEffect(() => {
+        return () => {
+            dispatch(clearSuccess())
+        }
+    }, [dispatch])
+
     useEffect(() => {
         if (productError) {
             toast.error(productError)
+            // Clear error after showing toast
+            dispatch(ClearError())
         }
 
         if (success) {
@@ -40,6 +49,8 @@ const CreateProduct = () => {
             setStock(0);
             setImages([]);
 
+            // Clear success state after navigation
+            dispatch(clearSuccess())
             navigate("/seller-profile")
         }
     }, [dispatch, productError, success, navigate])
@@ -55,9 +66,9 @@ const CreateProduct = () => {
         e.preventDefault()
 
         if (!seller || !seller._id) {
-        toast.error("Seller session expired. Please log in again.");
-        return;
-    }
+            toast.error("Seller session expired. Please log in again.");
+            return;
+        }
 
         dispatch(ClearError())
 
@@ -84,7 +95,6 @@ const CreateProduct = () => {
         newForm.append("shopID", seller._id)
         dispatch(createProduct(newForm))
     }
-
 
     return (
         <div className="w-full max-w-3xl mx-auto p-4 md:p-8 bg-white border border-light-border rounded-xl shadow-xs">
@@ -134,6 +144,7 @@ const CreateProduct = () => {
                             onChange={(e) => setCategory(e.target.value)}
                             className="w-full h-11 px-4 border border-light-border rounded-lg text-sm bg-light-bg text-text focus:outline-none focus:border-primary transition-colors appearance-none cursor-pointer"
                         >
+                            <option value="">Select Category</option>
                             {categories.map((cat, i) => (
                                 <option key={i} value={cat.label}>{cat.label}</option>
                             ))}

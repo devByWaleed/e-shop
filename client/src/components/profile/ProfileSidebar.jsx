@@ -37,7 +37,7 @@ const ProfileSidebar = ({ active, setActive }) => {
         { id: 1, label: "Profile", icon: <FiUser size={20} /> },
         { id: 2, label: "Orders", icon: <FiShoppingBag size={20} /> },
         { id: 3, label: "Refunds", icon: <FiRotateCcw size={20} /> },
-        { id: 4, label: "Inbox", icon: <FiMail size={20} />, path: "/inbox" },
+        { id: 4, label: "Inbox", icon: <FiMail size={20} /> },
         { id: 5, label: "Change Password", icon: <RiLockPasswordFill size={20} /> },
         { id: 7, label: "Logout", icon: <FiLogOut size={20} /> },
     ];

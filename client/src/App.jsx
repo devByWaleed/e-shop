@@ -34,7 +34,9 @@ import EventDetails from './pages/EventDetails';
 import SellerOrderDetails from './pages/seller/SellerOrderDetails';
 import UserOrderDetails from './pages/UserOrderDetails';
 import UserOrderTrack from './pages/UserOrderTrack';
-import ChatPage from './pages/ChatPage';
+import SellerChatPage from './pages/seller/SellerChatPage';
+import UserChatPage from './pages/UserChatPage';
+import ResetPassword from './components/profile/ResetPassword';
 
 const App = () => {
   const hideNavFooterPages = [
@@ -95,6 +97,7 @@ const App = () => {
         <Route path='/activation/:activation_token' element={<Activation />} />
         <Route path="/best-deals" element={<BestDealsPage />} />
         <Route path='/faqs' element={<Faqs />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
 
         <Route path='/products' element={<AllProducts />} />
         <Route path='/product-detail' element={<ProductDetails />} />
@@ -104,7 +107,7 @@ const App = () => {
         <Route path='/events' element={<Events />} />
         <Route path='/event-detail' element={<EventDetails />} />
         <Route path='/events/:category/:id' element={<EventDetails />} />
-        <Route path='/conversation/:id' element={<ChatPage />} />
+        <Route path='/user-conversation/:id' element={<UserChatPage />} />
 
 
         {/* Seller Auth Routes */}
@@ -118,6 +121,7 @@ const App = () => {
         <Route element={<SellerProtectedLayout requireAuth={true} requiredRole="seller" />}>
           <Route path="/seller-profile" element={<SellerProfile />} />
           <Route path="/order/:id" element={<SellerOrderDetails />} />
+          <Route path='/conversation/:id' element={<SellerChatPage />} />
         </Route>
 
         {/* FULLY PROTECTED ROUTES - Must be logged in (using Outlet pattern) */}

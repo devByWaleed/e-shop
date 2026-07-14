@@ -1,6 +1,6 @@
 import express from "express"
 import { upload } from "../config/multer.js";
-import { getProfile, login, register, activateAccount, logout, updateProfile, sendResetOTP, resetPassword, verifyResetOTP } from "../controllers/userController.js";
+import { getProfile, login, register, activateAccount, logout, updateProfile, sendResetOTP, resetPassword, verifyResetOTP, getUserInfo } from "../controllers/userController.js";
 import userAuth from "../middleware/userAuth.js";
 import requiredRole from "../middleware/requireRole.js";
 
@@ -16,5 +16,6 @@ userRouter.put("/update-profile", userAuth, requiredRole("user"), upload.single(
 userRouter.post("/send-reset-otp", sendResetOTP)
 userRouter.post("/verify-reset-otp", verifyResetOTP)
 userRouter.post("/reset-password", resetPassword)
+userRouter.get("/user-info/:id", getUserInfo);
 
 export default userRouter

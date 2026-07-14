@@ -4,17 +4,17 @@ import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-const SellerInbox = () => {
+const UserInbox = () => {
     const navigate = useNavigate()
-    const { seller } = useSelector((state) => state.seller);
+    const { user } = useSelector((state) => state.user);
 
     const [conversations, setConversations] = useState([])
     const [memberInfo, setMemberInfo] = useState({})
     const [active, setActive] = useState(null)
 
-    const getSellerConversations = async () => {
+    const getUserConversations = async () => {
         try {
-            const { data } = await axios.get(`/api/conversation/get-seller-conversation/${seller._id}`);
+            const { data } = await axios.get(`/api/conversation/get-user-conversation/${user._id}`);
             if (data.success) {
                 setConversations(data.conversations)
             } else {
@@ -26,23 +26,23 @@ const SellerInbox = () => {
     }
 
     useEffect(() => {
-        if (seller?._id) {
-            getSellerConversations()
+        if (user?._id) {
+            getUserConversations()
         }
-    }, [seller])
+    }, [user])
 
     useEffect(() => {
         const fetchAllMemberInfo = async () => {
             const entries = await Promise.all(
                 conversations.map(async (conv) => {
-                    const buyerId = conv.members.find((m) => m !== seller._id);
-                    if (!buyerId) return [conv._id, null];
+                    const sellerId = conv.members.find((m) => m !== user._id);
+                    if (!sellerId) return [conv._id, null];
                     try {
-                        const { data } = await axios.get(`/api/user/user-info/${buyerId}`);
+                        const { data } = await axios.get(`/api/seller/get-seller/${sellerId}`);
                         if (data.success) {
                             return [conv._id, {
-                                name: data.user?.name,
-                                avatar: data.user?.avatar?.url || data.user?.avatar
+                                name: data.seller?.name,
+                                avatar: data.seller?.avatar?.url || data.seller?.avatar
                             }];
                         }
                         return [conv._id, null];
@@ -54,13 +54,13 @@ const SellerInbox = () => {
             setMemberInfo(Object.fromEntries(entries));
         };
 
-        if (conversations.length > 0 && seller?._id) {
+        if (conversations.length > 0 && user?._id) {
             fetchAllMemberInfo();
         }
-    }, [conversations, seller]);
+    }, [conversations, user]);
 
     const handleSelectChat = (id) => {
-        navigate(`/conversation/${id}`)
+        navigate(`/user-conversation/${id}`)
     }
 
     return (
@@ -72,7 +72,7 @@ const SellerInbox = () => {
             ) : (
                 conversations.map((item, index) => {
                     const info = memberInfo[item._id];
-                    const displayName = info?.name || item.groupTitle || "User";
+                    const displayName = info?.name || item.groupTitle || "Seller";
 
                     return (
                         <div key={item._id}
@@ -111,4 +111,4 @@ const SellerInbox = () => {
     )
 }
 
-export default SellerInbox;
+export default UserInbox;

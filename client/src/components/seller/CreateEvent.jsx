@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { categories } from '../../assets/assets'
-// import { ClearError } from '../../redux/slices/eventSlice'   
 import { createEventProduct } from '../../redux/actions/eventAction'
+import { clearEventSuccess } from '../../redux/slices/eventSlice' // Add this import
 import toast from "react-hot-toast"
 
 const CreateEvent = () => {
@@ -24,6 +24,13 @@ const CreateEvent = () => {
     const [stock, setStock] = useState(0)
     const [startDate, setStartDate] = useState("")
     const [endDate, setEndDate] = useState("")
+
+    // Clear success state on component unmount
+    useEffect(() => {
+        return () => {
+            dispatch(clearEventSuccess())
+        }
+    }, [dispatch])
 
     const handleImageChange = (e) => {
         e.preventDefault()
@@ -62,9 +69,9 @@ const CreateEvent = () => {
         e.preventDefault()
 
         if (!seller || !seller._id) {
-        toast.error("Seller session expired. Please log in again.");
-        return;
-    }
+            toast.error("Seller session expired. Please log in again.");
+            return;
+        }
 
         // Validation safeguards
         if (new Date(startDate) > new Date(endDate)) {
@@ -94,11 +101,16 @@ const CreateEvent = () => {
         newForm.append("start_Date", startDate)
         newForm.append("finish_Date", endDate)
         newForm.append("shopID", seller?._id)
-        // newForm.append("shop", JSON.stringify(seller))
         dispatch(createEventProduct(newForm))
     }
 
     useEffect(() => {
+        if (eventError) {
+            toast.error(eventError)
+            // Clear error after showing toast
+            dispatch(clearEventError()) // Make sure this action exists
+        }
+
         if (eventSuccess) {
             toast.success("Event Created Successfully")
 
@@ -114,6 +126,8 @@ const CreateEvent = () => {
             setStartDate("")
             setEndDate("")
 
+            // Clear success state before navigation
+            dispatch(clearEventSuccess())
             navigate("/seller-profile")
         }
     }, [dispatch, eventError, eventSuccess, navigate])

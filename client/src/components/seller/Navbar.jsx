@@ -25,32 +25,6 @@ const Navbar = () => {
             {/* Navigation Icons & Profile */}
             <div className='flex items-center'>
                 <div className='flex items-center gap-2 sm:gap-4 md:gap-6'>
-
-                    {/* Coupons */}
-                    <Link to="/dashboard/coupons" title="Coupons">
-                        <MdOutlineLocalOffer className="text-2xl text-gray-700 hover:text-primary-dull transition-colors cursor-pointer" />
-                    </Link>
-
-                    {/* Events */}
-                    <Link to="/dashboard-events" title="Events">
-                        <MdOutlineEventNote className="text-2xl text-gray-700 hover:text-primary-dull transition-colors cursor-pointer" />
-                    </Link>
-
-                    {/* Products */}
-                    <Link to="/dashboard-products" title="Products">
-                        <FiShoppingBag className="text-2xl text-gray-700 hover:text-primary-dull transition-colors cursor-pointer" />
-                    </Link>
-
-                    {/* Orders */}
-                    <Link to="/dashboard-orders" title="Orders">
-                        <AiOutlineGift className="text-2xl text-gray-700 hover:text-primary-dull transition-colors cursor-pointer" />
-                    </Link>
-
-                    {/* Messages */}
-                    <Link to="/dashboard-messages" title="Messages">
-                        <AiOutlineMessage className="text-2xl text-gray-700 hover:text-primary-dull transition-colors cursor-pointer" />
-                    </Link>
-
                     {/* Profile Picture (Seller Avatar) */}
                     {seller && (
                         <Link to={`/shop/${seller?._id}`}>

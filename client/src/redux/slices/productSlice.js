@@ -67,8 +67,11 @@ const productSlice = createSlice({
             state.productLoading = false
             state.productError = action.payload
         },
+        clearSuccess: (state) => {
+            state.success = false
+        },
     }
 })
 
-export const { CreateProductRequest, CreateProductSuccess, CreateProductFail, ClearError, ResetProductState, getAllProductsRequest, getAllProductsSuccess, getAllProductsFail, deleteProductRequest, deleteProductSuccess, deleteProductFail } = productSlice.actions
+export const { CreateProductRequest, CreateProductSuccess, CreateProductFail, ClearError, ResetProductState, getAllProductsRequest, getAllProductsSuccess, getAllProductsFail, deleteProductRequest, deleteProductSuccess, deleteProductFail, clearSuccess } = productSlice.actions
 export default productSlice.reducer

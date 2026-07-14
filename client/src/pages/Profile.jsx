@@ -4,6 +4,7 @@ import ProfileContent from '../components/profile/ProfileContent';
 import UserOrders from '../components/profile/UserOrders';
 import UserRefunds from '../components/profile/UserRefunds';
 import ResetPassword from '../components/profile/ResetPassword';
+import UserInbox from '../components/profile/UserInbox';
 
 const Profile = () => {
     const [active, setActive] = useState(1);
@@ -22,6 +23,7 @@ const Profile = () => {
                     {active === 1 && <ProfileContent active={active} setActive={setActive} />}
                     {active === 2 && <UserOrders />}
                     {active === 3 && <UserRefunds />}
+                    {active === 4 && <UserInbox />}
                     {active === 5 && <ResetPassword />}
                 </div>
 

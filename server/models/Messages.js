@@ -6,7 +6,10 @@ const MessageSchema = new mongoose.Schema({
         type: String,
     },
     sender: {
-        type: Array,
+        type: String,
+    },
+    text: {
+        type: String,
     },
     images: [
         {
@@ -16,11 +19,6 @@ const MessageSchema = new mongoose.Schema({
     lastMessageID: {
         type: String,
     },
-
-    // createdAt: {
-    //     type: Date,
-    //     default: Date.now(),
-    // }
 }, { timestamps: true });
 
 
