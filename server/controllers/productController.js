@@ -86,14 +86,33 @@ export const createProduct = async (req, res) => {
 };
 
 
-// Get All Products : /api/product/get-all-products
-export const getAllProducts = async (req, res) => {
+// Get Shop Products : /api/product/get-all-products/:id
+export const getShopProducts = async (req, res) => {
     try {
-        const products = await ProductModel.find({ shopId: req.params.id })
+        const shopProducts = await ProductModel.find({ shopId: req.params.id })
 
         res.json({
             success: true,
-            products
+            shopProducts
+        });
+    } catch (error) {
+        console.log("Error inside createProduct:", error.message);
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+
+// Get All Products : /api/product/get-all-products/:id
+export const getAllProducts = async (req, res) => {
+    try {
+        const allProducts = await ProductModel.find({})
+
+        res.json({
+            success: true,
+            allProducts
         });
     } catch (error) {
         console.log("Error inside createProduct:", error.message);

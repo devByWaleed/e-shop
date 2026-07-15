@@ -1,33 +1,41 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
+
 
 const HeroSection = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    // Product images (replace with your actual product images)
+    const navigate = useNavigate()
+
+    // Product images matching the categories
     const productImages = [
         {
-            src: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=689&auto=format&fit=crop",
-            alt: "Premium Smart Watch",
-            category: "Electronics",
-            reviews: 1280
+            src: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1171&auto=format&fit=crop",
+            alt: "MacBook Pro - Computers and Laptops",
+            category: "Computers and Laptops",
+            reviews: 2847,
+            price: "$1,299"
+        },
+        {
+            src: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1180&auto=format&fit=crop",
+            alt: "iPhone 15 Pro - Mobile and Tablets",
+            category: "Mobile and Tablets",
+            reviews: 3156,
+            price: "$999"
+        },
+        {
+            src: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=1165&auto=format&fit=crop",
+            alt: "Gaming Headset - Music and Gaming",
+            category: "Music and Gaming",
+            reviews: 1892,
+            price: "$149"
         },
         {
             src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1170&auto=format&fit=crop",
-            alt: "Trendy Sneakers",
-            category: "Fashion",
-            reviews: 980
-        },
-        {
-            src: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1170&auto=format&fit=crop",
-            alt: "Wireless Headphones",
-            category: "Audio",
-            reviews: 1435
-        },
-        {
-            src: "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?q=80&w=1160&auto=format&fit=crop",
-            alt: "Designer Handbag",
-            category: "Accessories",
-            reviews: 745
+            alt: "Nike Air Max - Shoes",
+            category: "Shoes",
+            reviews: 2431,
+            price: "$189"
         }
     ];
 
@@ -63,15 +71,12 @@ const HeroSection = () => {
 
                     {/* CTA Buttons */}
                     <div className="flex flex-col sm:flex-row items-center mt-8 gap-4">
-                        <button className="bg-primary text-white px-8 pr-3 py-3 rounded-full text-sm font-semibold flex items-center space-x-2 hover:bg-[#5A52E0] transition shadow-lg hover:shadow-xl" type="button">
+                        <button onClick={() => navigate("/products")} className="bg-primary text-white px-8 pr-3 py-3 rounded-full text-sm font-semibold flex items-center space-x-2 hover:bg-[#5A52E0] transition shadow-lg hover:shadow-xl" type="button">
                             <span>Shop Now</span>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M4.821 11.999h13.43m0 0-6.714-6.715m6.715 6.715-6.715 6.715" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
-                        <a className="text-primary bg-primary/10 px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary/20 transition" href="#">
-                            Explore Collections →
-                        </a>
                     </div>
 
                     {/* Trust Indicators */}

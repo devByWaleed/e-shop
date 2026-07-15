@@ -38,6 +38,19 @@ import SellerChatPage from './pages/seller/SellerChatPage';
 import UserChatPage from './pages/UserChatPage';
 import ResetPassword from './components/profile/ResetPassword';
 
+
+import AdminProtectedLayout from './components/admin/AdminProtectedLayout';
+import AdminEvents from './pages/admin/AdminEvents';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminSellers from './pages/admin/AdminSellers';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminProfile from './pages/admin/AdminProfile';
+import { loadAdmin } from './redux/actions/adminAction';
+
+
 const App = () => {
   const hideNavFooterPages = [
     '/user-login',
@@ -47,6 +60,7 @@ const App = () => {
     '/seller-dashboard',
     '/seller-products',
     '/seller-profile',
+    '/admin-login',
   ]
 
   const currentPath = useLocation().pathname;
@@ -56,6 +70,7 @@ const App = () => {
   const { isLoading } = useSelector((state) => state.loading)
   const { isAuthenticated, user, loading: userLoading } = useSelector((state) => state.user)
   const { sellerAuthenticated, seller, sellerLoading } = useSelector((state) => state.seller)
+  const { adminAuthenticated, admin, adminLoading } = useSelector((state) => state.admin)
 
   const dispatch = useDispatch()
 
@@ -74,6 +89,15 @@ const App = () => {
 
   console.log("Auth Status:", sellerAuthenticated)
   console.log("Seller Data:", seller)
+
+
+  // Load Admin
+  useEffect(() => {
+    dispatch(loadAdmin())
+  }, [dispatch])
+
+  console.log("Admin Auth Status:", adminAuthenticated)
+  console.log("Admin Data:", admin)
 
   // Don't show main content while loading user data on app start
   if (userLoading && !user && currentPath !== '/success') {
@@ -133,6 +157,38 @@ const App = () => {
           <Route path='/payment' element={<Payment />} />
           <Route path='/track-order/:id' element={<UserOrderTrack />} />
         </Route>
+
+
+        {/* Admin Auth Route */}
+        <Route element={adminAuthenticated ? <Navigate to="/admin-profile" replace /> : <Outlet />}>
+          <Route path="/admin-login" element={<AdminLogin />} />
+        </Route>
+
+
+        {/* ADMIN Protected Routes */}
+        <Route element={<AdminProtectedLayout requireAuth={true} requiredRole="admin" />}>
+          <Route path="/admin-profile" element={<AdminProfile />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-orders" element={<AdminOrders />} />
+          <Route path="/admin-products" element={<AdminProducts />} />
+          <Route path="/admin-users" element={<AdminUsers />} />
+          <Route path="/admin-events" element={<AdminEvents />} />
+          <Route path="/admin-sellers" element={<AdminSellers />} />
+          {/* <Route path="inbox" element={<AdminInbox />} /> */}
+        </Route>
+
+
+
+
+
+        {/* <Route element={<AdminProtectedLayout requireAuth={true} requiredRole="admin" />}>
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-events" element={<AdminEvents />} />
+          <Route path="/admin-orders" element={<AdminOrders />} />
+          <Route path="/admin-products" element={<AdminProducts />} />
+          <Route path="/admin-sellers" element={<AdminSellers />} />
+          <Route path="/admin-users" element={<AdminUsers />} />
+        </Route> */}
       </Routes>
       {!shouldHideNavFooter && <Footer />}
     </>

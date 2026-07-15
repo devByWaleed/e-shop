@@ -1,5 +1,5 @@
 import axios from "axios"
-import { CreateProductRequest, CreateProductSuccess, CreateProductFail, getAllProductsRequest, getAllProductsSuccess, getAllProductsFail, deleteProductRequest, deleteProductSuccess, deleteProductFail } from "../slices/productSlice"
+import { CreateProductRequest, CreateProductSuccess, CreateProductFail, getAllProductsRequest, getAllProductsSuccess, getAllProductsFail, deleteProductRequest, deleteProductSuccess, deleteProductFail, getShopProductsRequest, getShopProductsSuccess, getShopProductsFail } from "../slices/productSlice"
 
 export const createProduct = (newForm) => async (dispatch, getState) => {
     try {
@@ -21,14 +21,32 @@ export const createProduct = (newForm) => async (dispatch, getState) => {
 }
 
 
+export const getShopProducts = (id) => async (dispatch, getState) => {
+    try {
+        dispatch(getShopProductsRequest())
+
+        const { data } = await axios.get(`/api/product/get-shop-products/${id}`)
+
+        if (data.success) {
+            dispatch(getShopProductsSuccess(data.shopProducts));
+        } else {
+            dispatch(getShopProductsFail(data.message));
+        }
+
+    } catch (error) {
+        dispatch(getShopProductsFail(error.message))
+    }
+}
+
+
 export const getAllProducts = (id) => async (dispatch, getState) => {
     try {
         dispatch(getAllProductsRequest())
 
-        const { data } = await axios.get(`/api/product/get-all-products/${id}`)
+        const { data } = await axios.get(`/api/product/get-all-products`)
 
         if (data.success) {
-            dispatch(getAllProductsSuccess(data.products));
+            dispatch(getAllProductsSuccess(data.allProducts));
         } else {
             dispatch(getAllProductsFail(data.message));
         }

@@ -1,13 +1,8 @@
 import SellerModel from "../models/Sellers.js";
 import bcrypt from "bcryptjs"
-import fs from "fs";
 import jwt from "jsonwebtoken"
-import path from "path";
-import { fileURLToPath } from "url"
 import transporter from "../config/nodeMailer.js";
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+import { getCloudinaryPublicId } from "../config/cloudinary.js";
 
 
 // Helper: create activation token
@@ -17,50 +12,61 @@ const createActivationToken = (seller) => {
     })
 }
 
+const cleanupTempFile = async (filePath) => {
+    if (!filePath) return;
+    await fs.promises.unlink(filePath).catch((err) => {
+        console.log("Failed to delete temp file:", err.message);
+    });
+}
+
 // Seller registration : /api/seller/register
 export const sellerRegister = async (req, res) => {
+
+    let avatarUrl = null;
 
     try {
         const { name, email, password, address, zipCode, phoneNumber } = req.body;
 
         if (!name || !email || !password) {
-            // Delete uploaded file if validation fails
-            if (req.file) {
-                const filePath = path.join(__dirname, "../uploads", req.file.filename);
-                await fs.promises.unlink(filePath).catch(console.log);
-            }
-
+            await cleanupTempFile(req.file?.path);
             return res.json({
                 success: false,
                 message: "Missing Details"
             })
         }
+
+        if (!req.file) {
+            return res.json({
+                success: false,
+                message: "Avatar image is required"
+            })
+        }
+
         const sellerEmail = await SellerModel.findOne({ email })
 
         if (sellerEmail) {
-            try {
-                const fileName = req.file.filename
-                const filePath = path.join(__dirname, "../uploads", fileName)
-                await fs.promises.unlink(filePath)
-            } catch (err) {
-                console.log("Failed to delete file:", err.message)
-            }
-
+            await cleanupTempFile(req.file.path);
             return res.json({
                 success: false,
                 message: "User already existed"
             })
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const fileName = req.file.filename
-        const fileUrl = path.join(fileName)
+        // All validation passed — safe to upload now
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: "shop-avatars"
+        });
+        avatarUrl = result.secure_url;
+
+        await cleanupTempFile(req.file.path);
+
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const sellerData = {
             name,
             email,
             password: hashedPassword,
-            avatar: fileUrl,
+            avatar: avatarUrl,
             address,
             zipCode,
             phoneNumber
@@ -69,7 +75,6 @@ export const sellerRegister = async (req, res) => {
         const activationToken = createActivationToken(sellerData)
         const activationUrl = `${process.env.VITE_FRONTEND_URL}/seller-activation/${activationToken}`
 
-        // Sending OTP reset email
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
             to: sellerData.email,
@@ -78,7 +83,6 @@ export const sellerRegister = async (req, res) => {
         }
 
         await transporter.sendMail(mailOptions);
-        // console.log(activationUrl);
 
         return res.json({
             success: true,
@@ -89,10 +93,13 @@ export const sellerRegister = async (req, res) => {
     catch (error) {
         console.log(error.message);
 
-        // Delete uploaded file if error occurs
-        if (req.file) {
-            const filePath = path.join(__dirname, "../uploads", req.file.filename);
-            await fs.promises.unlink(filePath).catch(console.log);
+        await cleanupTempFile(req.file?.path);
+
+        if (avatarUrl) {
+            const publicId = getCloudinaryPublicId(avatarUrl);
+            await cloudinary.uploader.destroy(publicId).catch((err) => {
+                console.log("Failed to delete cloudinary asset:", err.message);
+            });
         }
 
         return res.json({
@@ -108,7 +115,6 @@ export const activateAccount = async (req, res) => {
     try {
         const { activation_token } = req.body
 
-        // Verify the token
         const sellerData = jwt.verify(activation_token, process.env.ACTIVATION_SECRET)
 
         if (!sellerData) {
@@ -117,13 +123,11 @@ export const activateAccount = async (req, res) => {
 
         const { name, email, password, avatar, address, zipCode, phoneNumber } = sellerData
 
-        // Check again if seller was created in the meantime
         const existingSeller = await SellerModel.findOne({ email })
         if (existingSeller) {
             return res.json({ success: false, message: "Seller already exists" })
         }
 
-        // Now save the seller
         const seller = new SellerModel({
             name,
             email,
@@ -153,7 +157,6 @@ export const activateAccount = async (req, res) => {
         })
 
     } catch (error) {
-        // Token expired or invalid
         if (error.name === "TokenExpiredError") {
             return res.json({
                 success: false,
@@ -166,6 +169,7 @@ export const activateAccount = async (req, res) => {
         })
     }
 }
+
 
 
 // Seller login : /api/seller/login
@@ -216,7 +220,7 @@ export const sellerLogin = async (req, res) => {
 
         return res.json({
             success: true,
-            seller: { email: seller.email, name: seller.name, id: seller._id }
+            message: "Seller Logged In"
         })
     }
 

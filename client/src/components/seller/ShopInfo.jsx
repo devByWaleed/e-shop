@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getAllProducts } from '../../redux/actions/productAction';
 import { loadSeller } from '../../redux/actions/sellerAction';
+import { LoadSellerFail } from '../../redux/slices/sellerSlice';
 
 const ShopInfo = ({ isOwner }) => {
     // Accessing seller data from Redux state
@@ -20,6 +21,7 @@ const ShopInfo = ({ isOwner }) => {
             const { data } = await axios.post("/api/seller/seller-logout");
 
             if (data.success) {
+                dispatch(LoadSellerFail(null))
                 toast.success(data.message);
                 navigate("/");
             } else {

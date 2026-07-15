@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { categories } from '../../assets/assets'
 import { createEventProduct } from '../../redux/actions/eventAction'
-import { clearEventSuccess } from '../../redux/slices/eventSlice' // Add this import
+import { ClearError, clearEventSuccess } from '../../redux/slices/eventSlice' // Add this import
 import toast from "react-hot-toast"
 
 const CreateEvent = () => {
@@ -108,7 +108,7 @@ const CreateEvent = () => {
         if (eventError) {
             toast.error(eventError)
             // Clear error after showing toast
-            dispatch(clearEventError()) // Make sure this action exists
+            dispatch(ClearError())
         }
 
         if (eventSuccess) {

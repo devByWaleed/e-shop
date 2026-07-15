@@ -1,25 +1,26 @@
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
 const requiredRole = (...allowedRoles) => {
     return (req, res, next) => {
-        const role = req.userRole || req.sellerRole
+        // Get role from the request (set by adminAuth, sellerAuth, or userAuth)
+        const role = req.adminRole || req.sellerRole || req.userRole;
 
         if (!role) {
-            return res.json({
+            return res.status(401).json({
                 success: false,
                 message: "Not Authorized. Login Again"
-            })
+            });
         }
 
         if (!allowedRoles.includes(role)) {
-            return res.json({
+            return res.status(403).json({
                 success: false,
-                message: "Not Authorized for this action"
-            })
+                message: `Access denied.`
+            });
         }
 
-        next()
-    }
-}
+        next();
+    };
+};
 
 export default requiredRole;

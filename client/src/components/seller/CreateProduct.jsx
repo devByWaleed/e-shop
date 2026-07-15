@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 const CreateProduct = () => {
     const { sellerAuthenticated, seller, sellerLoading } = useSelector((state) => state.seller)
-    const { success, product, productError } = useSelector((state) => state.product)
+    const { createSuccess, product, productError } = useSelector((state) => state.product)
 
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -36,7 +36,7 @@ const CreateProduct = () => {
             dispatch(ClearError())
         }
 
-        if (success) {
+        if (createSuccess) {
             toast.success("Product Created Successfully")
 
             // Reset States
@@ -53,7 +53,7 @@ const CreateProduct = () => {
             dispatch(clearSuccess())
             navigate("/seller-profile")
         }
-    }, [dispatch, productError, success, navigate])
+    }, [dispatch, productError, createSuccess, navigate])
 
     const handleImageChange = (e) => {
         e.preventDefault()

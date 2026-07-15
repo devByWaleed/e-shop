@@ -6,14 +6,13 @@ import connectDB from "./config/mongodb.js"
 import userRouter from "./routes/userRoutes.js";
 import sellerRouter from "./routes/sellerRoutes.js"
 import productRouter from "./routes/productRoutes.js"
-import { fileURLToPath } from "url"
-import path from "path"
 import eventRouter from "./routes/eventRoutes.js"
 import { connectCloudinary } from "./config/cloudinary.js"
 import couponRouter from "./routes/couponRoutes.js"
 import orderRouter from "./routes/orderRoutes.js"
 import conversationRouter from "./routes/conversationRoutes.js"
 import messageRouter from "./routes/messageRoutes.js"
+import adminRouter from "./routes/adminRoutes.js"
 
 
 // Configuring server
@@ -59,13 +58,9 @@ app.use('/api/order', orderRouter);
 await connectCloudinary();
 await connectDB();
 
-// static files
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-app.use("/", express.static(path.join(__dirname, "uploads")));
 
 // API endpoints
-app.get('/', (req, res) => res.send("API Working!!!"));
+app.get('/', (req, res) => res.send("API Is Working!!!"));
 app.use('/api/user', userRouter);
 app.use('/api/seller', sellerRouter);
 app.use('/api/product', productRouter);
@@ -73,6 +68,7 @@ app.use('/api/event', eventRouter);
 app.use('/api/coupon', couponRouter);
 app.use('/api/conversation', conversationRouter);
 app.use('/api/message', messageRouter);
+app.use('/api/admin', adminRouter);
 
 
 

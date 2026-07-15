@@ -1,15 +1,8 @@
 import UserModel from "../models/Users.js";
 import bcrypt from "bcryptjs"
-import fs from "fs";
 import jwt from "jsonwebtoken"
-import path from "path";
-import { fileURLToPath } from "url"
 import transporter from "../config/nodeMailer.js";
 import { getCloudinaryPublicId } from "../config/cloudinary.js";
-
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 
 // Helper: create activation token
@@ -19,56 +12,69 @@ const createActivationToken = (user) => {
     })
 }
 
+// Helper: safely remove the local temp file multer created
+const cleanupTempFile = async (filePath) => {
+    if (!filePath) return;
+    await fs.promises.unlink(filePath).catch((err) => {
+        console.log("Failed to delete temp file:", err.message);
+    });
+}
+
 // User registration : /api/user/register
 export const register = async (req, res) => {
+
+    let avatarUrl = null; // only gets set once the Cloudinary upload actually succeeds
 
     try {
         const { name, email, password } = req.body;
 
+        // Validate required fields first — nothing has touched Cloudinary yet
         if (!name || !email || !password) {
-            // Delete uploaded file if validation fails
-            if (req.file) {
-                const filePath = path.join(__dirname, "../uploads", req.file.filename);
-                await fs.promises.unlink(filePath).catch(console.log);
-            }
-
+            await cleanupTempFile(req.file?.path);
             return res.json({
                 success: false,
                 message: "Missing Details"
             })
         }
+
+        if (!req.file) {
+            return res.json({
+                success: false,
+                message: "Avatar image is required"
+            })
+        }
+
         const existingUser = await UserModel.findOne({ email })
 
         if (existingUser) {
-            try {
-                const fileName = req.file.filename
-                const filePath = path.join(__dirname, "../uploads", fileName)
-                await fs.promises.unlink(filePath)
-            } catch (err) {
-                console.log("Failed to delete file:", err.message)
-            }
-
+            await cleanupTempFile(req.file.path);
             return res.json({
                 success: false,
                 message: "User already existed"
             })
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const fileName = req.file.filename
-        const fileUrl = path.join(fileName)
+        // All validation passed — safe to upload now
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: "avatars"
+        });
+        avatarUrl = result.secure_url;
+
+        // Temp file is no longer needed once it's on Cloudinary
+        await cleanupTempFile(req.file.path);
+
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const userData = {
             name,
             email,
             password: hashedPassword,
-            avatar: fileUrl
+            avatar: avatarUrl
         }
 
         const activationToken = createActivationToken(userData)
         const activationUrl = `${process.env.VITE_FRONTEND_URL}/activation/${activationToken}`
 
-        // Sending OTP reset email
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
             to: userData.email,
@@ -77,7 +83,6 @@ export const register = async (req, res) => {
         }
 
         await transporter.sendMail(mailOptions);
-        // console.log(activationUrl);
 
         return res.json({
             success: true,
@@ -88,10 +93,16 @@ export const register = async (req, res) => {
     catch (error) {
         console.log(error.message);
 
-        // Delete uploaded file if error occurs
-        if (req.file) {
-            const filePath = path.join(__dirname, "../uploads", req.file.filename);
-            await fs.promises.unlink(filePath).catch(console.log);
+        // Always clean up the temp file if it's still sitting around
+        await cleanupTempFile(req.file?.path);
+
+        // If the Cloudinary upload already succeeded before something else failed
+        // (e.g. sendMail), remove the orphaned asset
+        if (avatarUrl) {
+            const publicId = getCloudinaryPublicId(avatarUrl);
+            await cloudinary.uploader.destroy(publicId).catch((err) => {
+                console.log("Failed to delete cloudinary asset:", err.message);
+            });
         }
 
         return res.json({
@@ -107,7 +118,6 @@ export const activateAccount = async (req, res) => {
     try {
         const { activation_token } = req.body
 
-        // Verify the token
         const userData = jwt.verify(activation_token, process.env.ACTIVATION_SECRET)
 
         if (!userData) {
@@ -116,13 +126,11 @@ export const activateAccount = async (req, res) => {
 
         const { name, email, password, avatar } = userData
 
-        // Check again if user was created in the meantime
         const existingUser = await UserModel.findOne({ email })
         if (existingUser) {
             return res.json({ success: false, message: "User already exists" })
         }
 
-        // Now save the user
         const user = new UserModel({ name, email, password, avatar })
         await user.save()
 
@@ -132,7 +140,7 @@ export const activateAccount = async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure: false,  // false for localhost
+            secure: false,
             sameSite: "lax",
             maxAge: 7 * 24 * 3600 * 1000,
             path: "/"
@@ -144,7 +152,6 @@ export const activateAccount = async (req, res) => {
         })
 
     } catch (error) {
-        // Token expired or invalid
         if (error.name === "TokenExpiredError") {
             return res.json({
                 success: false,
@@ -207,7 +214,7 @@ export const login = async (req, res) => {
 
         return res.json({
             success: true,
-            user: { email: user.email, name: user.name }
+            message: "User Logged In"
         })
     }
 
