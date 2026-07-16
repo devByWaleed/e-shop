@@ -11,6 +11,9 @@ const adminSlice = createSlice({
         // Stores Data
         allUsers: [],
         allSellers: [],
+        allProducts: [],
+        allEvents: [],
+        allOrders: [],
         dataLoading: false // Dedicated loading state for fetching users/sellers
     },
     reducers: {
@@ -43,7 +46,7 @@ const adminSlice = createSlice({
             state.adminError = null;
         },
 
-        // --- REDUCERS FOR USERS AND SELLERS ---
+        // --- REDUCERS FOR GET ALL ---
         fetchDataStart: (state) => {
             state.dataLoading = true;
             state.adminError = null;
@@ -58,12 +61,35 @@ const adminSlice = createSlice({
             state.dataLoading = false;
             state.adminError = null;
         },
+        setAllProducts: (state, action) => {
+            state.allProducts = action.payload;
+            state.dataLoading = false;
+            state.adminError = null;
+        },
+        setAllEvents: (state, action) => {
+            state.allEvents = action.payload;
+            state.dataLoading = false;
+            state.adminError = null;
+        },
+        setAllOrders: (state, action) => {
+            state.allOrders = action.payload;
+            state.dataLoading = false;
+            state.adminError = null;
+        },
         fetchDataFailure: (state, action) => {
             state.dataLoading = false;
             state.adminError = action.payload;
+        },
+
+        // --- DELETE REDUCERS ---
+        deleteUser: (state, action) => {
+            state.allUsers = state.allUsers.filter(user => user._id !== action.payload);
+        },
+        deleteSeller: (state, action) => {
+            state.allSellers = state.allSellers.filter(seller => seller._id !== action.payload);
         }
     }
 })
 
-export const { adminSignInStart, adminSignInSuccess, adminSignInFailure, adminLogout, ClearAdminError, fetchDataStart, setAllUsers, setAllSellers, fetchDataFailure } = adminSlice.actions
+export const { adminSignInStart, adminSignInSuccess, adminSignInFailure, adminLogout, ClearAdminError, fetchDataStart, setAllUsers, setAllSellers, fetchDataFailure, deleteUser, deleteSeller, setAllProducts, setAllEvents, setAllOrders } = adminSlice.actions
 export default adminSlice.reducer

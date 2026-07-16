@@ -32,6 +32,7 @@ const Navbar = () => {
     const { seller } = useSelector((state) => state.seller);
     const { cart } = useSelector((state) => state.cart);
     const { wishlist } = useSelector((state) => state.wishlist);
+    const { adminAuthenticated } = useSelector((state) => state.admin);
 
     const [searchParams] = useSearchParams();
     const currentCategoryInUrl = searchParams.get('category');
@@ -109,24 +110,32 @@ const Navbar = () => {
                     )}
                 </div>
 
-                {seller ? (
-                    <div className="w-9 h-9 rounded-full overflow-hidden cursor-pointer
-                            border-2 border-white/40 hover:border-white/70 transition-colors shrink-0"
-                        title="Profile"
-                        onClick={() => navigate("/seller-profile")}
-                    >
-                        <img
-                            src={seller.avatar ? `${seller.avatar}` : assets.profile}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-                ) : (
-                    <button onClick={() => { setOpen(false); navigate('/seller-signup'); }}
-                        className="bg-dark hover:bg-dark-dull transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-full">
-                        Become a Seller
-                    </button>
-                )}
+                <div className="flex items-center gap-3">
+                    <Link to={adminAuthenticated ? "/admin-profile" : "/admin-login"}>
+                        <button className="border border-gray-300 px-3 py-1 rounded-full text-xs cursor-pointer opacity-80">
+                            {adminAuthenticated ? "Admin Profile" : "Admin Dashboard"}
+                        </button>
+                    </Link>
+
+                    {seller ? (
+                        <div className="w-9 h-9 rounded-full overflow-hidden cursor-pointer
+                                border-2 border-white/40 hover:border-white/70 transition-colors shrink-0"
+                            title="Profile"
+                            onClick={() => navigate("/seller-profile")}
+                        >
+                            <img
+                                src={seller.avatar ? `${seller.avatar}` : assets.profile}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    ) : (
+                        <button onClick={() => { setOpen(false); navigate('/seller-signup'); }}
+                            className="bg-dark hover:bg-dark-dull transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-full">
+                            Become a Seller
+                        </button>
+                    )}
+                </div>
 
 
                 {/* Mobile Action Icons Group - Visible only on Mobile (<640px) */}
@@ -290,6 +299,8 @@ const Navbar = () => {
 
                 {/* Desktop Action Icons */}
                 <div className="flex items-center gap-1.5">
+
+
                     {/* Wishlist Button */}
                     <button
                         onClick={() => setOpenWishlist(true)}
@@ -426,7 +437,8 @@ const Navbar = () => {
 
                     {/* Mobile Action Actions Footer Panel */}
                     <div className="p-4 bg-white border-t border-light-border space-y-3">
-                        {/* Avatar */}
+
+
                         {seller ? (
                             <div className="w-9 h-9 rounded-full overflow-hidden cursor-pointer
                             border-2 border-white/40 hover:border-white/70 transition-colors shrink-0"

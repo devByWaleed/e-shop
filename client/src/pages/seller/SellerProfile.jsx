@@ -9,7 +9,7 @@ import AllOrders from '../../components/seller/AllOrders';
 import DiscountCodes from '../../components/seller/DiscountCodes';
 import Refunds from '../../components/seller/Refunds';
 import ShopSettings from '../../components/seller/ShopSettings';
-import Navbar from '../../components/seller/Navbar';
+import SellerNavbar from '../../components/seller/SellerNavbar';
 import CreateEvent from '../../components/seller/CreateEvent';
 import WithdrawMoney from '../../components/seller/WithdrawMoney';
 import SellerInbox from '../../components/seller/SellerInbox';
@@ -22,7 +22,7 @@ const SellerProfile = () => {
 
     return (
         <>
-            <Navbar />
+            <SellerNavbar />
             <div className="min-h-screen bg-gray-50/40 py-8 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6">
 

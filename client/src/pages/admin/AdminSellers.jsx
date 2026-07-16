@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { FiTrash2, FiSearch, FiUser, FiArrowLeft } from 'react-icons/fi';
+import { IoMdEye } from "react-icons/io";
 import { MdOutlineDeleteOutline } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
-import { getSellers } from '../../redux/actions/adminAction';
-import toast from 'react-hot-toast';
+import { getSellersAction, deleteSellerAction } from '../../redux/actions/adminAction';
 
 const AdminSellers = () => {
     const dispatch = useDispatch();
@@ -17,32 +17,31 @@ const AdminSellers = () => {
     const [selectedSeller, setSelectedSeller] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    // Fetch sellers on component mount
-    useEffect(() => {
-        dispatch(getSellers());
-    }, [dispatch]);
+    const formatDate = (isoString) => {
+        const date = new Date(isoString);
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Intl.DateTimeFormat('en-US', options).format(date);
+    };
 
     // Filter sellers based on search
-    const filteredSellers = allSellers?.filter(seller =>
-        seller.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        seller.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        seller.shopName?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+    const filteredSellers = allSellers.filter(seller =>
+        seller.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        seller.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        seller.shopName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-    // Handle delete click
+    // Handle delete click (opens local confirmation modal)
     const handleDeleteClick = (seller) => {
         setSelectedSeller(seller);
         setShowDeleteModal(true);
     };
 
-    // Confirm delete
-    const handleConfirmDelete = async () => {
+    // Confirm delete (dispatches to slicer)
+    const handleConfirmDelete = () => {
         if (selectedSeller) {
-            const result = await dispatch(deleteSeller(selectedSeller._id));
-            if (result.success) {
-                setShowDeleteModal(false);
-                setSelectedSeller(null);
-            }
+            dispatch(deleteSellerAction(selectedSeller._id));
+            setShowDeleteModal(false);
+            setSelectedSeller(null);
         }
     };
 
@@ -52,27 +51,12 @@ const AdminSellers = () => {
         setSelectedSeller(null);
     };
 
-    // Helper to truncate MongoDB ObjectIds
-    const truncateId = (id) => {
-        if (!id) return 'N/A';
-        return id.length > 15 ? `${id.substring(0, 15)}...` : id;
-    };
+    // Helper to safely truncate MongoDB ObjectIds for display UI
+    const truncateId = (id) => id && id.length > 10 ? `${id.substring(0, 10)}...` : id;
 
-    // Format date
-    const formatDate = (date) => {
-        if (!date) return 'N/A';
-        const d = new Date(date);
-        return d.toISOString().split('T')[0];
-    };
-
-    // Get seller avatar
-    const getSellerAvatar = (seller) => {
-        if (seller.avatar) {
-            return seller.avatar;
-        }
-        return null;
-    };
-
+    useEffect(() => {
+        dispatch(getSellersAction());
+    }, [dispatch]);
 
     return (
         <div className="relative p-4">
@@ -81,7 +65,7 @@ const AdminSellers = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">All Sellers</h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        Total Sellers: <span className="font-semibold text-gray-700">{allSellers?.length || 0}</span>
+                        Total Sellers: <span className="font-semibold text-gray-700">{allSellers.length}</span>
                     </p>
                     <button
                         onClick={() => navigate(-1)}
@@ -112,9 +96,9 @@ const AdminSellers = () => {
                 </div>
             )}
 
-            {/* Table - Desktop View */}
             {!dataLoading && (
                 <>
+                    {/* Table - Desktop View */}
                     <div className="hidden md:block overflow-x-auto bg-white rounded-lg border border-gray-200">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
@@ -131,6 +115,9 @@ const AdminSellers = () => {
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                         Joined At
                                     </th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                        Preview Shop
+                                    </th>
                                     <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                         Delete Seller
                                     </th>
@@ -139,30 +126,27 @@ const AdminSellers = () => {
                             <tbody className="divide-y divide-gray-100">
                                 {filteredSellers.map((seller) => (
                                     <tr key={seller._id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 text-sm font-mono text-gray-600">
+                                        <td title={seller._id} className="px-6 py-4 text-sm font-mono text-gray-600 truncate">
                                             {truncateId(seller._id)}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                {getSellerAvatar(seller) ? (
-                                                    <img
-                                                        className='w-8 h-8 rounded-full object-cover'
-                                                        src={getSellerAvatar(seller)}
-                                                        alt={seller.name}
-                                                    />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                                                        {seller?.name?.charAt(0).toUpperCase() || 'S'}
-                                                    </div>
-                                                )}
-                                                <span className="text-sm font-medium text-gray-800">{seller.name || 'N/A'}</span>
+                                                <img
+                                                    className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm'
+                                                    src={seller.avatar}
+                                                    alt="Profile Pic"
+                                                />
+                                                <span className="text-sm font-medium text-gray-800">{seller.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-xs">
-                                            {seller.email || 'N/A'}
+                                        <td title={seller.email} className="truncate px-6 py-4 text-sm text-gray-600">
+                                            {seller.email}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {formatDate(seller.createdAt)}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                            <IoMdEye size={20} className='hover:text-primary cursor-pointer' onClick={() => navigate(`/shop/${seller._id}`)} />
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <button
@@ -185,19 +169,14 @@ const AdminSellers = () => {
                             <div key={seller._id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-3">
-                                        {getSellerAvatar(seller) ? (
-                                            <img
-                                                className='w-10 h-10 rounded-full object-cover'
-                                                src={getSellerAvatar(seller)}
-                                                alt={seller.name}
-                                            />
-                                        ) : (
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                                                {seller.name?.charAt(0).toUpperCase() || 'S'}
-                                            </div>
-                                        )}
+                                        <img
+                                            onClick={() => navigate(`/shop/${seller._id}`)}
+                                            className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm'
+                                            src={seller.avatar}
+                                            alt="Profile Pic"
+                                        />
                                         <div>
-                                            <h3 className="font-semibold text-gray-800">{seller.name || 'N/A'}</h3>
+                                            <h3 className="font-semibold text-gray-800">{seller.name}</h3>
                                             <p className="text-xs text-gray-500 font-mono">{truncateId(seller._id)}</p>
                                         </div>
                                     </div>
@@ -212,9 +191,9 @@ const AdminSellers = () => {
                                 <div className="mt-3 grid grid-cols-2 gap-2">
                                     <div>
                                         <p className="text-xs text-gray-500">Email</p>
-                                        <p className="text-sm text-gray-700 truncate">{seller.email || 'N/A'}</p>
+                                        <p className="text-sm text-gray-700 truncate">{seller.email}</p>
                                     </div>
-                                    <div>
+                                    <div className="col-span-2">
                                         <p className="text-xs text-gray-500">Joined</p>
                                         <p className="text-sm text-gray-700">{formatDate(seller.createdAt)}</p>
                                     </div>
@@ -241,6 +220,7 @@ const AdminSellers = () => {
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                         onClick={handleCancelDelete}
                     />
+
                     <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
@@ -254,30 +234,22 @@ const AdminSellers = () => {
 
                         <div className="bg-gray-50 rounded-lg p-4 mb-6">
                             <div className="flex items-center gap-3 mb-2">
-                                {getSellerAvatar(selectedSeller) ? (
-                                    <img
-                                        className='w-8 h-8 rounded-full object-cover'
-                                        src={getSellerAvatar(selectedSeller)}
-                                        alt={selectedSeller.name}
-                                    />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                                        {selectedSeller.name?.charAt(0).toUpperCase() || 'S'}
-                                    </div>
-                                )}
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                                    {selectedSeller.name.charAt(0)}
+                                </div>
                                 <div>
-                                    <p className="font-medium text-gray-800">{selectedSeller.name || 'N/A'}</p>
-                                    <p className="text-xs text-gray-500 font-mono">{truncateId(selectedSeller._id)}</p>
+                                    <p className="font-medium text-gray-800">{selectedSeller.name}</p>
+                                    <p className="text-xs text-gray-500 font-mono">{selectedSeller._id}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-sm">
                                 <div>
-                                    <p className="text-xs text-gray-500">Shop Name</p>
-                                    <p className="text-gray-700 truncate">{selectedSeller.shopName || 'N/A'}</p>
+                                    <p className="text-xs text-gray-500">Email</p>
+                                    <p className="text-gray-700 truncate">{selectedSeller.email}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Email</p>
-                                    <p className="text-gray-700 truncate">{selectedSeller.email || 'N/A'}</p>
+                                    <p className="text-xs text-gray-500">Shop Name</p>
+                                    <p className="text-gray-700 truncate">{selectedSeller.shopName}</p>
                                 </div>
                             </div>
                         </div>

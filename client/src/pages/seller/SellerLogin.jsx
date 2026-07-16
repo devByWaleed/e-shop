@@ -82,7 +82,7 @@ const SellerLogin = () => {
                             Remember me
                         </label>
                     </div>
-                    <p onClick={() => navigate("/reset-password")} className="text-sm text-right text-primary hover:text-primary-dull cursor-pointer font-medium transition-colors">
+                    <p onClick={() => navigate("/seller-reset-password")} className="text-sm text-right text-primary hover:text-primary-dull cursor-pointer font-medium transition-colors">
                         Forgot password?
                     </p>
                 </div>

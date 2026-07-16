@@ -7,8 +7,14 @@ import {
     setAllSellers,
     fetchDataStart,
     fetchDataFailure,
-    setAllUsers
+    setAllUsers,
+    deleteUser,
+    deleteSeller,
+    setAllProducts,
+    setAllEvents,
+    setAllOrders
 } from "../slices/adminSlice";
+import toast from "react-hot-toast";
 
 
 // Load admin from token (called on app mount)
@@ -76,10 +82,12 @@ export const adminLogoutAction = () => async (dispatch) => {
 
 
 // Get All Users
-export const getUsers = () => async (dispatch) => {
+export const getUsersAction = () => async (dispatch) => {
     try {
         dispatch(fetchDataStart());
-        const { data } = await axios.get('/api/admin/admin-users');
+        const { data } = await axios.get('/api/admin/admin-users', {
+            withCredentials: true
+        });
         if (data.success) {
             dispatch(setAllUsers(data.allUsers));
         } else {
@@ -92,16 +100,113 @@ export const getUsers = () => async (dispatch) => {
 
 
 // Delete Specific User
-export const deleteUser = () => async () => { }
+export const deleteUserAction = (id) => async (dispatch) => {
+    try {
+        dispatch(fetchDataStart());
+
+        const { data } = await axios.delete(`/api/admin/delete-user-by-id/${id}`, {
+            withCredentials: true
+        });
+
+        if (data.success) {
+            dispatch(deleteUser(id));
+            toast.success(data.message)
+        } else {
+            toast.error(data.message)
+            dispatch(fetchDataFailure(data.message));
+        }
+    } catch (error) {
+        toast.error(error.message)
+        dispatch(fetchDataFailure(error.message));
+    }
+}
 
 
 // Get All Sellers
-export const getSellers = () => async (dispatch) => {
+export const getSellersAction = () => async (dispatch) => {
     try {
         dispatch(fetchDataStart());
-        const { data } = await axios.get('/api/admin/admin-sellers');
+        const { data } = await axios.get('/api/admin/admin-sellers', {
+            withCredentials: true
+        });
         if (data.success) {
             dispatch(setAllSellers(data.allSellers));
+        } else {
+            dispatch(fetchDataFailure(data.message));
+        }
+    } catch (error) {
+        dispatch(fetchDataFailure(error.message));
+    }
+};
+
+// Delete Specific User
+export const deleteSellerAction = (id) => async (dispatch) => {
+    try {
+        dispatch(fetchDataStart());
+
+        const { data } = await axios.delete(`/api/admin/delete-seller-by-id/${id}`, {
+            withCredentials: true
+        });
+
+        if (data.success) {
+            dispatch(deleteSeller(id));
+            toast.success(data.message)
+        } else {
+            toast.error(data.message)
+            dispatch(fetchDataFailure(data.message));
+        }
+    } catch (error) {
+        toast.error(error.message)
+        dispatch(fetchDataFailure(error.message));
+    }
+}
+
+
+// Get All Products
+export const getProductsAction = () => async (dispatch) => {
+    try {
+        dispatch(fetchDataStart());
+        const { data } = await axios.get('/api/admin/admin-products', {
+            withCredentials: true
+        });
+        if (data.success) {
+            dispatch(setAllProducts(data.allProducts));
+        } else {
+            dispatch(fetchDataFailure(data.message));
+        }
+    } catch (error) {
+        dispatch(fetchDataFailure(error.message));
+    }
+};
+
+
+// Get All Events
+export const getEventsAction = () => async (dispatch) => {
+    try {
+        dispatch(fetchDataStart());
+        const { data } = await axios.get('/api/admin/admin-events', {
+            withCredentials: true
+        });
+        if (data.success) {
+            dispatch(setAllEvents(data.allEvents));
+        } else {
+            dispatch(fetchDataFailure(data.message));
+        }
+    } catch (error) {
+        dispatch(fetchDataFailure(error.message));
+    }
+};
+
+
+// Get All Orders
+export const getOrdersAction = () => async (dispatch) => {
+    try {
+        dispatch(fetchDataStart());
+        const { data } = await axios.get('/api/admin/admin-orders', {
+            withCredentials: true
+        });
+        if (data.success) {
+            dispatch(setAllOrders(data.allOrders));
         } else {
             dispatch(fetchDataFailure(data.message));
         }

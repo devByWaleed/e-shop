@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { FiTrash2, FiSearch, FiUser, FiArrowLeft } from 'react-icons/fi';
 import { MdOutlineDeleteOutline } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
-import { deleteUser, getUsers } from '../../redux/actions/adminAction';
+import { deleteUserAction, getUsersAction } from '../../redux/actions/adminAction';
 import { useEffect } from 'react';
 
 const AdminUsers = () => {
@@ -16,6 +16,13 @@ const AdminUsers = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    // Date Formatter
+    const formatDate = (isoString) => {
+        const date = new Date(isoString);
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Intl.DateTimeFormat('en-US', options).format(date);
+    };
 
     // Filter users based on search
     const filteredUsers = allUsers.filter(user =>
@@ -33,7 +40,7 @@ const AdminUsers = () => {
     // Confirm delete (dispatches to slicer)
     const handleConfirmDelete = () => {
         if (selectedUser) {
-            dispatch(deleteUser(selectedUser._id));
+            dispatch(deleteUserAction(selectedUser._id));
             setShowDeleteModal(false);
             setSelectedUser(null);
         }
@@ -49,7 +56,7 @@ const AdminUsers = () => {
     const truncateId = (id) => id && id.length > 10 ? `${id.substring(0, 10)}...` : id;
 
     useEffect(() => {
-        dispatch(getUsers());
+        dispatch(getUsersAction());
     }, [dispatch]);
 
     return (
@@ -125,7 +132,7 @@ const AdminUsers = () => {
                                     {user.email}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
-                                    {user.joinedAt}
+                                    {formatDate(user.createdAt)}
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                     <button
@@ -148,9 +155,11 @@ const AdminUsers = () => {
                     <div key={user._id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                                    {user.name.charAt(0)}
-                                </div>
+                                <img
+                                    className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm'
+                                    src={user.avatar}
+                                    alt="Profile Pic"
+                                />
                                 <div>
                                     <h3 className="font-semibold text-gray-800">{user.name}</h3>
                                     <p className="text-xs text-gray-500 font-mono">{truncateId(user._id)}</p>
@@ -171,7 +180,7 @@ const AdminUsers = () => {
                             </div>
                             <div className="col-span-2">
                                 <p className="text-xs text-gray-500">Joined</p>
-                                <p className="text-sm text-gray-700">{user.joinedAt}</p>
+                                <p className="text-sm text-gray-700">{formatDate(user.createdAt)}</p>
                             </div>
                         </div>
                     </div>
@@ -220,12 +229,6 @@ const AdminUsers = () => {
                                 <div>
                                     <p className="text-xs text-gray-500">Email</p>
                                     <p className="text-gray-700 truncate">{selectedUser.email}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500">Role</p>
-                                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getRoleBadgeColor(selectedUser.role)}`}>
-                                        {selectedUser.role}
-                                    </span>
                                 </div>
                             </div>
                         </div>

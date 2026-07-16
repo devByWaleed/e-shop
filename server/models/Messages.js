@@ -1,28 +1,28 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
-// Creating product schema
-const MessageSchema = new mongoose.Schema({
+const messageSchema = new mongoose.Schema({
     conversationID: {
         type: String,
+        required: true
     },
     sender: {
         type: String,
+        required: true
     },
     text: {
         type: String,
+        default: ""
     },
-    images: [
-        {
-            type: String,
-        }
-    ],
-    lastMessageID: {
-        type: String,
-    },
-}, { timestamps: true });
+    images: [{
+        type: String
+    }],
+    seen: {
+        type: Boolean,
+        default: false
+    }
+}, {
+    timestamps: true
+});
 
-
-// .model gets collection name & schema
-const MessageModel = mongoose.models.message || mongoose.model("message", MessageSchema)
-
-export default MessageModel
+const MessageModel = mongoose.model("Message", messageSchema);
+export default MessageModel;

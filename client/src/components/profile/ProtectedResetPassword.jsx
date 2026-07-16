@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useContext } from "react"
 import { assets } from "../../assets/assets"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import toast from 'react-hot-toast'
 import axios from "axios"
 
-const ResetPassword = () => {
+
+const ProtectedResetPassword = () => {
 	const [email, setEmail] = useState("")
 	const [newPassword, setNewPassword] = useState("")
 	const [isEmailSend, setIsEmailSend] = useState(false)
@@ -12,31 +13,17 @@ const ResetPassword = () => {
 	const [isOTPSubmitted, setIsOTPsubmited] = useState(false)
 	const [showPassword, setShowPassword] = useState(false);
 
-	const location = useLocation();
-	const currentPath = location.pathname;
-	const isUserReset = currentPath.includes("user");
-	const isSellerReset = currentPath.includes("seller");
-
 	const navigate = useNavigate();
 
 	const inputRefs = useRef([])
 
-	// Determine which role we're dealing with
-	const userType = isUserReset ? "user" : isSellerReset ? "seller" : null;
-
-	useEffect(() => {
-		// If neither user nor seller is detected, redirect or show error
-		if (!userType) {
-			toast.error("Invalid reset password URL");
-			navigate("/");
-		}
-	}, [userType, navigate]);
 
 	const handleInput = (e, index) => {
 		if (e.target.value.length > 0 && index < inputRefs.current.length - 1) {
 			inputRefs.current[index + 1].focus()
 		}
 	}
+
 
 	const handleKeyDown = (e, index) => {
 		if (e.key === "Backspace" && e.target.value === "" && index > 0) {
@@ -48,44 +35,29 @@ const ResetPassword = () => {
 		const paste = e.clipboardData.getData("text")
 		const pasteArray = paste.split("")
 		pasteArray.forEach((char, index) => {
-			if (inputRefs.current[index]) {
-				inputRefs.current[index].value = char
-			}
+			inputRefs.current[index].value = char
 		})
 	}
 
+
 	const onSubmitEmail = async (e) => {
 		e.preventDefault();
-
 		try {
-			let endpoint;
-			if (isSellerReset) {
-				endpoint = "/api/seller/seller-send-reset-otp";
-			} else if (isUserReset) {
-				endpoint = "/api/user/send-reset-otp";
-			} else {
-				toast.error("Invalid reset type");
-				return;
-			}
+			const { data } = await axios.post("/api/user/send-reset-otp", { email })
 
-			const { data } = await axios.post(endpoint, { email })
-
-			if (data.success) {
-				toast.success(data.message)
-				setIsEmailSend(true)
-			} else {
-				toast.error(data.message)
-			}
+			data.success ? toast.success(data.message) : toast.error(data.message)
+			data.success && setIsEmailSend(true)
+			setIsEmailSend(true)
 
 		} catch (error) {
-			toast.error(error?.response?.data?.message || error.message || "Failed to send OTP")
+			toast.error(error.message)
 		}
 	}
 
 	const onSubmitOTP = async (e) => {
 		e.preventDefault();
-
 		try {
+
 			const otpArray = inputRefs.current.map(e => e.value)
 			const otpString = otpArray.join("")
 
@@ -93,17 +65,8 @@ const ResetPassword = () => {
 				return toast.error("Please enter the full 6-digit OTP");
 			}
 
-			let endpoint;
-			if (isSellerReset) {
-				endpoint = "/api/seller/seller-verify-reset-otp";
-			} else if (isUserReset) {
-				endpoint = "/api/user/verify-reset-otp";
-			} else {
-				toast.error("Invalid reset type");
-				return;
-			}
-
-			const { data } = await axios.post(endpoint, {
+			// Actually verify with the server — don't just trust the client
+			const { data } = await axios.post("/api/user/verify-reset-otp", {
 				email,
 				otp: otpString
 			});
@@ -114,62 +77,35 @@ const ResetPassword = () => {
 				toast.success("OTP verified successfully");
 			} else {
 				// Clear the OTP inputs so user can retry
-				inputRefs.current.forEach(input => {
-					if (input) input.value = "";
-				});
-				if (inputRefs.current[0]) {
-					inputRefs.current[0].focus();
-				}
+				inputRefs.current.forEach(input => input.value = "");
+				inputRefs.current[0].focus();
 				toast.error(data.message);
 			}
 
 		} catch (error) {
-			toast.error(error?.response?.data?.message || error.message || "Failed to verify OTP")
+			toast.error(error.message)
 		}
 	}
 
 	const onSubmitNewPassword = async (e) => {
 		e.preventDefault();
-
 		try {
-			let endpoint;
-			if (isSellerReset) {
-				endpoint = "/api/seller/seller-reset-password";
-			} else if (isUserReset) {
-				endpoint = "/api/user/reset-password";
-			} else {
-				toast.error("Invalid reset type");
-				return;
-			}
 
-			const { data } = await axios.post(endpoint, {
-				email,
-				newPassword
-			})
+			const { data } = await axios.post("/api/user/reset-password", { email, newPassword })
 
 			if (data.success) {
 				toast.success(data.message);
-				// Navigate to the appropriate login page
-				if (isSellerReset) {
-					navigate("/seller-login");
-				} else {
-					navigate("/user-login");
-				}
+				navigate("/user-profile");
+				setShowUserLogin(true);
 			} else {
 				toast.error(data.message);
 			}
 
 		} catch (error) {
-			toast.error(error?.response?.data?.message || error.message || "Failed to reset password")
+			toast.error(error.message)
 		}
 	}
 
-	// Dynamic text based on user type
-	const getRoleText = () => {
-		if (isSellerReset) return "Seller";
-		if (isUserReset) return "User";
-		return "";
-	}
 
 	return (
 		<section className="flex flex-col items-center gap-6 text-center min-h-screen justify-center px-4">
@@ -183,7 +119,7 @@ const ResetPassword = () => {
 					{/* Reset Password Card */}
 					<div className="rounded-3xl p-8 sm:p-12 bg-white shadow-2xl border border-gray-100 w-full max-w-105">
 						<h2 className="text-3xl font-bold text-gray-900 sm:text-4xl tracking-tight mb-2">
-							Reset {getRoleText()} Password
+							Reset Password
 						</h2>
 
 						<p className="mb-8 text-sm text-gray-500 sm:text-base">
@@ -215,6 +151,8 @@ const ResetPassword = () => {
 				</div>
 			}
 
+
+
 			{/* 
 				*************************************
 				OTP Input Form
@@ -224,7 +162,7 @@ const ResetPassword = () => {
 				<div className="bg-white p-8 sm:p-12 rounded-3xl shadow-2xl w-full max-w-md border border-gray-100 text-center">
 					<div className="mb-6">
 						<h2 className="text-2xl font-bold text-gray-900 sm:text-3xl tracking-tight">
-							Reset {getRoleText()} Password OTP
+							Reset Password OTP
 						</h2>
 						<p className="mt-2 text-sm text-gray-500">
 							Enter the 6-digit code sent to your email address.
@@ -257,6 +195,8 @@ const ResetPassword = () => {
 				</div>
 			}
 
+
+
 			{/* 
 				*************************************
 				Password for resetting 
@@ -265,7 +205,7 @@ const ResetPassword = () => {
 			{isOTPSubmitted && isEmailSend &&
 				<div className="rounded-3xl p-8 sm:p-12 bg-white shadow-2xl border border-gray-100 w-full max-w-105">
 					<h2 className="text-3xl font-bold text-gray-900 sm:text-4xl tracking-tight mb-2">
-						New {getRoleText()} Password
+						New Password
 					</h2>
 
 					<p className="mb-8 text-sm text-gray-500 sm:text-base">
@@ -284,7 +224,6 @@ const ResetPassword = () => {
 									className="border border-gray-200 rounded-xl w-full p-3 pr-12 outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-gray-50"
 									type={showPassword ? "text" : "password"}
 									required
-									minLength={6}
 								/>
 								<img
 									onClick={() => setShowPassword(!showPassword)}
@@ -294,6 +233,7 @@ const ResetPassword = () => {
 								/>
 							</div>
 						</div>
+
 
 						{/* Submit Button */}
 						<button
@@ -305,8 +245,10 @@ const ResetPassword = () => {
 					</form>
 				</div>
 			}
+
+
 		</section>
 	)
 }
 
-export default ResetPassword
+export default ProtectedResetPassword

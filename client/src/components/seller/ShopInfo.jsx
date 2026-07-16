@@ -9,7 +9,7 @@ import { LoadSellerFail } from '../../redux/slices/sellerSlice';
 
 const ShopInfo = ({ isOwner }) => {
     // Accessing seller data from Redux state
-    const { seller } = useSelector((state) => state.seller);
+    const { seller, sellerLoading } = useSelector((state) => state.seller);
     const { allProducts, productLoading, productError } = useSelector((state) => state.product);
 
     const navigate = useNavigate();
@@ -32,16 +32,20 @@ const ShopInfo = ({ isOwner }) => {
         }
     }
 
-    useEffect(() => {
-        dispatch(loadSeller())
-    }, [dispatch])
-
     // Once seller is available, fetch that seller's products
     useEffect(() => {
         if (seller?._id) {
             dispatch(getAllProducts(seller._id))
         }
     }, [seller?._id, dispatch])
+
+    if (sellerLoading || !seller?._id) {
+        return (
+            <div className="w-full flex justify-center py-10">
+                <p className="text-sm text-gray-500">Loading shop info...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full flex flex-col items-center">

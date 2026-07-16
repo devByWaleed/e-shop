@@ -6,7 +6,8 @@ import {
     FiPackage,
     FiUsers,
     FiCalendar,
-    FiLogOut
+    FiLogOut,
+    FiMail
 } from 'react-icons/fi';
 import { MdOutlineStore } from 'react-icons/md'; // Replaced non-existent FiShop with MdOutlineStore
 import { useDispatch } from 'react-redux';
@@ -18,13 +19,14 @@ const AdminSidebar = ({ active, setActive }) => {
 
     // Admin menu items with appropriate, verified icons
     const menuItems = [
-        { id: 1, label: "Dashboard", icon: <RxDashboard size={20} />, path: "/admin-dashboard" },
-        { id: 2, label: "All Orders", icon: <FiShoppingBag size={20} />, path: "/admin-orders" },
-        { id: 3, label: "All Products", icon: <FiPackage size={20} />, path: "/admin-products" },
-        { id: 4, label: "All Users", icon: <FiUsers size={20} />, path: "/admin-users" },
-        { id: 5, label: "All Events", icon: <FiCalendar size={20} />, path: "/admin-events" },
-        { id: 6, label: "All Sellers", icon: <MdOutlineStore size={20} />, path: "/admin-sellers" },
-        { id: 7, label: "Logout", icon: <FiLogOut size={20} /> },
+        { id: 1, label: "Dashboard", icon: <RxDashboard size={20} /> },
+        { id: 2, label: "All Orders", icon: <FiShoppingBag size={20} />, path: "/admin-profile/orders" },
+        { id: 3, label: "All Products", icon: <FiPackage size={20} />, path: "/admin-profile/products" },
+        { id: 4, label: "All Users", icon: <FiUsers size={20} />, path: "/admin-profile/users" },
+        { id: 5, label: "All Events", icon: <FiCalendar size={20} />, path: "/admin-profile/events" },
+        { id: 6, label: "All Sellers", icon: <MdOutlineStore size={20} />, path: "/admin-profile/sellers" },
+        { id: 7, label: "Inbox", icon: <FiMail size={20} />, path: "/admin-profile/inbox" },
+        { id: 8, label: "Logout", icon: <FiLogOut size={20} /> },
     ];
 
     const handleNavigation = (item) => {

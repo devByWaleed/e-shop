@@ -5,7 +5,7 @@ import { getMessages, newMessage } from "../controllers/messageController.js";
 
 const messageRouter = express.Router();
 
-messageRouter.post("/create-new-message", upload.single("file"), newMessage)
+messageRouter.post("/create-new-message", upload.array("images", 5), newMessage)
 messageRouter.get("/get-all-messages/:id", getMessages)
 
 export default messageRouter

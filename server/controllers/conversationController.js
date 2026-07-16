@@ -131,3 +131,25 @@ export const updateLastMessage = async (req, res) => {
         });
     }
 }
+
+
+// Get Admin conversations: /api/conversation/get-admin-conversations/:id
+export const getAdminConversations = async (req, res) => {
+    try {
+        const conversations = await ConversationModel.find({
+            members: {
+                $in: [req.params.id],
+            }
+        }).sort({ updatedAt: -1, createdAt: -1 });
+
+        return res.json({
+            success: true,
+            conversations
+        });
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};

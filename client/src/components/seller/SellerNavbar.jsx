@@ -10,7 +10,7 @@ import {
 import { MdOutlineEventNote, MdOutlineLocalOffer } from 'react-icons/md'
 import { FiShoppingBag } from 'react-icons/fi'
 
-const Navbar = () => {
+const SellerNavbar = () => {
     const { seller } = useSelector((state) => state.seller)
 
     return (
@@ -41,4 +41,4 @@ const Navbar = () => {
     )
 }
 
-export default Navbar
+export default SellerNavbar

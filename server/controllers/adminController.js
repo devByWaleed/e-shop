@@ -1,7 +1,12 @@
 import jwt from "jsonwebtoken";
+import { getCloudinaryPublicId } from "../config/cloudinary.js";
+import multer from "multer"
+import { v2 as cloudinary } from "cloudinary";
 import UserModel from "../models/Users.js";
 import SellerModel from "../models/Sellers.js";
 import ProductModel from "../models/Products.js";
+import EventModel from "../models/Events.js";
+import OrderModel from "../models/Orders.js";
 
 
 // Admin login : /api/admin/admin-login
@@ -125,6 +130,45 @@ export const adminUsers = async (req, res) => {
 }
 
 
+// Delete Specific User : /api/admin/delete-user-by-id/:id
+export const deleteUser = async (req, res) => {
+    try {
+        const id = req.params.id
+
+        const userDetail = await UserModel.findById(id)
+
+        if (!userDetail) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            })
+        }
+
+        if (userDetail.avatar) {
+            try {
+                const publicId = getCloudinaryPublicId(userDetail.avatar)
+                if (publicId) {
+                    await cloudinary.uploader.destroy(publicId)
+                }
+            } catch (cloudinaryError) {
+                console.error("Failed to delete avatar from Cloudinary:", cloudinaryError.message)
+            }
+        }
+
+        await UserModel.findByIdAndDelete(id)
+
+        return res.json({
+            success: true,
+            message: "User Deleted Successfully",
+        })
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message || "Internal Server Error"
+        });
+    }
+}
+
 
 // Get All Sellers : /api/admin/admin-sellers
 export const adminSellers = async (req, res) => {
@@ -145,6 +189,45 @@ export const adminSellers = async (req, res) => {
 }
 
 
+// Delete Specific Seller : /api/admin/delete-seller-by-id/:id
+export const deleteSeller = async (req, res) => {
+    try {
+        const id = req.params.id
+
+        const sellerDetail = await SellerModel.findById(id)
+
+        if (!sellerDetail) {
+            return res.status(404).json({
+                success: false,
+                message: "Seller not found"
+            })
+        }
+
+        if (sellerDetail.avatar) {
+            try {
+                const publicId = getCloudinaryPublicId(sellerDetail.avatar)
+                if (publicId) {
+                    await cloudinary.uploader.destroy(publicId)
+                }
+            } catch (cloudinaryError) {
+                console.error("Failed to delete avatar from Cloudinary:", cloudinaryError.message)
+            }
+        }
+
+        await SellerModel.findByIdAndDelete(id)
+
+        return res.json({
+            success: true,
+            message: "Seller Deleted Successfully",
+        })
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message || "Internal Server Error"
+        });
+    }
+}
+
 
 // Get All Products : /api/admin/admin-products
 export const adminProducts = async (req, res) => {
@@ -154,6 +237,44 @@ export const adminProducts = async (req, res) => {
         res.json({
             success: true,
             allProducts
+        });
+    } catch (error) {
+        console.log("Error inside createProduct:", error.message);
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+
+// Get All Events : /api/admin/admin-events
+export const adminEvents = async (req, res) => {
+    try {
+        const allEvents = await EventModel.find({})
+
+        res.json({
+            success: true,
+            allEvents
+        });
+    } catch (error) {
+        console.log("Error inside createProduct:", error.message);
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+
+// Get All Orders : /api/admin/admin-orders
+export const adminOrders = async (req, res) => {
+    try {
+        const allOrders = await OrderModel.find({})
+
+        res.json({
+            success: true,
+            allOrders
         });
     } catch (error) {
         console.log("Error inside createProduct:", error.message);
