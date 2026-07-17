@@ -4,6 +4,7 @@ import profile from "./person-circle.svg"
 import search from "./search_icon.svg"
 import cart from "./cart_icon.svg"
 import zenvio from "./zenvio.webp"
+import DEFAULT_AVATAR from "./default_profile.png"
 
 
 export const assets = {
@@ -12,7 +13,8 @@ export const assets = {
     profile,
     search,
     cart,
-    zenvio
+    zenvio,
+    DEFAULT_AVATAR
 };
 
 

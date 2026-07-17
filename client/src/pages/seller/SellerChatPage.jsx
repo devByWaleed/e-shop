@@ -114,6 +114,18 @@ const SellerChatPage = () => {
         const fetchReceiverInfo = async () => {
             if (!receiverId) return;
 
+            // The other member may be admin, who has no User/Seller document to look up.
+            // Detect this the same way UserInbox/SellerInbox do (via memberRoles), with an
+            // id-prefix fallback, and skip the network call (and its fallback) entirely.
+            const otherRole = conversationData?.memberRoles?.get?.(receiverId)
+                || conversationData?.memberRoles?.[receiverId];
+            const isAdminReceiver = otherRole === 'admin' || receiverId.startsWith('admin');
+
+            if (isAdminReceiver) {
+                setReceiverInfo({ name: "Admin", avatar: "" });
+                return;
+            }
+
             try {
                 let endpoint;
                 if (isSellerView) {
@@ -159,7 +171,7 @@ const SellerChatPage = () => {
         };
 
         fetchReceiverInfo();
-    }, [receiverId, isSellerView]);
+    }, [receiverId, isSellerView, conversationData]);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });

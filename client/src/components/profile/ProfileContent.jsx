@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateUser } from '../../redux/actions/userAction';
 import toast from 'react-hot-toast'
+import { assets } from '../../assets/assets'
 
 const ProfileContent = ({ active }) => {
     const dispatch = useDispatch();
@@ -84,8 +85,12 @@ const ProfileContent = ({ active }) => {
                         <label htmlFor="user-avatar" className="cursor-pointer block relative">
                             <img
                                 className="w-24 h-24 object-cover rounded-full border-2 border-primary/40 opacity-80 transition-opacity hover:opacity-60"
-                                src={image ? URL.createObjectURL(image) : userData.image}
+                                src={image ? URL.createObjectURL(image) : (userData.image || assets.DEFAULT_AVATAR)}
                                 alt="Avatar Preview"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = assets.DEFAULT_AVATAR;
+                                }}
                             />
                             <div className="absolute inset-0 flex items-center justify-center text-lg bg-black/20 rounded-full text-white">📷</div>
                             <input
@@ -99,8 +104,12 @@ const ProfileContent = ({ active }) => {
                     ) : (
                         <img
                             className="w-24 h-24 object-cover rounded-full border border-gray-200 shadow-inner"
-                            src={userData.image}
+                            src={userData.image || assets.DEFAULT_AVATAR}
                             alt="Profile Avatar"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = assets.DEFAULT_AVATAR;
+                            }}
                         />
                     )}
                 </div>

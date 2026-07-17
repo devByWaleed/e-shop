@@ -67,27 +67,45 @@ const UserInbox = () => {
                                 avatar: null,
                                 role: 'admin'
                             }];
-                        } else if (otherRole === 'seller') {
-                            endpoint = `/api/seller/get-seller/${otherId}`;
+                        }
+
+
+
+
+
+                        else if (otherRole === 'seller') {
                             try {
-                                const { data } = await axios.get(endpoint);
-                                if (data.success && data.seller) {
-                                    info = data.seller;
-                                }
+                                const { data } = await axios.get(`/api/seller/get-seller/${otherId}`);
+                                if (data.success && data.seller) info = data.seller;
                             } catch (e) {
-                                console.log('Seller fetch failed:', e);
+                                // role tag may be stale — check the user collection before giving up
+                                try {
+                                    const { data } = await axios.get(`/api/user/user-info/${otherId}`);
+                                    if (data.success && data.user) info = data.user;
+                                } catch (e2) {
+                                    console.log('Both endpoints failed for', otherId);
+                                }
                             }
                         } else if (otherRole === 'user') {
-                            endpoint = `/api/user/user-info/${otherId}`;
                             try {
-                                const { data } = await axios.get(endpoint);
-                                if (data.success && data.user) {
-                                    info = data.user;
-                                }
+                                const { data } = await axios.get(`/api/user/user-info/${otherId}`);
+                                if (data.success && data.user) info = data.user;
                             } catch (e) {
-                                console.log('User fetch failed:', e);
+                                try {
+                                    const { data } = await axios.get(`/api/seller/get-seller/${otherId}`);
+                                    if (data.success && data.seller) info = data.seller;
+                                } catch (e2) {
+                                    console.log('Both endpoints failed for', otherId);
+                                }
                             }
-                        } else {
+                        }
+
+                        /* 
+                        This cause avatar display and a 404 error:-
+                        UserInbox.jsx:106 
+                        GET http://localhost:4000/api/user/user-info/6a3d302… 404 (Not Found)
+                        */
+                        else {
                             // If no role is found, try both endpoints as fallback
                             try {
                                 const { data } = await axios.get(`/api/user/user-info/${otherId}`);
@@ -106,6 +124,25 @@ const UserInbox = () => {
                             }
                         }
 
+                        /*
+                        else {
+                            // Role not tagged on this conversation — resolve it once, in parallel.
+                            const [userRes, sellerRes] = await Promise.all([
+                                axios.get(`/api/user/user-info/${otherId}`, { validateStatus: () => true }),
+                                axios.get(`/api/seller/get-seller/${otherId}`, { validateStatus: () => true })
+                            ]);
+
+                            if (userRes.data?.success && userRes.data?.user) {
+                                info = userRes.data.user;
+                                otherRole = 'user';
+                            } else if (sellerRes.data?.success && sellerRes.data?.seller) {
+                                info = sellerRes.data.seller;
+                                otherRole = 'seller';
+                            }
+                        }
+                        */
+
+
                         // If we got info from API, use it
                         if (info) {
                             return [conv._id, {
@@ -115,11 +152,14 @@ const UserInbox = () => {
                             }];
                         }
 
-                        // If we couldn't fetch info, use fallback
+                        // If we couldn't fetch info, use fallback.
+                        // A failed lookup on both User and Seller collections (with no role
+                        // tagged on the conversation) means this participant isn't in either
+                        // collection at all, which in this app only happens for admin.
                         return [conv._id, {
-                            name: otherRole === 'admin' ? 'Admin' : (otherRole === 'seller' ? 'Seller' : 'User'),
+                            name: otherRole === 'admin' ? 'Admin' : (otherRole === 'seller' ? 'Seller' : (otherRole === 'user' ? 'User' : 'Admin')),
                             avatar: null,
-                            role: otherRole || 'unknown'
+                            role: otherRole || 'admin'
                         }];
                     } catch (error) {
                         console.error(`Error fetching info for ${otherId}:`, error);

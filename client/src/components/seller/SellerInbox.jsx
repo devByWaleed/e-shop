@@ -115,11 +115,14 @@ const SellerInbox = () => {
                             }];
                         }
 
-                        // If we couldn't fetch info, use fallback
+                        // If we couldn't fetch info, use fallback.
+                        // A failed lookup on both User and Seller collections (with no role
+                        // tagged on the conversation) means this participant isn't in either
+                        // collection at all, which in this app only happens for admin.
                         return [conv._id, {
-                            name: otherRole === 'admin' ? 'Admin' : (otherRole === 'seller' ? 'Seller' : 'User'),
+                            name: otherRole === 'admin' ? 'Admin' : (otherRole === 'seller' ? 'Seller' : (otherRole === 'user' ? 'User' : 'Admin')),
                             avatar: null,
-                            role: otherRole || 'unknown'
+                            role: otherRole || 'admin'
                         }];
                     } catch (error) {
                         console.error(`Error fetching info for ${otherId}:`, error);
