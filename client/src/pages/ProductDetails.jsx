@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { addToCart } from "../redux/actions/cartAction";
 import { addToWishlist, removeFromWishlist } from "../redux/actions/wishlistAction";
 import axios from "axios";
+import StarRating from "../components/StarRating";
 
 const ProductDetails = () => {
     const { user, isAuthenticated } = useSelector((state) => state.user);
@@ -18,6 +19,7 @@ const ProductDetails = () => {
     const [activeTab, setActiveTab] = useState("reviews");
     const [count, setCount] = useState(0);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [sendingMessage, setSendingMessage] = useState(false);
     const { id } = useParams();
 
     const dispatch = useDispatch();
@@ -69,9 +71,17 @@ const ProductDetails = () => {
         return <div className="text-center py-12">Product not found</div>;
     }
 
-    // The product's embedded shop info, straight from the DB (ProductSchema.shop),
-    // instead of a separately imported mock seller object
     const shop = product.shop;
+
+    // Single source of truth for this product's rating, reused everywhere below
+    // (top rating block, seller card, seller info tab) instead of being
+    // recalculated inline in some places and hardcoded to 4.5 in another.
+    const reviews = product.reviews || [];
+    const reviewCount = reviews.length;
+    const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+    const averageRating = reviewCount > 0
+        ? Math.round((totalRating / reviewCount) * 10) / 10
+        : 0;
 
     // Products belonging to the same shop, derived from the already-fetched list —
     // real DB-derived count instead of a hardcoded/mock "totalProducts" value
@@ -131,27 +141,44 @@ const ProductDetails = () => {
     };
 
 
+
     const handleSubmitMessage = async () => {
-        if (!isAuthenticated) {
-            toast.error("Please login to create conversation");
-        }
-        const groupTitle = id + user._id
-        const userID = user._id
-        const sellerID = seller._id
 
-        try {
-            const { data } = await axios.post(`/api/conversation/create-new-conversation`, {
-                groupTitle, userID, sellerID
-            });
-            if (data.success) {
-                navigate(`/conversation/${data.conversation._id}`)
-            } else {
-                toast.error(data.message);
+        navigate("/user-profile")
+        // if (!isAuthenticated) {
+        //     toast.error("Please login to create conversation");
+        //     return;
+        // }
 
-            }
-        } catch (error) {
-            toast.error(error?.message || "Invalid coupon code!");
-        }
+        // if (!shop?._id) {
+        //     toast.error("Unable to message this shop right now");
+        //     return;
+        // }
+
+        // if (sendingMessage) return;
+        // setSendingMessage(true);
+
+        // try {
+        //     const { data } = await axios.post(`/api/conversation/create-new-conversation`, {
+        //         senderID: user._id,
+        //         senderRole: "user",     // confirm this matches VALID_ROLES
+        //         receiverID: shop._id,
+        //         receiverRole: "seller", // confirm this matches VALID_ROLES
+        //     });
+        //     if (data.success) {
+        //         // Whether this was a brand-new conversation or an existing
+        //         // one the backend's upsert returned, navigate the same way —
+        //         // the upsert guarantees data.conversation is always present
+        //         // on success.
+        //         navigate(`/conversation/${data.conversation._id}`)
+        //     } else {
+        //         toast.error(data.message);
+        //     }
+        // } catch (error) {
+        //     toast.error(error?.response?.data?.message || "Failed to start conversation");
+        // } finally {
+        //     setSendingMessage(false);
+        // }
     }
 
     return (
@@ -218,36 +245,14 @@ const ProductDetails = () => {
 
                     {/* Rating */}
                     <div className="flex flex-col items-center gap-0.5 mt-1">
-                        {(() => {
-                            const reviews = product.reviews || [];
-
-                            // 1. If there are no reviews, default to 0 stars
-                            if (reviews.length === 0) {
-                                return (
-                                    <div className="star-rating" data-rating="0" style={{ "--rating-percent": "0%" }} aria-label="No reviews yet"></div>
-                                );
-                            }
-
-                            // 2. Sum up all the ratings in the array
-                            const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-
-                            // 3. Calculate the average (e.g., 4.5)
-                            const averageRating = Math.round((totalRating / reviews.length) * 10) / 10;
-
-                            return (
-                                <>
-                                    <div
-                                        className="star-rating"
-                                        data-rating={averageRating}
-                                        style={{ "--rating-percent": `${(averageRating / 5) * 100}%` }}
-                                        aria-label={`Rated ${averageRating} out of 5 stars`}
-                                    ></div>
-                                    <p className="text-base ml-1 text-gray-500">
-                                        {averageRating} ({product.soldOut} sold)
-                                    </p>
-                                </>
-                            );
-                        })()}
+                        <div className="flex items-center gap-1">
+                            <StarRating rating={averageRating} totalReviews={reviewCount} size="md" />
+                        </div>
+                        {reviewCount > 0 && (
+                            <p className="text-base ml-1 text-gray-500">
+                                {averageRating} ({product.soldOut} sold)
+                            </p>
+                        )}
                     </div>
 
                     {/* Seller Info Card — sourced from product.shop (DB), not a mock seller import */}
@@ -263,21 +268,17 @@ const ProductDetails = () => {
                             <div>
                                 <p className="font-medium text-gray-800 hover:text-primary cursor-pointer">{shop?.name}</p>
                                 <div className="flex items-center gap-1">
-                                    <div
-                                        className="star-rating"
-                                        data-rating={4.5}
-                                        style={{ "--rating-percent": `${(4.5 / 5) * 100}%` }}
-                                        aria-label="Rated 4.5 out of 5 stars"
-                                    ></div>
-                                    <span className="text-xs text-gray-500">(4.5)</span>
+                                    <StarRating rating={averageRating} size="sm" />
+                                    <span className="text-xs text-gray-500">({averageRating})</span>
                                 </div>
                             </div>
                         </div>
                         <button
                             onClick={handleSubmitMessage}
-                            className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition"
+                            disabled={sendingMessage}
+                            className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Send Message
+                            {sendingMessage ? "Sending..." : "Send Message"}
                         </button>
                     </div>
 
@@ -360,8 +361,7 @@ const ProductDetails = () => {
 
                 {/* Single Content Div - Changes based on active tab */}
                 <div className="mt-6">
-                    {/* Product Reviews Content — no Review model exists yet, so this list is
-                        inline dummy data directly in JSX rather than pulled from Redux/DB */}
+                    {/* Product Reviews Content */}
                     {activeTab === "reviews" && (
                         <div id="reviews">
                             {product.reviews.length === 0 ? (
@@ -383,12 +383,7 @@ const ProductDetails = () => {
                                                             {review.user?.name || "Anonymous User"}
                                                         </p>
                                                         <div className="flex items-center gap-0.5 mt-1">
-                                                            <div
-                                                                className="star-rating"
-                                                                data-rating={currentRating}
-                                                                style={{ "--rating-percent": `${(currentRating / 5) * 100}%` }}
-                                                                aria-label={`Rated ${currentRating} out of 5 stars`}
-                                                            ></div>
+                                                            <StarRating rating={currentRating} size="sm" />
                                                             <p className="text-base ml-1 text-gray-500">
                                                                 {currentRating.toFixed(1)}
                                                             </p>
@@ -415,38 +410,24 @@ const ProductDetails = () => {
                     )}
 
                     {/* Seller Information Content — real fields (name, avatar, joined date,
-                        product count) come from product.shop / allProducts; rating and review
-                        count stay inline dummy values since there's no rating/review model yet */}
+                        product count) come from product.shop / allProducts; rating now
+                        reuses the same averageRating/reviewCount computed at the top of
+                        the component instead of a second, separately-computed copy. */}
                     {activeTab === "seller" && (
                         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm max-w-md">
                             <div className="text-center pb-6 border-b border-gray-100">
                                 <h3 className="text-xl font-semibold text-gray-800">{shop?.name}</h3>
                                 <div className="flex items-center justify-center gap-1 mt-2">
                                     <div className="flex items-center gap-0.5 mt-1">
-                                        {(() => {
-                                            const reviews = product.reviews || [];
-                                            const totalRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
-                                            const avgRating = reviews.length > 0 ? totalRating / reviews.length : 0;
-
-                                            return (
-                                                <>
-                                                    <div
-                                                        className="star-rating"
-                                                        data-rating={avgRating}
-                                                        style={{ "--rating-percent": `${(avgRating / 5) * 100}%` }}
-                                                        aria-label={`Rated ${avgRating.toFixed(1)} out of 5 stars`}
-                                                    ></div>
-                                                    <span className="text-sm text-gray-500 ml-1">({avgRating.toFixed(1)}) Ratings</span>
-                                                </>
-                                            );
-                                        })()}
+                                        <StarRating rating={averageRating} size="sm" />
+                                        <span className="text-sm text-gray-500 ml-1">({averageRating}) Ratings</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="py-6 border-b border-gray-100">
                                 <p className="text-gray-600 text-sm leading-relaxed">
-                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Repudiandae repellat pariatur inventore reprehenderit minus obcaecati ut ipsa, illo quas magnam excepturi beatae. Deleniti ipsa reiciendis quidem dolores natus, odio perspiciatis.
+                                    {shop.description}
                                 </p>
                             </div>
 
@@ -467,7 +448,7 @@ const ProductDetails = () => {
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-500 text-sm">Total Reviews:</span>
-                                    <span className="text-gray-800 font-medium">{product.reviews?.length}</span>
+                                    <span className="text-gray-800 font-medium">{reviewCount}</span>
                                 </div>
                             </div>
 

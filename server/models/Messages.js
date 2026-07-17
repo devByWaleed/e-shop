@@ -9,6 +9,11 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    // NEW: lets you query "unseen messages sent TO this admin/user/seller"
+    // directly, without joining back through the conversation's members list
+    receiver: {
+        type: String,
+    },
     text: {
         type: String,
         default: ""
@@ -24,5 +29,8 @@ const messageSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const MessageModel = mongoose.model("Message", messageSchema);
+messageSchema.index({ conversationID: 1, createdAt: 1 });
+
+
+const MessageModel = mongoose.models.message || mongoose.model("message", messageSchema);
 export default MessageModel;

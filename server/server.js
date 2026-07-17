@@ -47,9 +47,12 @@ app.use(cors({
 
 
 // Middleware configuration
-app.use('/api/order/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+
+app.use('/api/order/stripe/webhook', express.raw({ type: 'application/json' }));
 
 // Contains Stripe Webhook
 app.use('/api/order', orderRouter);
@@ -69,19 +72,6 @@ app.use('/api/coupon', couponRouter);
 app.use('/api/conversation', conversationRouter);
 app.use('/api/message', messageRouter);
 app.use('/api/admin', adminRouter);
-
-
-
-
-// app.use((err, req, res, next) => {
-//     const statusCode = err.statusCode || 500
-//     const message = err.message || "Internal Server Error"
-//     return res.status(statusCode).json({
-//         success: false,
-//         statusCode,
-//         message
-//     })
-// })
 
 
 // Only listen if NOT running on Vercel

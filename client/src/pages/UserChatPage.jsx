@@ -3,8 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Image as ImageIcon, X } from 'lucide-react';
 import { socket } from '../socket';
+import { MdManageAccounts } from 'react-icons/md';
 
 const formatMessageTime = (dateString) => {
     if (!dateString) return "";
@@ -28,6 +29,7 @@ const UserChatPage = () => {
     const { id: conversationId } = useParams();
     const navigate = useNavigate();
     const chatEndRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const { user } = useSelector((state) => state.user);
     const { seller } = useSelector((state) => state.seller);
@@ -37,10 +39,13 @@ const UserChatPage = () => {
 
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState("");
+    const [images, setImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
     const [conversationData, setConversationData] = useState(null);
     const [receiverId, setReceiverId] = useState("");
     const [receiverInfo, setReceiverInfo] = useState({ name: "", avatar: "" });
     const [isLoading, setIsLoading] = useState(true);
+    const [isSending, setIsSending] = useState(false);
 
     // 1. Establish socket registration and global receiver listener
     useEffect(() => {
@@ -124,15 +129,15 @@ const UserChatPage = () => {
                     const info = data.seller || data.user;
                     const avatarUrl = info?.avatar?.url || info?.avatar || "";
                     setReceiverInfo({
-                        name: info?.name || "Participant",
+                        name: info?.name || "ADMIN",
                         avatar: avatarUrl
                     });
                 } else {
-                    setReceiverInfo({ name: "Participant", avatar: "" });
+                    setReceiverInfo({ name: "ADMIN", avatar: "" });
                 }
             } catch (error) {
                 console.error("Error fetching receiver info:", error);
-                setReceiverInfo({ name: "Participant", avatar: "" });
+                setReceiverInfo({ name: "ADMIN", avatar: "" });
             }
         };
 
@@ -143,18 +148,44 @@ const UserChatPage = () => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    // File selection handler
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length + images.length > 5) {
+            return toast.error("You can upload a maximum of 5 images.");
+        }
+
+        setImages((prev) => [...prev, ...files]);
+
+        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setImagePreviews((prev) => [...prev, ...newPreviews]);
+    };
+
+    // Remove selected file from state
+    const removeSelectedImage = (index) => {
+        setImages((prev) => prev.filter((_, idx) => idx !== index));
+        setImagePreviews((prev) => prev.filter((_, idx) => idx !== index));
+    };
+
     const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!inputValue.trim()) return;
+        if (!inputValue.trim() && images.length === 0) return;
 
-        const messagePayload = {
-            conversationID: conversationId,
-            sender: currentUserId,
-            text: inputValue
-        };
+        setIsSending(true);
+        const formData = new FormData();
+        formData.append("conversationID", conversationId);
+        formData.append("sender", currentUserId);
+        formData.append("receiver", receiverId);
+        formData.append("text", inputValue);
+
+        images.forEach((imgFile) => {
+            formData.append("images", imgFile);
+        });
 
         try {
-            const { data } = await axios.post("/api/message/create-new-message", messagePayload);
+            const { data } = await axios.post("/api/message/create-new-message", formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
             if (data.success) {
                 const savedMessage = data.userMessage;
@@ -164,19 +195,27 @@ const UserChatPage = () => {
                     senderID: currentUserId,
                     receiverID: receiverId,
                     conversationID: conversationId,
-                    text: inputValue
+                    text: inputValue || "Sent an attachment",
+                    images: savedMessage.images || []
                 });
 
                 axios.put(`/api/conversation/update-last-message/${conversationId}`, {
-                    lastMessage: inputValue,
+                    lastMessage: inputValue || "Sent an attachment",
                     lastMessageID: savedMessage._id
                 }).catch(() => { });
 
                 setMessages((prev) => [...prev, savedMessage]);
                 setInputValue("");
+                setImages([]);
+                setImagePreviews([]);
+            } else {
+                toast.error(data.message || "Failed to send message");
             }
         } catch (error) {
-            toast.error("Message could not be sent.");
+            console.error("Send message error:", error);
+            toast.error(error?.response?.data?.message || "Message could not be sent.");
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -209,8 +248,8 @@ const UserChatPage = () => {
                             className="w-10 h-10 rounded-full object-cover shrink-0 border border-gray-300"
                         />
                     ) : (
-                        <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
-                            {receiverInfo.name ? receiverInfo.name.charAt(0).toUpperCase() : "?"}
+                        <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                            <MdManageAccounts />
                         </div>
                     )}
                     <div className="min-w-0">
@@ -233,11 +272,22 @@ const UserChatPage = () => {
                         const isMe = msg.sender === currentUserId;
                         return (
                             <div key={msg._id} className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`rounded p-2.5 px-4 text-sm font-medium shadow-sm max-w-[75%] sm:max-w-[70%] ${isMe ? 'bg-[#2ecc71] text-white' : 'bg-gray-100 text-gray-800'
-                                    }`}>
-                                    <p className="wrap-break-word">{msg.text}</p>
-                                    <span className={`block text-[10px] mt-1 text-right ${isMe ? 'text-emerald-50' : 'text-gray-400'
-                                        }`}>
+                                <div className={`rounded p-2.5 px-4 text-sm font-medium shadow-sm max-w-[75%] sm:max-w-[70%] ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                                    {/* Handle text display */}
+                                    {msg.text && <p className="wrap-break-word">{msg.text}</p>}
+
+                                    {/* Render optional attachment images */}
+                                    {msg.images && msg.images.length > 0 && (
+                                        <div className="grid grid-cols-2 gap-1.5 mt-2 max-w-75">
+                                            {msg.images.map((imgUrl, i) => (
+                                                <a key={i} href={imgUrl} target="_blank" rel="noreferrer">
+                                                    <img src={imgUrl} alt="uploaded content" className="w-full h-24 object-cover rounded hover:opacity-90 transition-opacity cursor-zoom-in" />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <span className={`block text-[10px] mt-1 text-right ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
                                         {formatMessageTime(msg.createdAt)}
                                     </span>
                                 </div>
@@ -248,17 +298,61 @@ const UserChatPage = () => {
                 <div ref={chatEndRef} />
             </div>
 
+            {/* PRE-UPLOAD IMAGES PREVIEW ZONE */}
+            {imagePreviews.length > 0 && (
+                <div className="px-4 py-2 bg-gray-100 border-t flex gap-2 flex-wrap">
+                    {imagePreviews.map((url, i) => (
+                        <div key={i} className="relative w-16 h-16">
+                            <img src={url} className="w-full h-full object-cover rounded border" alt="preview" />
+                            <button
+                                type="button"
+                                onClick={() => removeSelectedImage(i)}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* INPUT FOOTER */}
             <footer className="p-3 bg-gray-50 border-t border-gray-200">
-                <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-white border border-gray-300 rounded p-1.5 px-3 focus-within:border-emerald-500 transition-all">
+                <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-white border border-gray-300 rounded p-1.5 px-3 focus-within:border-blue-500 transition-all">
+                    {/* Hidden Native File Input */}
+                    <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleImageChange}
+                        className="hidden"
+                    />
+
+                    {/* Image Selector Button */}
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current.click()}
+                        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                        disabled={isSending}
+                    >
+                        <ImageIcon size={20} />
+                    </button>
+
                     <input
                         type="text"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder="Write a message..."
+                        disabled={isSending}
                         className="flex-1 min-w-0 bg-transparent text-sm border-none focus:outline-none text-gray-700 placeholder-gray-400"
                     />
-                    <button type="submit" className="text-emerald-600 hover:text-emerald-700 transition-colors p-1 shrink-0">
+
+                    <button
+                        type="submit"
+                        disabled={isSending}
+                        className="text-blue-600 hover:text-blue-700 transition-colors p-1 shrink-0 disabled:text-gray-300"
+                    >
                         <Send size={18} />
                     </button>
                 </form>

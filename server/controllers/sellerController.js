@@ -286,7 +286,16 @@ export const sellerLogout = async (req, res) => {
 
 export const getSellerInfo = async (req, res) => {
     try {
-        const seller = await SellerModel.findById(req.params.id).select("name avatar");
+        const sellerId = req.params.id;
+
+        // Check if it's a custom ID or MongoDB ObjectId
+        let seller;
+        if (sellerId && sellerId.includes('_')) {
+            // Try to find by custom ID field
+            seller = await SellerModel.findOne({ customId: sellerId }).select("name avatar");
+        } else {
+            seller = await SellerModel.findById(sellerId).select("name avatar");
+        }
 
         if (!seller) {
             return res.status(404).json({
@@ -464,3 +473,97 @@ export const resetPassword = async (req, res) => {
         return res.json({ success: false, message: error.message })
     }
 }
+
+
+export const searchSellers = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q || q.length < 2) {
+            return res.json({ success: true, sellers: [] });
+        }
+
+        const sellers = await SellerModel.find({
+            $or: [
+                { name: { $regex: q, $options: 'i' } },
+                { email: { $regex: q, $options: 'i' } }
+            ]
+        }).limit(10);
+
+        return res.json({ success: true, sellers });
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
+    }
+};
+
+
+// Update Seller Profile : /api/seller/update-seller-profile
+export const updateSellerProfile = async (req, res) => {
+    try {
+        const sellerID = req.sellerID; // Settled by userAuth middleware
+        const { name, email, password, phoneNumber, address, zipCode, description } = req.body;
+
+        // 1. Validate fields
+        if (!password) {
+            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+            return res.json({ success: false, message: "Password is required to update profile" });
+        }
+
+        // 2. Find seller & verify password
+        const seller = await SellerModel.findById(sellerID);
+        if (!seller) {
+            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+            return res.json({ success: false, message: "Seller not found" });
+        }
+
+        const isPasswordMatch = await bcrypt.compare(password, seller.password);
+        if (!isPasswordMatch) {
+            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+            return res.json({ success: false, message: "Incorrect password. Verification failed." });
+        }
+
+        // 3. Handle Avatar File Updates
+        if (req.file) {
+            // Delete old asset from Cloudinary if it exists
+            const oldPublicId = getCloudinaryPublicId(seller.avatar);
+            if (oldPublicId) {
+                await cloudinary.uploader.destroy(oldPublicId).catch((err) => console.log("Cloudinary destroy error:", err.message));
+            }
+
+            // Upload new file to Cloudinary
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: "avatars",
+            });
+            seller.avatar = result.secure_url;
+
+            // Clean up temporary local upload file
+            await fs.promises.unlink(req.file.path).catch(console.log);
+        }
+
+        // 4. Update structural details
+        if (name) seller.name = name;
+        if (email) seller.email = email;
+        if (phoneNumber) seller.phoneNumber = phoneNumber;
+        if (address) seller.address = address;
+        if (zipCode) seller.zipCode = zipCode;
+        if (description) seller.description = description;
+
+        await seller.save();
+
+        // Strip password out of response data
+        const sellerData = await SellerModel.findById(sellerID).select("-password");
+
+        return res.json({
+            success: true,
+            message: "Profile Updated Successfully",
+            sellerData,
+        });
+
+    } catch (error) {
+        console.log(error.message);
+        if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};

@@ -35,11 +35,27 @@ const sellerSlice = createSlice({
             state.sellerError = action.payload
             state.seller = null
         },
+
+
+        UpdateSellerRequest: (state) => {
+            state.sellerLoading = true
+        },
+        UpdateSellerSuccess: (state, action) => {
+            state.sellerAuthenticated = true
+            state.sellerLoading = false
+            state.seller = action.payload
+        },
+        UpdateSellerFail: (state, action) => {
+            state.sellerAuthenticated = false
+            state.sellerLoading = false
+            state.sellerError = action.payload
+            state.seller = null
+        },
         ClearError: (state) => {
             state.sellerError = null
         }
     }
 })
 
-export const { LoadSellerRequest, LoadSellerSuccess, LoadSellerFail, ClearError } = sellerSlice.actions
+export const { LoadSellerRequest, LoadSellerSuccess, LoadSellerFail, UpdateSellerRequest, UpdateSellerSuccess, UpdateSellerFail, ClearError } = sellerSlice.actions
 export default sellerSlice.reducer

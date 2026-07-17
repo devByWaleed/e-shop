@@ -30,14 +30,15 @@ const AdminChatPage = () => {
     const chatEndRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    const { user: admin } = useSelector((state) => state.user); // Reusing User model as Admin
+    // FIX: Use admin reducer instead of user reducer
+    const { admin } = useSelector((state) => state.admin);
 
-    const currentUserId = admin?._id;
+    const currentUserId = admin?.id;
 
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState("");
-    const [images, setImages] = useState([]); // Holds chosen local files
-    const [imagePreviews, setImagePreviews] = useState([]); // Preview URLs
+    const [images, setImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
     const [conversationData, setConversationData] = useState(null);
     const [receiverId, setReceiverId] = useState("");
     const [receiverInfo, setReceiverInfo] = useState({ name: "", avatar: "", role: "" });
@@ -171,10 +172,12 @@ const AdminChatPage = () => {
         const formData = new FormData();
         formData.append("conversationID", conversationId);
         formData.append("sender", currentUserId);
+        // FIX: Add receiver to message
+        formData.append("receiver", receiverId);
         formData.append("text", inputValue);
 
         images.forEach((imgFile) => {
-            formData.append("images", imgFile); // Key matches multer setup middleware (upload.array("images", 5))
+            formData.append("images", imgFile);
         });
 
         try {

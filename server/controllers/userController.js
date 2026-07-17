@@ -524,7 +524,16 @@ export const logout = async (req, res) => {
 
 export const getUserInfo = async (req, res) => {
     try {
-        const user = await UserModel.findById(req.params.id).select("name avatar");
+        const userId = req.params.id;
+
+        // Check if it's a custom ID (like admin_123) or MongoDB ObjectId
+        let user;
+        if (userId && userId.includes('_')) {
+            // Try to find by custom ID field if you have one
+            user = await UserModel.findOne({ customId: userId }).select("name avatar");
+        } else {
+            user = await UserModel.findById(userId).select("name avatar");
+        }
 
         if (!user) {
             return res.status(404).json({
@@ -542,5 +551,26 @@ export const getUserInfo = async (req, res) => {
             success: false,
             message: error.message
         });
+    }
+};
+
+
+export const searchUsers = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q || q.length < 2) {
+            return res.json({ success: true, users: [] });
+        }
+
+        const users = await UserModel.find({
+            $or: [
+                { name: { $regex: q, $options: 'i' } },
+                { email: { $regex: q, $options: 'i' } }
+            ]
+        }).limit(10);
+
+        return res.json({ success: true, users });
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
     }
 };

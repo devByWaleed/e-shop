@@ -1,5 +1,5 @@
 import axios from "axios"
-import { LoadSellerRequest, LoadSellerSuccess, LoadSellerFail } from "../slices/sellerSlice"
+import { LoadSellerRequest, LoadSellerSuccess, LoadSellerFail, UpdateSellerRequest, UpdateSellerSuccess, UpdateSellerFail } from "../slices/sellerSlice"
 
 export const loadSeller = () => async (dispatch, getState) => {
     // Get current user state
@@ -34,3 +34,29 @@ export const loadSeller = () => async (dispatch, getState) => {
         dispatch(LoadSellerFail(error.message))
     }
 }
+
+
+
+export const updateSeller = (formData) => async (dispatch) => {
+    try {
+        dispatch(UpdateSellerRequest());
+
+        const { data } = await axios.put('/api/seller/update-seller-profile', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            withCredentials: true
+        });
+
+        if (data.success) {
+            dispatch(UpdateSellerSuccess(data.sellerData));
+            return { success: true, message: data.message };
+        } else {
+            dispatch(UpdateSellerFail(data.message));
+            return { success: false, message: data.message };
+        }
+
+    } catch (error) {
+        const errorMsg = error.message;
+        dispatch(UpdateSellerFail(errorMsg));
+        return { success: false, message: errorMsg };
+    }
+};
