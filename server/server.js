@@ -17,6 +17,7 @@ import adminRouter from "./routes/adminRoutes.js"
 
 // Configuring server
 const app = express();
+const EXP_PORT = process.env.PORT
 
 
 // Allow multiple origins
@@ -52,23 +53,61 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
+// Stripe webhook
 app.use('/api/order/stripe/webhook', express.raw({ type: 'application/json' }));
 
-// Contains Stripe Webhook
-app.use('/api/order', orderRouter);
+let dbConnected = false;
+let cloudinaryConnected = false;
 
+async function initializeServices() {
+    try {
+        // Connect to MongoDB
+        if (!dbConnected) {
+            await connectDB();
+            dbConnected = true;
+            console.log("✅ MongoDB connected");
+        }
+    } catch (error) {
+        console.error("❌ MongoDB connection failed:", error.message);
+        // Don't throw - let the function handle it
+    }
 
-await connectCloudinary();
-await connectDB();
+    try {
+        // Connect to Cloudinary
+        if (!cloudinaryConnected) {
+            await connectCloudinary();
+            cloudinaryConnected = true;
+            console.log("✅ Cloudinary connected");
+        }
+    } catch (error) {
+        console.error("❌ Cloudinary connection failed:", error.message);
+    }
+}
+
+// Initialize connections BEFORE routes
+await initializeServices();
 
 
 // API endpoints
 app.get('/', (req, res) => res.send("API Is Working!!!"));
+
+// Health check endpoint for Vercel
+app.get("/api/health", (req, res) => {
+    res.json({
+        status: "ok",
+        dbConnected,
+        cloudinaryConnected,
+        timestamp: new Date().toISOString(),
+    });
+});
+
+// Routers
 app.use('/api/user', userRouter);
 app.use('/api/seller', sellerRouter);
 app.use('/api/product', productRouter);
 app.use('/api/event', eventRouter);
 app.use('/api/coupon', couponRouter);
+app.use('/api/order', orderRouter);
 app.use('/api/conversation', conversationRouter);
 app.use('/api/message', messageRouter);
 app.use('/api/admin', adminRouter);
@@ -76,8 +115,8 @@ app.use('/api/admin', adminRouter);
 
 // Only listen if NOT running on Vercel
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(process.env.PORT, () => {
-        console.log(`Server running on PORT ${process.env.PORT}`);
+    app.listen(EXP_PORT, () => {
+        console.log(`Server running on PORT ${EXP_PORT}`);
     });
 }
 

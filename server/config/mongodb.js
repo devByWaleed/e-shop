@@ -2,23 +2,28 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
     try {
-        mongoose.connection.on('connected', () =>
-            console.log("Database Connected"));
+        // Set up event listeners BEFORE connecting
+        mongoose.connection.once('connected', () => {
+            console.log("✅ Database Connected Successfully");
+        });
 
-        // For Laptop
-        await mongoose.connect(`${process.env.MONGODB_URI}/Eshop`);
+        mongoose.connection.on('error', (err) => {
+            console.error("❌ MongoDB Connection Error:", err.message);
+        });
 
-        // For PC
-        // await mongoose.connect("mongodb://localhost:27017/Eshop", {
-        //     user: "myAdmin",
-        //     pass: "myPassword123",
-        //     authSource: "admin"
-        // })
-        //     .then(() => console.log("Authenticated!"))
-        //     .catch(err => console.log(err));
+        // Connect to MongoDB
+        await mongoose.connect(`${process.env.MONGODB_URI}/Eshop`, {
+            serverSelectionTimeoutMS: 5000, // Timeout after 5s
+            socketTimeoutMS: 45000,
+        });
+
+        console.log("✅ MongoDB connection established");
+
     } catch (error) {
-        console.error(error.message);
+        console.error("❌ Failed to connect to MongoDB:", error.message);
+        // Re-throw the error so the caller knows it failed
+        throw error;
     }
-}
+};
 
 export default connectDB;
