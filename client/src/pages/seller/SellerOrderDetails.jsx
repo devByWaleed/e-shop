@@ -22,7 +22,7 @@ const SellerOrderDetails = () => {
   }, [dispatch, seller?._id]);
 
   const orderData = shopOrders?.find((item) => item._id === id);
-  console.log(orderData);
+
 
   // Sync state when order finishes loading
   useEffect(() => {

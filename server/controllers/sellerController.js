@@ -15,7 +15,7 @@ const createActivationToken = (seller) => {
 const cleanupTempFile = async (filePath) => {
     if (!filePath) return;
     await fs.promises.unlink(filePath).catch((err) => {
-        console.log("Failed to delete temp file:", err.message);
+
     });
 }
 
@@ -91,14 +91,14 @@ export const sellerRegister = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
 
         await cleanupTempFile(req.file?.path);
 
         if (avatarUrl) {
             const publicId = getCloudinaryPublicId(avatarUrl);
             await cloudinary.uploader.destroy(publicId).catch((err) => {
-                console.log("Failed to delete cloudinary asset:", err.message);
+
             });
         }
 
@@ -225,7 +225,7 @@ export const sellerLogin = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
 
         return res.json({
             success: false,
@@ -248,7 +248,7 @@ export const sellerProfile = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -275,7 +275,7 @@ export const sellerLogout = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -526,7 +526,7 @@ export const updateSellerProfile = async (req, res) => {
             // Delete old asset from Cloudinary if it exists
             const oldPublicId = getCloudinaryPublicId(seller.avatar);
             if (oldPublicId) {
-                await cloudinary.uploader.destroy(oldPublicId).catch((err) => console.log("Cloudinary destroy error:", err.message));
+                await cloudinary.uploader.destroy(oldPublicId).catch((err) => 
             }
 
             // Upload new file to Cloudinary
@@ -559,7 +559,7 @@ export const updateSellerProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error.message);
+
         if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
         return res.json({
             success: false,

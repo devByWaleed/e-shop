@@ -121,7 +121,7 @@ export const adminUsers = async (req, res) => {
             allUsers
         });
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -180,7 +180,7 @@ export const adminSellers = async (req, res) => {
             allSellers
         });
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -239,7 +239,7 @@ export const adminProducts = async (req, res) => {
             allProducts
         });
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -258,7 +258,7 @@ export const adminEvents = async (req, res) => {
             allEvents
         });
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -277,7 +277,7 @@ export const adminOrders = async (req, res) => {
             allOrders
         });
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -304,7 +304,7 @@ export const adminLogout = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
         return res.json({
             success: false,
             message: error.message

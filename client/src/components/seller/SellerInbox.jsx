@@ -75,7 +75,7 @@ const SellerInbox = () => {
                                     info = data.user;
                                 }
                             } catch (e) {
-                                console.log('User fetch failed:', e);
+
                             }
                         } else if (otherRole === 'seller') {
                             endpoint = `/api/seller/get-seller/${otherId}`;
@@ -85,7 +85,7 @@ const SellerInbox = () => {
                                     info = data.seller;
                                 }
                             } catch (e) {
-                                console.log('Seller fetch failed:', e);
+
                             }
                         } else {
                             // If no role is found, try both endpoints as fallback
@@ -101,7 +101,7 @@ const SellerInbox = () => {
                                         info = data.seller;
                                     }
                                 } catch (e2) {
-                                    console.log('Both endpoints failed');
+
                                 }
                             }
                         }

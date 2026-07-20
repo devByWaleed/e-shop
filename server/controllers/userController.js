@@ -16,7 +16,7 @@ const createActivationToken = (user) => {
 const cleanupTempFile = async (filePath) => {
     if (!filePath) return;
     await fs.promises.unlink(filePath).catch((err) => {
-        console.log("Failed to delete temp file:", err.message);
+
     });
 }
 
@@ -91,7 +91,7 @@ export const register = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
 
         // Always clean up the temp file if it's still sitting around
         await cleanupTempFile(req.file?.path);
@@ -101,7 +101,7 @@ export const register = async (req, res) => {
         if (avatarUrl) {
             const publicId = getCloudinaryPublicId(avatarUrl);
             await cloudinary.uploader.destroy(publicId).catch((err) => {
-                console.log("Failed to delete cloudinary asset:", err.message);
+
             });
         }
 
@@ -219,7 +219,7 @@ export const login = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
 
         return res.json({
             success: false,
@@ -243,7 +243,7 @@ export const getProfile = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -282,7 +282,7 @@ export const updateProfile = async (req, res) => {
             // Delete old asset from Cloudinary if it exists
             const oldPublicId = getCloudinaryPublicId(user.avatar);
             if (oldPublicId) {
-                await cloudinary.uploader.destroy(oldPublicId).catch((err) => console.log("Cloudinary destroy error:", err.message));
+                await cloudinary.uploader.destroy(oldPublicId).catch((err) => 
             }
 
             // Upload new file to Cloudinary
@@ -328,7 +328,7 @@ export const updateProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error.message);
+
         if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
         return res.json({
             success: false,
@@ -513,7 +513,7 @@ export const logout = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
+
         return res.json({
             success: false,
             message: error.message

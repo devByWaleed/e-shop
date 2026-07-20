@@ -7,13 +7,13 @@ export const loadUser = () => async (dispatch, getState) => {
 
     // If we already have user data, don't fetch again
     if (user && user.email) {
-        console.log("User data already exists, skipping API call");
+
         return;
     }
 
     // If already loading, don't fetch again
     if (loading) {
-        console.log("Already loading user data");
+
         return;
     }
 

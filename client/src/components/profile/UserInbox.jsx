@@ -83,7 +83,7 @@ const UserInbox = () => {
                                     const { data } = await axios.get(`/api/user/user-info/${otherId}`);
                                     if (data.success && data.user) info = data.user;
                                 } catch (e2) {
-                                    console.log('Both endpoints failed for', otherId);
+
                                 }
                             }
                         } else if (otherRole === 'user') {
@@ -95,7 +95,7 @@ const UserInbox = () => {
                                     const { data } = await axios.get(`/api/seller/get-seller/${otherId}`);
                                     if (data.success && data.seller) info = data.seller;
                                 } catch (e2) {
-                                    console.log('Both endpoints failed for', otherId);
+
                                 }
                             }
                         }
@@ -119,7 +119,7 @@ const UserInbox = () => {
                                         info = data.seller;
                                     }
                                 } catch (e2) {
-                                    console.log('Both endpoints failed');
+
                                 }
                             }
                         }

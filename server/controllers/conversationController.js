@@ -13,13 +13,13 @@ const buildGroupTitle = (idA, idB) => [idA, idB].sort().join("_");
 export const newConversation = async (req, res) => {
     try {
         // Debug: Log the entire request body
-        console.log('Request body:', req.body);
-        console.log('Headers:', req.headers['content-type']);
+
+
         const { senderID, senderRole, receiverID, receiverRole } = req.body
 
         // Log individual values
-        console.log('senderID:', senderID);
-        console.log('receiverID:', receiverID);
+
+
 
         if (!senderID || !receiverID) {
             return res.status(400).json({

@@ -190,7 +190,7 @@ export const stripeWebhooks = async (req, res) => {
                     }),
                     UserModel.findByIdAndUpdate(userID, { cartItems: {} })
                 ]);
-                console.log(`✅ Order ${orderId} updated successfully.`);
+
             }
         } catch (dbError) {
             console.error("❌ Database Update Failed:", dbError.message);

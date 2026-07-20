@@ -120,7 +120,7 @@ export const deleteCoupon = async (req, res) => {
 
 
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message

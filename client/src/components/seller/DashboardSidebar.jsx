@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useDispatch } from 'react-redux';
-// Clean, matching React Icons from standard sets
 import {
     RxDashboard
 } from 'react-icons/rx';
@@ -12,11 +11,9 @@ import {
     FiPackage,
     FiFolderPlus,
     FiMail,
-    FiSettings
 } from 'react-icons/fi';
 import { MdOutlineLocalOffer, MdOutlinePercent, MdEventNote } from 'react-icons/md';
 import { VscNewFile } from 'react-icons/vsc';
-import { CiMoneyBill } from 'react-icons/ci';
 import { AiOutlineRotateLeft } from 'react-icons/ai';
 
 
@@ -33,11 +30,9 @@ const DashboardSidebar = ({ active, setActive }) => {
         { id: 4, label: "Create Product", icon: <FiFolderPlus size={20} /> },
         { id: 5, label: "All Events", icon: <MdEventNote size={20} /> },
         { id: 6, label: "Create Event", icon: <VscNewFile size={20} /> },
-        { id: 7, label: "Withdraw Money", icon: <CiMoneyBill size={20} /> },
-        { id: 8, label: "Shop Inbox", icon: <FiMail size={20} /> },
-        { id: 9, label: "Discount Codes", icon: <MdOutlinePercent size={20} /> },
-        { id: 10, label: "Refunds", icon: <AiOutlineRotateLeft size={20} /> },
-        { id: 11, label: "Settings", icon: <FiSettings size={20} /> },
+        { id: 7, label: "Shop Inbox", icon: <FiMail size={20} /> },
+        { id: 8, label: "Discount Codes", icon: <MdOutlinePercent size={20} /> },
+        { id: 9, label: "Refunds", icon: <AiOutlineRotateLeft size={20} /> }
     ];
 
     const handleNavigation = (item) => {

@@ -55,7 +55,7 @@ const UserOrderDetails = () => {
   }, [dispatch, user?._id]);
 
   const orderData = orders?.find((item) => item._id === id);
-  console.log(orderData);
+
 
   // Sync state when order finishes loading
   useEffect(() => {

@@ -35,14 +35,14 @@ const AdminInbox = () => {
 
         try {
             setLoading(true);
-            console.log('Fetching conversations for admin ID:', adminId);
+
 
             const { data } = await axios.get(`/api/conversation/get-admin-conversations/${adminId}`);
-            console.log('Raw conversations response:', data);
+
 
             if (data.success) {
                 const allConversations = data.conversations || [];
-                console.log('All conversations:', allConversations);
+
 
                 // Debug: Log each conversation's members and roles
                 allConversations.forEach(conv => {
@@ -59,20 +59,20 @@ const AdminInbox = () => {
                     const otherMemberId = conv.members.find(m => m !== adminId);
                     // Check if the other member's role is 'user' from memberRoles Map
                     const role = conv.memberRoles?.get?.(otherMemberId) || conv.memberRoles?.[otherMemberId];
-                    console.log(`User check - otherMember: ${otherMemberId}, role: ${role}`);
+
                     return role === 'user';
                 });
-                console.log('User conversations:', userConvs);
+
                 setUserConversations(userConvs);
 
                 // Filter conversations where the other member is a seller
                 const sellerConvs = allConversations.filter(conv => {
                     const otherMemberId = conv.members.find(m => m !== adminId);
                     const role = conv.memberRoles?.get?.(otherMemberId) || conv.memberRoles?.[otherMemberId];
-                    console.log(`Seller check - otherMember: ${otherMemberId}, role: ${role}`);
+
                     return role === 'seller';
                 });
-                console.log('Seller conversations:', sellerConvs);
+
                 setSellerConversations(sellerConvs);
             } else {
                 toast.error(data.message || 'Failed to load conversations');
@@ -203,7 +203,7 @@ const AdminInbox = () => {
                 receiverRole: receiverRole
             };
 
-            console.log('Creating conversation with payload:', payload);
+
 
             const { data } = await axios.post('/api/conversation/create-new-conversation', payload, {
                 headers: {
@@ -211,7 +211,7 @@ const AdminInbox = () => {
                 }
             });
 
-            console.log('Create conversation response:', data);
+
 
             if (data.success) {
                 toast.success('New conversation created!');

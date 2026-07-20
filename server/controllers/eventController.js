@@ -79,15 +79,15 @@ export const eventProduct = async (req, res) => {
         return res.json({ success: true, message: "Event Product Added Successfully", eventProduct });
 
     } catch (error) {
-        console.log("Error inside eventProduct:", error.message);
+
 
         // Roll back any images that were uploaded before the failure happened
         if (uploadedPublicIds.length > 0) {
             try {
                 await cloudinary.api.delete_resources(uploadedPublicIds);
-                console.log("Cleaned up orphaned images:", uploadedPublicIds);
+
             } catch (cleanupError) {
-                console.log("Failed to clean up orphaned images:", cleanupError.message);
+
             }
         }
 
@@ -106,7 +106,7 @@ export const getShopEvents = async (req, res) => {
             shopEvents
         });
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -125,7 +125,7 @@ export const getAllEvents = async (req, res) => {
             allEvents
         });
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message
@@ -175,7 +175,7 @@ export const deleteEvents = async (req, res) => {
 
 
     } catch (error) {
-        console.log("Error inside createProduct:", error.message);
+
         return res.json({
             success: false,
             message: error.message

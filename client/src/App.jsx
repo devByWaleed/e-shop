@@ -84,16 +84,16 @@ const App = () => {
     dispatch(loadUser())
   }, [dispatch])
 
-  console.log("Auth Status:", isAuthenticated)
-  console.log("User Data:", user)
+
+
 
   // Load Seller
   useEffect(() => {
     dispatch(loadSeller())
   }, [dispatch])
 
-  console.log("Auth Status:", sellerAuthenticated)
-  console.log("Seller Data:", seller)
+
+
 
 
   // Load Admin
@@ -101,8 +101,8 @@ const App = () => {
     dispatch(loadAdmin())
   }, [dispatch])
 
-  console.log("Admin Auth Status:", adminAuthenticated)
-  console.log("Admin Data:", admin)
+
+
 
   // Don't show main content while loading user data on app start
   if (userLoading && !user && currentPath !== '/success') {
