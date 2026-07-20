@@ -1,5 +1,4 @@
 import { useState } from 'react';
-// Changed to use the DashboardSidebar component you provided
 import DashboardSidebar from '../../components/seller/DashboardSidebar';
 import CreateProduct from '../../components/seller/CreateProduct';
 import AllEvents from '../../components/seller/AllEvents';
@@ -8,15 +7,11 @@ import SellerProfileContent from '../../components/seller/SellerProfileContent';
 import AllOrders from '../../components/seller/AllOrders';
 import DiscountCodes from '../../components/seller/DiscountCodes';
 import Refunds from '../../components/seller/Refunds';
-import ShopSettings from '../../components/seller/ShopSettings';
 import SellerNavbar from '../../components/seller/SellerNavbar';
 import CreateEvent from '../../components/seller/CreateEvent';
-import WithdrawMoney from '../../components/seller/WithdrawMoney';
 import SellerInbox from '../../components/seller/SellerInbox';
 
 
-
-// Note: Clean up or swap these out later if your seller views differ from user views
 const SellerProfile = () => {
     const [active, setActive] = useState(1);
 
@@ -74,37 +69,22 @@ const SellerProfile = () => {
                             </div>
                         )}
 
-                        {/* ID: 7 - Withdraw Money */}
                         {active === 7 && (
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-800 mb-4">Withdraw Money</h2>
-                                <WithdrawMoney />
+                                <SellerInbox />
                             </div>
                         )}
 
-                        {/* ID: 8 - Shop Inbox (Handled mostly via your sidebar router navigate, but caught here as fallback) */}
                         {active === 8 && (
                             <div>
-                                <SellerInbox />
+                                <DiscountCodes />
                             </div>
                         )}
 
                         {/* ID: 9 - Discount Codes */}
                         {active === 9 && (
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-800 mb-4">Discount Codes</h2>
-                                <DiscountCodes />
-                            </div>
-                        )}
-
-                        {/* ID: 10 - Refunds */}
-                        {active === 10 && <Refunds />}
-
-                        {/* ID: 11 - Settings */}
-                        {active === 11 && (
-                            <div>
-                                <h2 className="text-xl font-semibold text-gray-800 mb-4">Shop Settings</h2>
-                                <ShopSettings />
+                                <Refunds />
                             </div>
                         )}
                     </div>
