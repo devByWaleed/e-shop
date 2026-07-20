@@ -2,21 +2,13 @@ import SellerModel from "../models/Sellers.js";
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import transporter from "../config/nodeMailer.js";
-import { getCloudinaryPublicId } from "../config/cloudinary.js";
+import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
 
 
-// Helper: create activation token
 const createActivationToken = (seller) => {
     return jwt.sign(seller, process.env.ACTIVATION_SECRET, {
         expiresIn: "5m"
     })
-}
-
-const cleanupTempFile = async (filePath) => {
-    if (!filePath) return;
-    await fs.promises.unlink(filePath).catch((err) => {
-        console.log("Failed to delete temp file:", err.message);
-    });
 }
 
 // Seller registration : /api/seller/register
@@ -28,7 +20,6 @@ export const sellerRegister = async (req, res) => {
         const { name, email, password, address, zipCode, phoneNumber } = req.body;
 
         if (!name || !email || !password) {
-            await cleanupTempFile(req.file?.path);
             return res.json({
                 success: false,
                 message: "Missing Details"
@@ -45,20 +36,16 @@ export const sellerRegister = async (req, res) => {
         const sellerEmail = await SellerModel.findOne({ email })
 
         if (sellerEmail) {
-            await cleanupTempFile(req.file.path);
             return res.json({
                 success: false,
                 message: "User already existed"
             })
         }
 
-        // All validation passed — safe to upload now
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: "shop-avatars"
+        const result = await uploadBufferToCloudinary(req.file.buffer, {
+            folder: "Zenvio Media"
         });
         avatarUrl = result.secure_url;
-
-        await cleanupTempFile(req.file.path);
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -93,8 +80,6 @@ export const sellerRegister = async (req, res) => {
     catch (error) {
         console.log(error.message);
 
-        await cleanupTempFile(req.file?.path);
-
         if (avatarUrl) {
             const publicId = getCloudinaryPublicId(avatarUrl);
             await cloudinary.uploader.destroy(publicId).catch((err) => {
@@ -108,6 +93,9 @@ export const sellerRegister = async (req, res) => {
         })
     }
 }
+
+
+
 
 
 // Account activation : /api/seller/seller-activation

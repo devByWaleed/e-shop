@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import { Readable } from "stream";
 
 export const connectCloudinary = async () => {
     cloudinary.config({
@@ -8,26 +9,31 @@ export const connectCloudinary = async () => {
     });
 }
 
+// Uploads an in-memory buffer to Cloudinary — replaces the old path-based upload
+export const uploadBufferToCloudinary = (buffer, options = {}) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(options, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+        });
+        Readable.from(buffer).pipe(uploadStream);
+    });
+};
 
 export const getCloudinaryPublicId = (imageUrl) => {
     try {
-        // Decode the URL to convert '%20' back to normal spaces ' '
         const decodedUrl = decodeURIComponent(imageUrl);
-
         const urlParts = decodedUrl.split('/');
-        const filenameWithExtension = urlParts.pop(); // e.g., "img_name.jpg"
-        const filename = filenameWithExtension.split('.')[0]; // e.g., "img_name"
+        const filenameWithExtension = urlParts.pop();
+        const filename = filenameWithExtension.split('.')[0];
 
-        // Locate the version segment (matches 'v' followed by digits, like v1712345678)
         const versionIndex = urlParts.findIndex(part => /^v\d+$/.test(part));
 
         if (versionIndex !== -1 && urlParts.length > versionIndex + 1) {
-            // Slices and reconstructs folder paths (e.g., ["Zenvio Media", "products"])
             const folders = urlParts.slice(versionIndex + 1).join('/');
             return folders ? `${folders}/${filename}` : filename;
         }
 
-        // Fallback layout check
         const uploadIndex = urlParts.indexOf('upload');
         if (uploadIndex !== -1 && urlParts.length > uploadIndex + 2) {
             const folders = urlParts.slice(uploadIndex + 2).join('/');

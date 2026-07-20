@@ -1,9 +1,8 @@
 import MessageModel from "../models/Messages.js";
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
+import { uploadBufferToCloudinary } from "../config/cloudinary.js";
 
-// create new message with image support (works for user/seller/admin senders —
-// `sender` is just an opaque ID, same as it already was)
+
 export const newMessage = async (req, res) => {
     const messageData = req.body;
     try {
@@ -18,8 +17,6 @@ export const newMessage = async (req, res) => {
 
         const hasImages = req.files && req.files.length > 0;
 
-        // FIXED: previously a request with no text and no files would
-        // silently save an empty message
         if (!text?.trim() && !hasImages) {
             return res.status(400).json({
                 success: false,
@@ -29,28 +26,19 @@ export const newMessage = async (req, res) => {
 
         let imageUrls = [];
 
-        // Upload images to Cloudinary if present
         if (hasImages) {
             const uploadPromises = req.files.map(async (file) => {
                 try {
-                    const result = await cloudinary.uploader.upload(file.path, {
+                    const result = await uploadBufferToCloudinary(file.buffer, {
                         folder: 'Zenvio Media/Chats Media',
                         transformation: [
                             { width: 800, crop: 'limit' },
                             { quality: 'auto' }
                         ]
                     });
-
-                    if (fs.existsSync(file.path)) {
-                        fs.unlinkSync(file.path);
-                    }
-
                     return result.secure_url;
                 } catch (uploadError) {
                     console.error("Image upload error:", uploadError);
-                    if (fs.existsSync(file.path)) {
-                        fs.unlinkSync(file.path);
-                    }
                     return null;
                 }
             });
@@ -58,8 +46,6 @@ export const newMessage = async (req, res) => {
             const uploadedUrls = await Promise.all(uploadPromises);
             imageUrls = uploadedUrls.filter(url => url !== null);
 
-            // FIXED: if every upload failed and there's no text either,
-            // don't silently save a blank message — surface the failure
             if (imageUrls.length === 0 && !text?.trim()) {
                 return res.status(500).json({
                     success: false,
@@ -71,7 +57,7 @@ export const newMessage = async (req, res) => {
         const userMessage = new MessageModel({
             conversationID,
             sender,
-            receiver, // NEW: optional, but recommended — see Messages.js
+            receiver,
             text: text || '',
             images: imageUrls.length > 0 ? imageUrls : undefined,
         });

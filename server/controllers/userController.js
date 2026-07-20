@@ -2,35 +2,24 @@ import UserModel from "../models/Users.js";
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import transporter from "../config/nodeMailer.js";
-import { getCloudinaryPublicId } from "../config/cloudinary.js";
+import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
 
 
-// Helper: create activation token
 const createActivationToken = (user) => {
     return jwt.sign(user, process.env.ACTIVATION_SECRET, {
         expiresIn: "5m"
     })
 }
 
-// Helper: safely remove the local temp file multer created
-const cleanupTempFile = async (filePath) => {
-    if (!filePath) return;
-    await fs.promises.unlink(filePath).catch((err) => {
-        console.log("Failed to delete temp file:", err.message);
-    });
-}
-
 // User registration : /api/user/register
 export const register = async (req, res) => {
 
-    let avatarUrl = null; // only gets set once the Cloudinary upload actually succeeds
+    let avatarUrl = null;
 
     try {
         const { name, email, password } = req.body;
 
-        // Validate required fields first — nothing has touched Cloudinary yet
         if (!name || !email || !password) {
-            await cleanupTempFile(req.file?.path);
             return res.json({
                 success: false,
                 message: "Missing Details"
@@ -47,21 +36,17 @@ export const register = async (req, res) => {
         const existingUser = await UserModel.findOne({ email })
 
         if (existingUser) {
-            await cleanupTempFile(req.file.path);
             return res.json({
                 success: false,
                 message: "User already existed"
             })
         }
 
-        // All validation passed — safe to upload now
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: "avatars"
+        // Upload straight from the in-memory buffer — no temp file involved
+        const result = await uploadBufferToCloudinary(req.file.buffer, {
+            folder: "Zenvio Media"
         });
         avatarUrl = result.secure_url;
-
-        // Temp file is no longer needed once it's on Cloudinary
-        await cleanupTempFile(req.file.path);
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -93,9 +78,6 @@ export const register = async (req, res) => {
     catch (error) {
         console.log(error.message);
 
-        // Always clean up the temp file if it's still sitting around
-        await cleanupTempFile(req.file?.path);
-
         // If the Cloudinary upload already succeeded before something else failed
         // (e.g. sendMail), remove the orphaned asset
         if (avatarUrl) {
@@ -111,6 +93,11 @@ export const register = async (req, res) => {
         })
     }
 }
+
+
+
+
+
 
 
 // Account activation : /api/user/activation

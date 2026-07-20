@@ -1,4 +1,4 @@
-import { getCloudinaryPublicId } from "../config/cloudinary.js";
+import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
 import ProductModel from "../models/Products.js";
 import OrderModel from "../models/Orders.js";
 import SellerModel from "../models/Sellers.js";
@@ -6,12 +6,11 @@ import { v2 as cloudinary } from "cloudinary";
 
 // Create Product : /api/product/create-product
 export const createProduct = async (req, res) => {
-    let uploadedPublicIds = []; // tracks successful uploads for rollback
+    let uploadedPublicIds = [];
 
     try {
         const { shopID, name, category, discountPrice, stock } = req.body;
 
-        // --- Validate everything BEFORE touching Cloudinary ---
         if (!shopID) {
             return res.json({ success: false, message: "Shop ID is required. Product creation failed." });
         }
@@ -29,7 +28,6 @@ export const createProduct = async (req, res) => {
             return res.json({ success: false, message: "Missing required product fields." });
         }
 
-        // Normalize description into an array (see section 2 below)
         let description = req.body.description;
         if (!description) {
             return res.json({ success: false, message: "Please add a product description." });
@@ -40,10 +38,9 @@ export const createProduct = async (req, res) => {
             return res.json({ success: false, message: "Please add a product description." });
         }
 
-        // --- Only now do we start uploading, one at a time so we can track/rollback ---
         let imagesURL = [];
         for (const image of req.files) {
-            const result = await cloudinary.uploader.upload(image.path, {
+            const result = await uploadBufferToCloudinary(image.buffer, {
                 folder: "Zenvio Media",
                 resource_type: "image"
             });
@@ -70,21 +67,17 @@ export const createProduct = async (req, res) => {
 
     } catch (error) {
 
-
-        // Roll back any images that were uploaded before the failure happened
         if (uploadedPublicIds.length > 0) {
             try {
                 await cloudinary.api.delete_resources(uploadedPublicIds);
-
             } catch (cleanupError) {
-
+                console.log("Failed to roll back cloudinary assets:", cleanupError.message);
             }
         }
 
         return res.json({ success: false, message: error.message });
     }
 };
-
 
 // Get Shop Products : /api/product/get-all-products/:id
 export const getShopProducts = async (req, res) => {
