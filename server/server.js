@@ -21,7 +21,7 @@ const EXP_PORT = process.env.PORT
 
 
 // Allow multiple origins
-const allowedOrigin = ["http://localhost:5173"];
+const allowedOrigin = ["http://localhost:5173", "https://zenvio-six.vercel.app"];
 app.use(cors({
     origin: allowedOrigin,
     credentials: true,
