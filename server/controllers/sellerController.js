@@ -5,6 +5,9 @@ import transporter from "../config/nodeMailer.js";
 import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
 
 
+const isProd = process.env.NODE_ENV === "production";
+
+
 const createActivationToken = (seller) => {
     return jwt.sign(seller, process.env.ACTIVATION_SECRET, {
         expiresIn: "5m"
@@ -96,8 +99,6 @@ export const sellerRegister = async (req, res) => {
 
 
 
-
-
 // Account activation : /api/seller/seller-activation
 export const activateAccount = async (req, res) => {
     try {
@@ -133,10 +134,10 @@ export const activateAccount = async (req, res) => {
 
         res.cookie("sellerToken", sellerToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+            secure: isProd,                     // must be true when sameSite is "none"
+            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
             maxAge: 7 * 24 * 3600 * 1000,
-            path: "/"
+            path: "/",
         })
 
         return res.json({
@@ -193,17 +194,12 @@ export const sellerLogin = async (req, res) => {
 
         const sellerToken = jwt.sign({ id: seller._id, role: seller.role }, process.env.JWT_SECRET, { expiresIn: "7d" })
 
-        // res.cookie("token", token, {
-        //     httpOnly: true, secure: process.env.NODE_ENV === "production",
-        //     sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", maxAge: 7 * 24 * 3600 * 1000
-        // })
         res.cookie("sellerToken", sellerToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+            secure: isProd,                     // must be true when sameSite is "none"
+            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
             maxAge: 7 * 24 * 3600 * 1000,
             path: "/",               // IMPORTANT: available on all routes
-            domain: "localhost"      // Explicitly set domain
         })
 
         return res.json({
@@ -252,8 +248,9 @@ export const sellerLogout = async (req, res) => {
     try {
         res.clearCookie("sellerToken", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
+            secure: isProd,                     // must be true when sameSite is "none"
+            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
+            path: "/"
         })
 
         return res.json({

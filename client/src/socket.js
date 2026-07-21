@@ -44,7 +44,6 @@ socket.on("disconnect", (reason) => {
 // Connection error
 socket.on("connect_error", (error) => {
     console.error("❌ Socket connection error:", error.message);
-    console.error("📡 URL attempted:", SOCKET_URL);
 });
 
 // Reconnection attempts

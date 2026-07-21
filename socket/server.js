@@ -279,10 +279,7 @@ io.on("connection", (socket) => {
 // ======================
 const PORT = process.env.PORT;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Socket Server running on port ${PORT}`);
-    console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`✅ Redis: ${redisClient ? 'Connected' : 'Not Configured'}`);
-    console.log(`✅ Allowed Origins:`, allowedOrigins);
+    console.log(`✅ Socket Server running!`);
 });
 
 // ======================

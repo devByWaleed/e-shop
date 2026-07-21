@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken"
 import transporter from "../config/nodeMailer.js";
 import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
 
+const isProd = process.env.NODE_ENV === "production";
 
 const createActivationToken = (user) => {
     return jwt.sign(user, process.env.ACTIVATION_SECRET, {
@@ -96,10 +97,6 @@ export const register = async (req, res) => {
 
 
 
-
-
-
-
 // Account activation : /api/user/activation
 export const activateAccount = async (req, res) => {
     try {
@@ -127,8 +124,8 @@ export const activateAccount = async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure: false,
-            sameSite: "lax",
+            secure: isProd,                     // must be true when sameSite is "none"
+            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
             maxAge: 7 * 24 * 3600 * 1000,
             path: "/"
         })
@@ -186,17 +183,12 @@ export const login = async (req, res) => {
 
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" })
 
-        // res.cookie("token", token, {
-        //     httpOnly: true, secure: process.env.NODE_ENV === "production",
-        //     sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", maxAge: 7 * 24 * 3600 * 1000
-        // })
         res.cookie("token", token, {
+            secure: isProd,                     // must be true when sameSite is "none"
+            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
             httpOnly: true,
-            secure: false,           // false for localhost (HTTP)
-            sameSite: "lax",         // Use "lax" not "strict" for cross-origin
             maxAge: 7 * 24 * 3600 * 1000,
             path: "/",               // IMPORTANT: available on all routes
-            domain: "localhost"      // Explicitly set domain
         })
 
         return res.json({
