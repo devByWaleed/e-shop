@@ -11,6 +11,8 @@ import OrderModel from "../models/Orders.js";
 
 // Admin login : /api/admin/admin-login
 export const adminLogin = async (req, res) => {
+    const isProd = process.env.NODE_ENV === "production";
+
     try {
         const { email, password } = req.body;
 
@@ -36,8 +38,8 @@ export const adminLogin = async (req, res) => {
             // Set cookie with the token
             res.cookie("adminToken", adminToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production", // true in production
-                sameSite: "lax",
+                secure: isProd,                     // must be true when sameSite is "none"
+                sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
                 maxAge: 7 * 24 * 3600 * 1000, // 7 days
                 path: "/"
             });
@@ -289,12 +291,14 @@ export const adminOrders = async (req, res) => {
 
 // Admin logout : /api/admin/admin-logout
 export const adminLogout = async (req, res) => {
+    const isProd = process.env.NODE_ENV === "production";
 
     try {
         res.clearCookie("adminToken", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
+            secure: isProd,                     // must be true when sameSite is "none"
+            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
+            path: "/"
         })
 
         return res.json({

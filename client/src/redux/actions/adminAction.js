@@ -33,8 +33,10 @@ export const loadAdmin = () => async (dispatch) => {
             dispatch(adminLogout());
         }
     } catch (error) {
-        console.error("Admin load error:", error);
-        // Don't show error toast here to avoid confusion on initial load
+        // Only log genuinely unexpected errors, not the routine "not logged in" 401
+        if (error.response?.status !== 401) {
+            console.error("Admin load error:", error);
+        }
         dispatch(adminLogout());
     }
 };
