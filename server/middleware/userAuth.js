@@ -1,34 +1,24 @@
-import jwt from "jsonwebtoken"
+import { verifyAccessToken } from "../config/tokens.js";
 
 const userAuth = async (req, res, next) => {
-    const token = req.cookies?.token;  // Safe navigation
+    const token = req.cookies?.token;
 
     if (!token) {
-        return res.json({
-            success: false,
-            message: "Not Authorized. Login Again"
-        })
+        return res.status(401).json({ success: false, message: "Not Authorized. Login Again" })
     }
 
     try {
-        const tokenDecode = jwt.verify(token, process.env.JWT_SECRET)
+        const tokenDecode = verifyAccessToken("user", token)
 
-        if (tokenDecode.id && tokenDecode.role) {
+        if (tokenDecode.id && tokenDecode.role === "user") {
             req.userID = tokenDecode.id
             req.userRole = tokenDecode.role
-            next()
-        } else {
-            return res.json({
-                success: false,
-                message: "Not Authorized. Login Again"
-            })
+            return next()
         }
+
+        return res.status(401).json({ success: false, message: "Not Authorized. Login Again" })
     } catch (error) {
-        console.error("Token verification error:", error.message);
-        return res.json({
-            success: false,
-            message: error.message
-        })
+        return res.status(401).json({ success: false, message: "Session expired. Login Again" })
     }
 }
 

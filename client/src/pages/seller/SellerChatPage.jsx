@@ -7,6 +7,8 @@ import { ArrowLeft, Send, Image as ImageIcon, X } from 'lucide-react';
 import { socket } from '../../socket';
 import { MdManageAccounts } from 'react-icons/md';
 
+const withCreds = { withCredentials: true };
+
 const formatMessageTime = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -32,10 +34,7 @@ const SellerChatPage = () => {
     const fileInputRef = useRef(null);
 
     const { seller } = useSelector((state) => state.seller);
-    const { user } = useSelector((state) => state.user);
-
-    const currentUserId = seller?._id || user?._id;
-    const isSellerView = Boolean(seller?._id);
+    const currentUserId = seller?._id;
 
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState("");
@@ -47,7 +46,6 @@ const SellerChatPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
 
-    // 1. Establish socket registration and global receiver listener
     useEffect(() => {
         if (!currentUserId) return;
 
@@ -71,24 +69,20 @@ const SellerChatPage = () => {
         };
     }, [currentUserId, conversationId]);
 
-    // 2. Load basic message logs and establish conversation structures
     useEffect(() => {
         const fetchChatDetailsAndMessages = async () => {
             setIsLoading(true);
             try {
-                // Fetch messages
-                const resMessages = await axios.get(`/api/message/get-all-messages/${conversationId}`);
+                const resMessages = await axios.get(`/api/message/get-all-messages/${conversationId}`, withCreds);
                 if (resMessages.data.success) {
                     setMessages(resMessages.data.messages);
                 }
 
-                // FIXED: Get conversation by ID, not by member ID
-                const resConversation = await axios.get(`/api/conversation/get-conversation/${conversationId}`);
+                const resConversation = await axios.get(`/api/conversation/get-conversation/${conversationId}`, withCreds);
                 if (resConversation.data.success) {
                     const conv = resConversation.data.conversation;
                     setConversationData(conv);
 
-                    // Find the other member
                     const targetReceiver = conv.members.find(memberID => memberID !== currentUserId);
                     if (targetReceiver) {
                         setReceiverId(targetReceiver);
@@ -98,7 +92,6 @@ const SellerChatPage = () => {
                 }
             } catch (error) {
                 toast.error("Failed to load messages.");
-                console.error("Error fetching chat details:", error);
             } finally {
                 setIsLoading(false);
             }
@@ -109,14 +102,10 @@ const SellerChatPage = () => {
         }
     }, [conversationId, currentUserId]);
 
-    // 3. Obtain real names and profile avatars 
     useEffect(() => {
         const fetchReceiverInfo = async () => {
             if (!receiverId) return;
 
-            // The other member may be admin, who has no User/Seller document to look up.
-            // Detect this the same way UserInbox/SellerInbox do (via memberRoles), with an
-            // id-prefix fallback, and skip the network call (and its fallback) entirely.
             const otherRole = conversationData?.memberRoles?.get?.(receiverId)
                 || conversationData?.memberRoles?.[receiverId];
             const isAdminReceiver = otherRole === 'admin' || receiverId.startsWith('admin');
@@ -127,57 +116,41 @@ const SellerChatPage = () => {
             }
 
             try {
-                let endpoint;
-                if (isSellerView) {
-                    // If seller is logged in, receiver is a buyer (user)
-                    endpoint = `/api/user/user-info/${receiverId}`;
-                } else {
-                    // If user is logged in, receiver is a seller
-                    endpoint = `/api/seller/get-seller-info/${receiverId}`;
-                }
-
-                const { data } = await axios.get(endpoint);
+                const endpoint = `/api/user/user-info/${receiverId}`;
+                const { data } = await axios.get(endpoint, withCreds);
                 if (data.success) {
-                    const info = data.user || data.seller;
-                    // Properly handle avatar URL
+                    const info = data.user;
                     const avatarUrl = info?.avatar?.url || info?.avatar || "";
                     setReceiverInfo({
-                        name: info?.name || "ADMIN",
+                        name: info?.name || "User",
                         avatar: avatarUrl
                     });
-                } else {
-                    setReceiverInfo({ name: "ADMIN", avatar: "" });
                 }
             } catch (error) {
-                console.error("Error fetching receiver info:", error);
-                // Try alternative endpoint if first one fails
                 try {
-                    // Fallback: try to get seller info without auth
                     const fallbackEndpoint = `/api/seller/get-seller/${receiverId}`;
-                    const { data } = await axios.get(fallbackEndpoint);
+                    const { data } = await axios.get(fallbackEndpoint, withCreds);
                     if (data.success) {
                         const info = data.seller;
                         const avatarUrl = info?.avatar?.url || info?.avatar || "";
                         setReceiverInfo({
-                            name: info?.name || "ADMIN",
+                            name: info?.name || "User",
                             avatar: avatarUrl
                         });
                     }
                 } catch (fallbackError) {
-                    console.error("Fallback also failed:", fallbackError);
-                    setReceiverInfo({ name: "ADMIN", avatar: "" });
+                    setReceiverInfo({ name: "User", avatar: "" });
                 }
             }
         };
 
         fetchReceiverInfo();
-    }, [receiverId, isSellerView, conversationData]);
+    }, [receiverId, conversationData]);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // File selection handler
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
         if (files.length + images.length > 5) {
@@ -185,12 +158,10 @@ const SellerChatPage = () => {
         }
 
         setImages((prev) => [...prev, ...files]);
-
         const newPreviews = files.map(file => URL.createObjectURL(file));
         setImagePreviews((prev) => [...prev, ...newPreviews]);
     };
 
-    // Remove selected file from state
     const removeSelectedImage = (index) => {
         setImages((prev) => prev.filter((_, idx) => idx !== index));
         setImagePreviews((prev) => prev.filter((_, idx) => idx !== index));
@@ -204,7 +175,6 @@ const SellerChatPage = () => {
         const formData = new FormData();
         formData.append("conversationID", conversationId);
         formData.append("sender", currentUserId);
-        formData.append("receiver", receiverId);
         formData.append("text", inputValue);
 
         images.forEach((imgFile) => {
@@ -213,7 +183,8 @@ const SellerChatPage = () => {
 
         try {
             const { data } = await axios.post("/api/message/create-new-message", formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                ...withCreds
             });
 
             if (data.success) {
@@ -231,7 +202,7 @@ const SellerChatPage = () => {
                 axios.put(`/api/conversation/update-last-message/${conversationId}`, {
                     lastMessage: inputValue || "Sent an attachment",
                     lastMessageID: savedMessage._id
-                }).catch(() => { });
+                }, withCreds).catch(() => { });
 
                 setMessages((prev) => [...prev, savedMessage]);
                 setInputValue("");
@@ -241,7 +212,6 @@ const SellerChatPage = () => {
                 toast.error(data.message || "Failed to send message");
             }
         } catch (error) {
-            console.error("Send message error:", error);
             toast.error(error?.response?.data?.message || "Message could not be sent.");
         } finally {
             setIsSending(false);
@@ -258,54 +228,35 @@ const SellerChatPage = () => {
 
     return (
         <div className="w-full max-w-6xl mx-auto my-4 bg-white h-[85vh] flex flex-col rounded shadow-sm overflow-hidden">
-
-            {/* HEADER */}
             <header className="px-4 py-3 bg-[#eef2f7] flex items-center justify-between border-b border-gray-200">
                 <div className="flex items-center gap-3 min-w-0">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-600 shrink-0"
-                    >
+                    <button onClick={() => navigate(-1)} className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-600 shrink-0">
                         <ArrowLeft size={20} />
                     </button>
-
-                    {/* Proper avatar display logic */}
                     {receiverInfo.avatar ? (
-                        <img
-                            src={receiverInfo.avatar}
-                            alt={receiverInfo.name}
-                            className="w-10 h-10 rounded-full object-cover shrink-0 border border-gray-300"
-                        />
+                        <img src={receiverInfo.avatar} alt={receiverInfo.name} className="w-10 h-10 rounded-full object-cover shrink-0 border border-gray-300" />
                     ) : (
                         <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
                             <MdManageAccounts />
                         </div>
                     )}
                     <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-gray-800 leading-tight truncate">
-                            {receiverInfo.name || "Loading..."}
-                        </h3>
+                        <h3 className="text-sm font-semibold text-gray-800 leading-tight truncate">{receiverInfo.name || "Loading..."}</h3>
                         <p className="text-xs text-gray-500 font-normal">Active now</p>
                     </div>
                 </div>
             </header>
 
-            {/* CHAT MESSAGES AREA */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
                 {messages.length === 0 ? (
-                    <div className="text-center text-gray-400 py-10">
-                        No messages yet. Start the conversation!
-                    </div>
+                    <div className="text-center text-gray-400 py-10">No messages yet. Start the conversation!</div>
                 ) : (
                     messages.map((msg) => {
                         const isMe = msg.sender === currentUserId;
                         return (
                             <div key={msg._id} className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`rounded p-2.5 px-4 text-sm font-medium shadow-sm max-w-[75%] sm:max-w-[70%] ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                                    {/* Handle text display */}
                                     {msg.text && <p className="wrap-break-word">{msg.text}</p>}
-
-                                    {/* Render optional attachment images */}
                                     {msg.images && msg.images.length > 0 && (
                                         <div className="grid grid-cols-2 gap-1.5 mt-2 max-w-75">
                                             {msg.images.map((imgUrl, i) => (
@@ -315,7 +266,6 @@ const SellerChatPage = () => {
                                             ))}
                                         </div>
                                     )}
-
                                     <span className={`block text-[10px] mt-1 text-right ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
                                         {formatMessageTime(msg.createdAt)}
                                     </span>
@@ -327,17 +277,12 @@ const SellerChatPage = () => {
                 <div ref={chatEndRef} />
             </div>
 
-            {/* PRE-UPLOAD IMAGES PREVIEW ZONE */}
             {imagePreviews.length > 0 && (
                 <div className="px-4 py-2 bg-gray-100 border-t flex gap-2 flex-wrap">
                     {imagePreviews.map((url, i) => (
                         <div key={i} className="relative w-16 h-16">
                             <img src={url} className="w-full h-full object-cover rounded border" alt="preview" />
-                            <button
-                                type="button"
-                                onClick={() => removeSelectedImage(i)}
-                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
-                            >
+                            <button type="button" onClick={() => removeSelectedImage(i)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600">
                                 <X size={12} />
                             </button>
                         </div>
@@ -345,43 +290,14 @@ const SellerChatPage = () => {
                 </div>
             )}
 
-            {/* INPUT FOOTER */}
             <footer className="p-3 bg-gray-50 border-t border-gray-200">
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-white border border-gray-300 rounded p-1.5 px-3 focus-within:border-blue-500 transition-all">
-                    {/* Hidden Native File Input */}
-                    <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleImageChange}
-                        className="hidden"
-                    />
-
-                    {/* Image Selector Button */}
-                    <button
-                        type="button"
-                        onClick={() => fileInputRef.current.click()}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-                        disabled={isSending}
-                    >
+                    <input type="file" multiple accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" />
+                    <button type="button" onClick={() => fileInputRef.current.click()} className="text-gray-400 hover:text-gray-600 transition-colors p-1" disabled={isSending}>
                         <ImageIcon size={20} />
                     </button>
-
-                    <input
-                        type="text"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        placeholder="Write a message..."
-                        disabled={isSending}
-                        className="flex-1 min-w-0 bg-transparent text-sm border-none focus:outline-none text-gray-700 placeholder-gray-400"
-                    />
-
-                    <button
-                        type="submit"
-                        disabled={isSending}
-                        className="text-blue-600 hover:text-blue-700 transition-colors p-1 shrink-0 disabled:text-gray-300"
-                    >
+                    <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="Write a message..." disabled={isSending} className="flex-1 min-w-0 bg-transparent text-sm border-none focus:outline-none text-gray-700 placeholder-gray-400" />
+                    <button type="submit" disabled={isSending} className="text-blue-600 hover:text-blue-700 transition-colors p-1 shrink-0 disabled:text-gray-300">
                         <Send size={18} />
                     </button>
                 </form>

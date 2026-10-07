@@ -35,6 +35,18 @@ const OrderSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    platformFee: {
+        type: Number,
+        default: 0,
+    },
+    discountPrice: {
+        type: Number,
+        default: 0,
+    },
+    couponCode: {
+        type: String,
+        default: "",
+    },
     status: {
         type: String,
         default: "Processing",
@@ -51,18 +63,32 @@ const OrderSchema = new mongoose.Schema({
         },
     },
     paidAt: {
-        type: Date,
-        default: Date.now(),
+        type: Date
     },
     deliveredAt: {
         type: Date,
     },
     createdAt: {
         type: Date,
-        default: Date.now(),
+        default: Date.now,
     },
 });
 
+OrderSchema.index({ "cart.seller": 1, createdAt: -1 });
+OrderSchema.index({ user: 1, createdAt: -1 });
+
+// Safety net: delete card orders that stayed unpaid for 3 days
+// (the partial filter means PAID orders and COD orders are never touched)
+OrderSchema.index(
+    { createdAt: 1 },
+    {
+        expireAfterSeconds: 3 * 24 * 60 * 60,
+        partialFilterExpression: {
+            "paymentInfo.type": "Online",
+            "paymentInfo.status": "Pending"
+        }
+    }
+);
 
 // .model gets collection name & schema
 const OrderModel = mongoose.models.order || mongoose.model("order", OrderSchema)

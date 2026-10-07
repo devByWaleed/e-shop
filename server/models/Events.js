@@ -59,10 +59,12 @@ const EventSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now(),
+        default: Date.now,
     },
 })
 
+EventSchema.index({ shopId: 1 });
+EventSchema.index({ finish_Date: 1 });
 
 // .model gets collection name & schema
 const EventModel = mongoose.models.event || mongoose.model("event", EventSchema)

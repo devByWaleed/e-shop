@@ -24,16 +24,26 @@ const Payment = () => {
 
     const handlePaymentSubmit = async (e) => {
         e.preventDefault();
+
+        // A discount is shown on this page, but there is no coupon code to send.
+        // The server decides the discount from the code, so it would charge the FULL price.
+        if (orderData.discountPrice > 0 && !orderData.couponCode) {
+            toast.error("Coupon details are missing. Please apply your coupon again at checkout.");
+            navigate("/checkout");
+            return;
+        }
+
         setLoading(true);
 
-        // Format payloads properly to map with backend schemas
+        // The server loads the price and the seller from the database,
+        // so only the product id and the quantity are sent (no prices, no shopId)
         const payload = {
             items: orderData.cart.map(item => ({
-                product: item,
-                quantity: item.quantity,
-                shopId: item.shopId
+                product: item._id,
+                quantity: item.quantity
             })),
-            address: orderData.shippingAddress
+            address: orderData.shippingAddress,
+            couponCode: orderData.couponCode || ""   // the server checks the coupon and calculates the discount
         };
 
         // Configuration to fix your authentication/authorization issue
@@ -50,6 +60,7 @@ const Payment = () => {
                     // Redirect directly to Stripe's secure off-site form
                     window.location.replace(data.url);
                 } else {
+                    // Also shows coupon problems, for example "Invalid coupon code"
                     toast.error(data.message || "Stripe Initialization Error.");
                 }
             } else if (paymentMethod === 'COD') {
@@ -60,11 +71,16 @@ const Payment = () => {
                     toast.success(data.message || "Order placed successfully!");
                     navigate("/success");
                 } else {
+                    // Also shows coupon problems, for example "This coupon has expired"
                     toast.error(data.message || "Failed to place COD order.");
                 }
             }
         } catch (err) {
-            toast.error(err.response?.data?.message || "Authorization Error. Please try logging out and back in.");
+            if (err.response?.status === 401) {
+                toast.error("Please log in again to continue.");
+            } else {
+                toast.error(err.response?.data?.message || "Something went wrong. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -124,7 +140,7 @@ const Payment = () => {
                             </span>
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-600 pb-4 border-b border-gray-100">
-                            <span>Discount:</span>
+                            <span>Discount{orderData.couponCode ? ` (${orderData.couponCode})` : ""}:</span>
                             <span className="font-medium text-green-600">
                                 {orderData.discountPrice > 0 ? `-${currency}${orderData.discountPrice?.toFixed(2)}` : "-"}
                             </span>

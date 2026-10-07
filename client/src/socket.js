@@ -5,7 +5,6 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ||
     import.meta.env.VITE_ENDPOINT ||
     "http://localhost:4500";
 
-console.log("🔌 Socket URL:", SOCKET_URL);
 
 // Create socket instance with production-ready config
 export const socket = io(SOCKET_URL, {

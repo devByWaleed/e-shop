@@ -3,8 +3,21 @@ import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import transporter from "../config/nodeMailer.js";
 import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
+import { signAccessToken, accessMaxAge, cookieBase } from "../config/tokens.js";
+import { startSession, endSession } from "../config/tokens.js";
+import { v2 as cloudinary } from 'cloudinary';
+import crypto from "crypto";
 
-const isProd = process.env.NODE_ENV === "production";
+
+
+// The token carries only a hash of the OTP, never the OTP itself
+const hashOtp = (email, otp) => {
+
+    crypto.createHmac("sha256", process.env.RESET_SECRET)
+    jwt.sign({ email, otpHash: hashOtp(email, otp) }, process.env.RESET_SECRET, { expiresIn: "10m" })
+    jwt.verify(userResetToken, process.env.RESET_SECRET)
+}
+
 
 const createActivationToken = (user) => {
     return jwt.sign(user, process.env.ACTIVATION_SECRET, {
@@ -24,6 +37,13 @@ export const register = async (req, res) => {
             return res.json({
                 success: false,
                 message: "Missing Details"
+            })
+        }
+
+        if (typeof password !== "string" || password.length < 8) {
+            return res.json({
+                success: false,
+                message: "Password must be at least 8 characters"
             })
         }
 
@@ -118,17 +138,10 @@ export const activateAccount = async (req, res) => {
         const user = new UserModel({ name, email, password, avatar })
         await user.save()
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-            expiresIn: "7d"
-        })
+        const token = signAccessToken("user", user._id)
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: isProd,                     // must be true when sameSite is "none"
-            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
-            maxAge: 7 * 24 * 3600 * 1000,
-            path: "/"
-        })
+        res.cookie("token", token, { ...cookieBase, maxAge: accessMaxAge("user") })
+
 
         return res.json({
             success: true,
@@ -163,33 +176,19 @@ export const login = async (req, res) => {
             })
         }
 
-        const user = await UserModel.findOne({ email })
+        const user = await UserModel.findOne({ email }).select("+password")
 
-        if (!user) {
-            return res.json({
-                success: false,
-                message: "Invalid Email"
-            })
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = user ? await bcrypt.compare(password, user.password) : false;
 
         if (!isMatch) {
             return res.json({
                 success: false,
-                message: "Invalid Password"
+                message: "Invalid email or password"
             })
         }
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" })
+        await startSession(res, UserModel, "user", user)
 
-        res.cookie("token", token, {
-            secure: isProd,                     // must be true when sameSite is "none"
-            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
-            httpOnly: true,
-            maxAge: 7 * 24 * 3600 * 1000,
-            path: "/",               // IMPORTANT: available on all routes
-        })
 
         return res.json({
             success: true,
@@ -233,45 +232,43 @@ export const getProfile = async (req, res) => {
 
 // Update User Profile : /api/user/update-profile
 export const updateProfile = async (req, res) => {
+    let newPublicId = null;   // remembers a fresh upload so it can be removed if saving fails
+
     try {
         const userID = req.userID; // Settled by userAuth middleware
         const { name, email, password, phoneNumber, address1, address2, zipCode, country, city } = req.body;
 
         // 1. Validate fields
         if (!password) {
-            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
             return res.json({ success: false, message: "Password is required to update profile" });
         }
 
-        // 2. Find user & verify password
-        const user = await UserModel.findById(userID);
+        // 2. Find user & verify password (+password because the field is hidden by default after Fix 21)
+        const user = await UserModel.findById(userID).select("+password");
         if (!user) {
-            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
             return res.json({ success: false, message: "User not found" });
         }
 
         const isPasswordMatch = await bcrypt.compare(password, user.password);
         if (!isPasswordMatch) {
-            if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
             return res.json({ success: false, message: "Incorrect password. Verification failed." });
         }
 
-        // 3. Handle Avatar File Updates
-        if (req.file) {
-            // Delete old asset from Cloudinary if it exists
-            const oldPublicId = getCloudinaryPublicId(user.avatar);
-            if (oldPublicId) {
-                await cloudinary.uploader.destroy(oldPublicId).catch((err) => console.log("Cloudinary destroy error:", err.message));
+        // 2b. If the email changes, make sure nobody else already uses it
+        if (email && email !== user.email) {
+            const emailTaken = await UserModel.findOne({ email });
+            if (emailTaken) {
+                return res.json({ success: false, message: "This email is already in use" });
             }
+        }
 
-            // Upload new file to Cloudinary
-            const result = await cloudinary.uploader.upload(req.file.path, {
-                folder: "avatars",
-            });
+        // 3. Avatar: upload from memory, delete the old image only after saving worked
+        let oldPublicId = null;
+        if (req.file) {
+            const result = await uploadBufferToCloudinary(req.file.buffer, { folder: "Zenvio Media" });
+            newPublicId = result.public_id;
+            oldPublicId = getCloudinaryPublicId(user.avatar);
             user.avatar = result.secure_url;
-
-            // Clean up temporary local upload file
-            await fs.promises.unlink(req.file.path).catch(console.log);
         }
 
         // 4. Update structural details
@@ -279,11 +276,11 @@ export const updateProfile = async (req, res) => {
         if (email) user.email = email;
         if (phoneNumber) user.phoneNumber = phoneNumber;
 
-        // Sync structure with schema address dictionary 
+        // Sync structure with schema address dictionary
         const updatedAddress = {
             address1: address1 || "",
             address2: address2 || "",
-            zipCode: zipCode ? Number(zipCode) : 0,
+            zipCode: zipCode ? String(zipCode) : "",
             country: country || "",
             city: city || "",
             addressType: "Default"
@@ -297,6 +294,11 @@ export const updateProfile = async (req, res) => {
 
         await user.save();
 
+        // Saving worked, so the old image can go
+        if (oldPublicId) {
+            await cloudinary.uploader.destroy(oldPublicId).catch((err) => console.log("Cloudinary destroy error:", err.message));
+        }
+
         // Strip password out of response data
         const userData = await UserModel.findById(userID).select("-password");
 
@@ -308,7 +310,12 @@ export const updateProfile = async (req, res) => {
 
     } catch (error) {
         console.log(error.message);
-        if (req.file) await fs.promises.unlink(req.file.path).catch(console.log);
+
+        // Saving failed after a new upload: remove the new image so it does not become an orphan
+        if (newPublicId) {
+            await cloudinary.uploader.destroy(newPublicId).catch(() => { });
+        }
+
         return res.json({
             success: false,
             message: error.message
@@ -317,173 +324,11 @@ export const updateProfile = async (req, res) => {
 };
 
 
-// Password reset OTP : /api/user/send-reset-otp
-export const sendResetOTP = async (req, res) => {
-    const { email } = req.body;
-
-    if (!email) {
-        return res.json({
-            success: false,
-            message: "Email is required"
-        })
-    }
-
-    try {
-
-        const user = await UserModel.findOne({ email })
-
-        if (!user) {
-            return res.json({
-                success: false,
-                message: "User not found"
-            })
-        }
-
-        // Generating OTP, guaranteed 6 digits
-        const otp = String(Math.floor(100000 + Math.random() * 900000))
-
-        const resetToken = jwt.sign({ email, otp }, process.env.JWT_SECRET, { expiresIn: '10m' })
-        res.cookie('resetToken', resetToken, { httpOnly: true, maxAge: 10 * 60 * 1000 })
-
-        // Sending OTP reset email
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: user.email,
-            subject: "Password Reset OTP",
-            text: `Your OTP Is ${otp}. Reset your password using this OTP.`
-        }
-
-        await transporter.sendMail(mailOptions);
-
-        return res.json({ success: true, message: "OTP send to your email" })
-    }
-
-    catch (error) {
-        return res.json({ success: false, message: error.message })
-    }
-}
-
-
-// Verify Reset OTP : /api/user/verify-reset-otp
-export const verifyResetOTP = async (req, res) => {
-    const { email, otp } = req.body;
-    const { resetToken } = req.cookies;
-
-    if (!email || !otp) {
-        return res.json({ success: false, message: "Email and OTP are required" });
-    }
-
-    if (!resetToken) {
-        return res.json({ success: false, message: "OTP expired. Please request a new one." });
-    }
-
-    try {
-        const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
-
-        if (decoded.email !== email) {
-            return res.json({ success: false, message: "Invalid request" });
-        }
-
-        if (decoded.otp !== otp) {
-            return res.json({ success: false, message: "Invalid OTP. Please try again." });
-        }
-
-        // OTP is correct — issue a verified token so reset-password knows OTP was checked
-        const verifiedToken = jwt.sign(
-            { email, otpVerified: true },
-            process.env.JWT_SECRET,
-            { expiresIn: '10m' }
-        );
-
-        res.cookie('resetVerified', verifiedToken, {
-            httpOnly: true,
-            maxAge: 10 * 60 * 1000,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-        });
-
-        // Clear the OTP token — it's been used
-        res.clearCookie('resetToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-        });
-
-        return res.json({ success: true, message: "OTP verified" });
-
-    } catch (error) {
-        // jwt.verify throws if token is expired
-        return res.json({ success: false, message: "OTP expired. Please request a new one." });
-    }
-}
-
-
-// Reset user password : /api/user/reset-password
-export const resetPassword = async (req, res) => {
-    const { email, newPassword } = req.body;
-    const { resetVerified } = req.cookies;
-
-    if (!email || !newPassword) {
-        return res.json({
-            success: false,
-            message: "Email,OTP, new password is required"
-        })
-    }
-
-    if (!resetVerified) {
-        return res.json({
-            success: false,
-            message: "OTP not verified. Please start over."
-        });
-    }
-
-    try {
-
-        const user = await UserModel.findOne({ email })
-
-        if (!user) {
-            return res.json({
-                success: false,
-                message: "User not found"
-            })
-        }
-
-        const decoded = jwt.verify(resetVerified, process.env.JWT_SECRET);
-
-        if (!decoded.otpVerified || decoded.email !== email) {
-            return res.json({ success: false, message: "Unauthorized. Please verify your OTP first." });
-        }
-
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        user.password = hashedPassword
-
-        await user.save();
-
-        // Clean up the verified cookie
-        res.clearCookie('resetVerified', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-        });
-
-        return res.json({ success: true, message: "Password has been reset successfully" })
-    }
-
-    catch (error) {
-        return res.json({ success: false, message: error.message })
-    }
-}
-
-
 // User logout : /api/user/logout
 export const logout = async (req, res) => {
 
     try {
-        res.clearCookie("token", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
-        })
+        await endSession(req, res, UserModel, "user")
 
         return res.json({
             success: true,
@@ -534,22 +379,159 @@ export const getUserInfo = async (req, res) => {
 };
 
 
+// Escape regex special characters so user input cannot become a regex attack
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const searchUsers = async (req, res) => {
     try {
-        const { q } = req.query;
-        if (!q || q.length < 2) {
+        // q must be a plain string (blocks ?q[$ne]=x style object input)
+        const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+        if (q.length < 2 || q.length > 50) {
             return res.json({ success: true, users: [] });
         }
 
+        const safe = escapeRegex(q);
         const users = await UserModel.find({
             $or: [
-                { name: { $regex: q, $options: 'i' } },
-                { email: { $regex: q, $options: 'i' } }
+                { name: { $regex: safe, $options: "i" } },
+                { email: { $regex: safe, $options: "i" } }
             ]
-        }).limit(10);
+        }).select("name email avatar").limit(10);
 
         return res.json({ success: true, users });
     } catch (error) {
         return res.json({ success: false, message: error.message });
     }
 };
+
+
+// Password reset OTP : /api/user/send-reset-otp
+export const sendResetOTP = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.json({ success: false, message: "Email is required" })
+    }
+
+    try {
+        const user = await UserModel.findOne({ email })
+
+        // Same answer whether or not the email exists
+        if (!user) {
+            return res.json({ success: true, message: "If this email is registered, an OTP has been sent" })
+        }
+
+        // Secure random 6 digit code (Math.random is predictable)
+        const otp = String(crypto.randomInt(100000, 1000000))
+
+        const resetToken = jwt.sign(
+            { email, otpHash: hashOtp(email, otp) },
+            process.env.JWT_SECRET,
+            { expiresIn: "10m" }
+        )
+        res.cookie("userResetToken", resetToken, { ...cookieBase, maxAge: 10 * 60 * 1000 })
+
+        await transporter.sendMail({
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: "Password Reset OTP",
+            text: `Your OTP Is ${otp}. Reset your password using this OTP.`
+        });
+
+        return res.json({ success: true, message: "OTP send to your email" })
+    }
+
+    catch (error) {
+        return res.json({ success: false, message: error.message })
+    }
+}
+
+
+// Verify Reset OTP : /api/user/verify-reset-otp
+export const verifyResetOTP = async (req, res) => {
+    const { email, otp } = req.body;
+    const { userResetToken } = req.cookies;
+
+    if (!email || !otp) {
+        return res.json({ success: false, message: "Email and OTP are required" });
+    }
+
+    if (!userResetToken) {
+        return res.json({ success: false, message: "OTP expired. Please request a new one." });
+    }
+
+    try {
+        const decoded = jwt.verify(userResetToken, process.env.JWT_SECRET);
+
+        if (decoded.email !== email) {
+            return res.json({ success: false, message: "Invalid request" });
+        }
+
+        // Compare the hash of what the user typed with the hash stored in the token
+        const expected = Buffer.from(decoded.otpHash, "hex");
+        const given = Buffer.from(hashOtp(email, String(otp)), "hex");
+        if (expected.length !== given.length || !crypto.timingSafeEqual(expected, given)) {
+            return res.json({ success: false, message: "Invalid OTP. Please try again." });
+        }
+
+        const verifiedToken = jwt.sign(
+            { email, otpVerified: true },
+            process.env.JWT_SECRET,
+            { expiresIn: "10m" }
+        );
+
+        res.cookie("userResetVerified", verifiedToken, { ...cookieBase, maxAge: 10 * 60 * 1000 });
+        res.clearCookie("userResetToken", cookieBase);
+
+        return res.json({ success: true, message: "OTP verified" });
+
+    } catch (error) {
+        return res.json({ success: false, message: "OTP expired. Please request a new one." });
+    }
+}
+
+
+// Reset user password : /api/user/reset-password
+export const resetPassword = async (req, res) => {
+    const { email, newPassword } = req.body;
+    const { userResetVerified } = req.cookies;
+
+    if (!email || !newPassword) {
+        return res.json({ success: false, message: "Email and new password are required" })
+    }
+
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+        return res.json({ success: false, message: "Password must be at least 8 characters" })
+    }
+
+    if (!userResetVerified) {
+        return res.json({ success: false, message: "OTP not verified. Please start over." });
+    }
+
+    try {
+        const decoded = jwt.verify(userResetVerified, process.env.JWT_SECRET);
+
+        if (!decoded.otpVerified || decoded.email !== email) {
+            return res.json({ success: false, message: "Unauthorized. Please verify your OTP first." });
+        }
+
+        const user = await UserModel.findOne({ email })
+
+        if (!user) {
+            return res.json({ success: false, message: "Unable to reset password" })
+        }
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        await user.save();
+
+        // The password changed: log this account out on every device
+        await UserModel.updateOne({ _id: user._id }, { $set: { refreshTokens: [] } });
+
+
+        return res.json({ success: true, message: "Password has been reset successfully" })
+    }
+
+    catch (error) {
+        return res.json({ success: false, message: error.message })
+    }
+}

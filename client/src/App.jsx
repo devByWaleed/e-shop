@@ -79,29 +79,53 @@ const App = () => {
 
   const dispatch = useDispatch()
 
-  // Load User
-  useEffect(() => {
-    dispatch(loadUser())
-  }, [dispatch])
+  // const authReady = useSelector((state) => state.auth.ready);
 
+  // if (!authReady) {
+  //   return <Loading />;
+  // }
 
+  // useEffect(() => {
+  //   dispatch(loadSession());
+  // }, [dispatch]);
 
+  // const needsUserAuth = [
+  //   '/user-login',
+  //   '/user-signup',
+  //   '/user-profile',
+  //   '/user-order/:id',
+  //   '/checkout',
+  //   '/payment',
+  //   '/success',
+  //   '/track-order/:id',
+  //   '/user-conversation/:id',
+  // ].some((pattern) => matchPath(pattern, currentPath))
 
-  // Load Seller
-  useEffect(() => {
-    dispatch(loadSeller())
-  }, [dispatch])
+  // const needsSellerAuth = [
+  //   '/seller-login',
+  //   '/seller-signup',
+  //   '/seller-profile',
+  //   '/order/:id',
+  //   '/conversation/:id',
+  // ].some((pattern) => matchPath(pattern, currentPath))
 
+  // const needsAdminAuth = [
+  //   '/admin-login',
+  //   '/admin-profile/*',
+  //   '/admin-conversation/:id',
+  // ].some((pattern) => matchPath(pattern, currentPath))
 
+  // useEffect(() => {
+  //   if (needsUserAuth) dispatch(loadUser())
+  // }, [dispatch, currentPath, needsUserAuth])
 
+  // useEffect(() => {
+  //   if (needsSellerAuth) dispatch(loadSeller())
+  // }, [dispatch, currentPath, needsSellerAuth])
 
-
-  // Load Admin
-  useEffect(() => {
-    dispatch(loadAdmin())
-  }, [dispatch])
-
-
+  // useEffect(() => {
+  //   if (needsAdminAuth) dispatch(loadAdmin())
+  // }, [dispatch, currentPath, needsAdminAuth])
 
 
   // Don't show main content while loading user data on app start

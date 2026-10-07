@@ -11,7 +11,8 @@ const SellerSchema = new mongoose.Schema({
     },
     phoneNumber: {
         type: Number,
-        required: true
+        required: true,
+        match: [/^[0-9+\-\s]{7,15}$/, "Please enter a valid phone number"]
     },
     address: {
         type: String,
@@ -29,6 +30,7 @@ const SellerSchema = new mongoose.Schema({
         type: String,
         required: [true, "Please enter your password"],
         minLength: [8, "Password should be greater than 8 characters"],
+        select: false,
     },
     avatar: {
         type: String,
@@ -39,10 +41,16 @@ const SellerSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now(),
+        default: Date.now,
     },
     resetPasswordToken: String,
     resetPasswordTime: Date,
+    // Hashes of the active refresh tokens (one per logged-in device)
+    refreshTokens: {
+        type: [{ hash: String, expiresAt: Date }],
+        select: false,
+        default: [],
+    },
 })
 
 

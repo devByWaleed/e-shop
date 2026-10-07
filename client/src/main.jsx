@@ -7,6 +7,7 @@ import store from './redux/store.js'
 import { Provider } from 'react-redux'
 // import ThemeProvider from './components/ThemeProvider.jsx'
 import axios from "axios";
+import "./utils/setupAxios";
 
 // Send cookies
 axios.defaults.withCredentials = true

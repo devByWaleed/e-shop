@@ -5,6 +5,13 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FiUsers, FiUserPlus, FiSearch, FiPlusCircle } from 'react-icons/fi';
 
+// The chat routes now need your login cookies, so chat requests must send them
+const withCreds = { withCredentials: true };
+
+// The server now answers 401 / 403 / 429 with a JSON message, so read it from the error response
+const getErrorMessage = (error, fallback) =>
+    error?.response?.data?.message || error?.message || fallback;
+
 const AdminInbox = () => {
     const navigate = useNavigate();
     const { admin } = useSelector((state) => state.admin);
@@ -24,6 +31,7 @@ const AdminInbox = () => {
     const [searchingUsers, setSearchingUsers] = useState(false);
 
     // Get admin ID - try both id and _id
+    // (the admin id is now a fixed value from the server, see ADMIN_ID, so old chats stay linked)
     const adminId = admin?.id || admin?._id;
 
     // Get all conversations for admin
@@ -36,23 +44,10 @@ const AdminInbox = () => {
         try {
             setLoading(true);
 
-
-            const { data } = await axios.get(`/api/conversation/get-admin-conversations/${adminId}`);
-
+            const { data } = await axios.get(`/api/conversation/get-admin-conversations/${adminId}`, withCreds);
 
             if (data.success) {
                 const allConversations = data.conversations || [];
-
-
-                // Debug: Log each conversation's members and roles
-                allConversations.forEach(conv => {
-                    console.log('Conversation:', {
-                        id: conv._id,
-                        members: conv.members,
-                        memberRoles: conv.memberRoles,
-                        groupTitle: conv.groupTitle
-                    });
-                });
 
                 // Filter conversations where the other member is a user
                 const userConvs = allConversations.filter(conv => {
@@ -79,7 +74,7 @@ const AdminInbox = () => {
             }
         } catch (error) {
             console.error('Error fetching conversations:', error);
-            toast.error(error?.message || "Failed to load conversations!");
+            toast.error(getErrorMessage(error, "Failed to load conversations!"));
         } finally {
             setLoading(false);
         }
@@ -164,11 +159,16 @@ const AdminInbox = () => {
 
         setSearchingUsers(true);
         try {
-            let endpoint = activeTab === 'users'
-                ? `/api/user/search-users?q=${query}`
-                : `/api/seller/search-sellers?q=${query}`;
+            const endpoint = activeTab === 'users'
+                ? '/api/user/search-users'
+                : '/api/seller/search-sellers';
 
-            const { data } = await axios.get(endpoint);
+            // Search now needs the login cookies; params also encodes special characters safely
+            const { data } = await axios.get(endpoint, {
+                params: { q: query.trim() },
+                withCredentials: true
+            });
+
             if (data.success) {
                 // Filter out users/sellers that already have conversations
                 const existingConversations = activeTab === 'users' ? userConversations : sellerConversations;
@@ -183,6 +183,11 @@ const AdminInbox = () => {
             }
         } catch (error) {
             console.error("Search error:", error);
+
+            // Show login / rate limit problems (the id stops the same toast from repeating while typing)
+            if ([401, 403, 429].includes(error?.response?.status)) {
+                toast.error(getErrorMessage(error, "Search failed"), { id: 'search-error' });
+            }
         } finally {
             setSearchingUsers(false);
         }
@@ -203,15 +208,12 @@ const AdminInbox = () => {
                 receiverRole: receiverRole
             };
 
-
-
             const { data } = await axios.post('/api/conversation/create-new-conversation', payload, {
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                withCredentials: true
             });
-
-
 
             if (data.success) {
                 toast.success('New conversation created!');
@@ -229,7 +231,7 @@ const AdminInbox = () => {
             }
         } catch (error) {
             console.error('Error creating conversation:', error);
-            toast.error(error?.response?.data?.message || error?.message || 'Failed to create conversation');
+            toast.error(getErrorMessage(error, 'Failed to create conversation'));
         }
     };
 
@@ -384,7 +386,7 @@ const AdminInbox = () => {
                                                 />
                                             ) : (
                                                 <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg shadow-sm">
-                                                    {displayName[0].toUpperCase()}
+                                                    {displayName?.[0]?.toUpperCase() || '?'}
                                                 </div>
                                             )}
                                             <div className='w-3.5 h-3.5 bg-green-400 rounded-full absolute top-0.5 right-0.5 border-2 border-white'></div>

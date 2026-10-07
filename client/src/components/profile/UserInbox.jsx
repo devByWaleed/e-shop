@@ -6,6 +6,13 @@ import { FiPlusCircle, FiSearch } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+// The chat routes now need your login cookies, so chat requests must send them
+const withCreds = { withCredentials: true };
+
+// The server now answers 401 / 403 / 429 with a JSON message, so read it from the error response
+const getErrorMessage = (error, fallback) =>
+    error?.response?.data?.message || error?.message || fallback;
+
 const UserInbox = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.user);
@@ -25,14 +32,14 @@ const UserInbox = () => {
     const getUserConversations = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get(`/api/conversation/get-user-conversation/${userId}`);
+            const { data } = await axios.get(`/api/conversation/get-user-conversation/${userId}`, withCreds);
             if (data.success) {
                 setConversations(data.conversations);
             } else {
                 toast.error(data.message);
             }
         } catch (error) {
-            toast.error(error?.message || "Failed to load inbox!");
+            toast.error(getErrorMessage(error, "Failed to load inbox!"));
         } finally {
             setLoading(false);
         }
@@ -56,29 +63,21 @@ const UserInbox = () => {
                         const otherRole = conv.memberRoles?.get?.(otherId) || conv.memberRoles?.[otherId];
 
                         let info = null;
-                        let endpoint = '';
 
                         // Determine which endpoint to call based on the role
                         if (otherRole === 'admin') {
                             // For admin, we don't have a get-admin endpoint yet
-                            // Use a default name or create an admin info endpoint
                             return [conv._id, {
                                 name: "Admin",
                                 avatar: null,
                                 role: 'admin'
                             }];
-                        }
-
-
-
-
-
-                        else if (otherRole === 'seller') {
+                        } else if (otherRole === 'seller') {
                             try {
                                 const { data } = await axios.get(`/api/seller/get-seller/${otherId}`);
                                 if (data.success && data.seller) info = data.seller;
                             } catch (e) {
-                                // role tag may be stale — check the user collection before giving up
+                                // role tag may be stale, check the user collection before giving up
                                 try {
                                     const { data } = await axios.get(`/api/user/user-info/${otherId}`);
                                     if (data.success && data.user) info = data.user;
@@ -98,15 +97,9 @@ const UserInbox = () => {
 
                                 }
                             }
-                        }
-
-                        /* 
-                        This cause avatar display and a 404 error:-
-                        UserInbox.jsx:106 
-                        GET http://localhost:4000/api/user/user-info/6a3d302… 404 (Not Found)
-                        */
-                        else {
-                            // If no role is found, try both endpoints as fallback
+                        } else {
+                            // No role tagged on this conversation: try both endpoints as fallback.
+                            // (The failed first request shows as a 404 in the browser console.)
                             try {
                                 const { data } = await axios.get(`/api/user/user-info/${otherId}`);
                                 if (data.success && data.user) {
@@ -123,25 +116,6 @@ const UserInbox = () => {
                                 }
                             }
                         }
-
-                        /*
-                        else {
-                            // Role not tagged on this conversation — resolve it once, in parallel.
-                            const [userRes, sellerRes] = await Promise.all([
-                                axios.get(`/api/user/user-info/${otherId}`, { validateStatus: () => true }),
-                                axios.get(`/api/seller/get-seller/${otherId}`, { validateStatus: () => true })
-                            ]);
-
-                            if (userRes.data?.success && userRes.data?.user) {
-                                info = userRes.data.user;
-                                otherRole = 'user';
-                            } else if (sellerRes.data?.success && sellerRes.data?.seller) {
-                                info = sellerRes.data.seller;
-                                otherRole = 'seller';
-                            }
-                        }
-                        */
-
 
                         // If we got info from API, use it
                         if (info) {
@@ -188,7 +162,11 @@ const UserInbox = () => {
 
         setSearchingUsers(true);
         try {
-            const { data } = await axios.get(`/api/seller/search-sellers?q=${query}`);
+            // Search now needs the login cookies; params also encodes special characters safely
+            const { data } = await axios.get('/api/seller/search-sellers', {
+                params: { q: query.trim() },
+                withCredentials: true
+            });
             if (data.success) {
                 // Filter out sellers that already have conversations
                 const existingIds = new Set();
@@ -203,6 +181,11 @@ const UserInbox = () => {
         } catch (error) {
             console.error("Search error:", error);
             setSearchResults([]);
+
+            // Show login / rate limit problems (the id stops the same toast from repeating while typing)
+            if ([401, 403, 429].includes(error?.response?.status)) {
+                toast.error(getErrorMessage(error, "Search failed"), { id: 'search-error' });
+            }
         } finally {
             setSearchingUsers(false);
         }
@@ -221,7 +204,8 @@ const UserInbox = () => {
             const { data } = await axios.post('/api/conversation/create-new-conversation', payload, {
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                withCredentials: true
             });
 
             if (data.success) {
@@ -240,7 +224,7 @@ const UserInbox = () => {
             }
         } catch (error) {
             console.error('Error creating conversation:', error);
-            toast.error(error?.response?.data?.message || error?.message || 'Failed to create conversation');
+            toast.error(getErrorMessage(error, 'Failed to create conversation'));
         }
     };
 

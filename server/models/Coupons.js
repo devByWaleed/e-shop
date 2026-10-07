@@ -5,7 +5,6 @@ const CouponSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, "Please enter a valid coupon code identifier name!"],
-        unique: true,
     },
     discountPercentage: {
         type: Number,
@@ -28,12 +27,14 @@ const CouponSchema = new mongoose.Schema({
         type: String,
         default: null
     },
-    createdAt: {
+    expiresAt: {
         type: Date,
-        default: Date.now(),
-    }
+        default: null      // empty means the coupon never expires
+    },
 }, { timestamps: true });
 
+// A name must be unique only inside one shop
+CouponSchema.index({ shopId: 1, name: 1 }, { unique: true });
 
 // .model gets collection name & schema
 const CouponModel = mongoose.models.coupon || mongoose.model("coupon", CouponSchema)

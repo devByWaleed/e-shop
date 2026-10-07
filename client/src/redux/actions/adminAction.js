@@ -17,30 +17,6 @@ import {
 import toast from "react-hot-toast";
 
 
-// Load admin from token (called on app mount)
-export const loadAdmin = () => async (dispatch) => {
-    try {
-        dispatch(adminSignInStart());
-
-        const { data } = await axios.get('/api/admin/verify-admin', {
-            withCredentials: true
-        });
-
-        if (data.success) {
-            dispatch(adminSignInSuccess(data.admin));
-        } else {
-            // Token invalid or expired
-            dispatch(adminLogout());
-        }
-    } catch (error) {
-        // Only log genuinely unexpected errors, not the routine "not logged in" 401
-        if (error.response?.status !== 401) {
-            console.error("Admin load error:", error);
-        }
-        dispatch(adminLogout());
-    }
-};
-
 
 // Admin login with credentials
 export const adminLogin = (email, password) => async (dispatch) => {
@@ -62,6 +38,31 @@ export const adminLogin = (email, password) => async (dispatch) => {
         const errorMessage = error.response?.data?.message || error.message || "Login failed";
         dispatch(adminSignInFailure(errorMessage));
         return { success: false, message: errorMessage };
+    }
+};
+
+
+// Load admin from token (called on app mount)
+export const loadAdmin = () => async (dispatch) => {
+    try {
+        dispatch(adminSignInStart());
+
+        const { data } = await axios.get('/api/admin/verify-admin', {
+            withCredentials: true
+        });
+
+        if (data.success) {
+            dispatch(adminSignInSuccess(data.admin));
+        } else {
+            // Token invalid or expired
+            dispatch(adminLogout());
+        }
+    } catch (error) {
+        // Only log genuinely unexpected errors, not the routine "not logged in" 401
+        if (error.response?.status !== 401) {
+            console.error("Admin load error:", error);
+        }
+        dispatch(adminLogout());
     }
 };
 

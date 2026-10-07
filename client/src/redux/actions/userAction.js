@@ -31,7 +31,12 @@ export const loadUser = () => async (dispatch, getState) => {
         }
 
     } catch (error) {
-        dispatch(LoadUserFail(error.message))
+        // 401 just means "not logged in": not an error to show
+        if (error.response?.status === 401) {
+            dispatch(LoadUserFail(null))
+            return
+        }
+        dispatch(LoadUserFail(error.response?.data?.message || error.message))
     }
 }
 

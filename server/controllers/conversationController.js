@@ -1,4 +1,5 @@
 import ConversationModel from "../models/Conversations.js";
+import { isActor, actorIds } from "../middleware/anyAuth.js";
 
 const VALID_ROLES = ["user", "seller", "admin"];
 
@@ -33,6 +34,11 @@ export const newConversation = async (req, res) => {
                 success: false,
                 message: "Cannot create a conversation with yourself"
             });
+        }
+
+        // The logged-in person must really be the sender
+        if (!isActor(req, senderID)) {
+            return res.status(403).json({ success: false, message: "You can only start conversations as yourself" });
         }
 
         if ((senderRole && !VALID_ROLES.includes(senderRole)) ||
@@ -98,9 +104,13 @@ const getConversationsByMemberId = async (memberId) => {
     }).sort({ updatedAt: -1, createdAt: -1 })
 }
 
-// Get seller conversations : /api/conversation/get-seller-conversation/:id
-export const getSellerConversations = async (req, res) => {
+const getMyConversations = async (req, res) => {
     try {
+        // You can only list your own conversations
+        if (!isActor(req, req.params.id)) {
+            return res.status(403).json({ success: false, message: "Not allowed" });
+        }
+
         const conversations = await getConversationsByMemberId(req.params.id)
         return res.json({ success: true, conversations });
     } catch (error) {
@@ -108,30 +118,18 @@ export const getSellerConversations = async (req, res) => {
     }
 }
 
-// Get user conversations : /api/conversation/get-user-conversation/:id
-export const getUserConversations = async (req, res) => {
-    try {
-        const conversations = await getConversationsByMemberId(req.params.id)
-        return res.json({ success: true, conversations });
-    } catch (error) {
-        return res.json({ success: false, message: error.message });
-    }
-}
-
-// Get Admin conversations: /api/conversation/get-admin-conversations/:id
-export const getAdminConversations = async (req, res) => {
-    try {
-        const conversations = await getConversationsByMemberId(req.params.id)
-        return res.json({ success: true, conversations });
-    } catch (error) {
-        return res.json({ success: false, message: error.message });
-    }
-};
+export const getSellerConversations = getMyConversations
+export const getUserConversations = getMyConversations
+export const getAdminConversations = getMyConversations
 
 
 export const getConversationById = async (req, res) => {
     try {
-        const conversation = await ConversationModel.findById(req.params.id)
+        // Only returns it if you are one of its two members
+        const conversation = await ConversationModel.findOne({
+            _id: req.params.id,
+            members: { $in: actorIds(req) }
+        })
 
         if (!conversation) {
             return res.json({
@@ -159,11 +157,15 @@ export const updateLastMessage = async (req, res) => {
     try {
         const { lastMessage, lastMessageID } = req.body
 
-        const lastConversation = await ConversationModel.findByIdAndUpdate(
-            req.params.id,
+        const lastConversation = await ConversationModel.findOneAndUpdate(
+            { _id: req.params.id, members: { $in: actorIds(req) } },
             { lastMessage, lastMessageID },
             { new: true }
         )
+
+        if (!lastConversation) {
+            return res.status(404).json({ success: false, message: "Conversation not found" });
+        }
 
         return res.json({
             success: true,

@@ -167,7 +167,7 @@ const ProfileContent = ({ active }) => {
                 <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-gray-500">Phone Number</label>
                     <input
-                        type="text"
+                        type="tel"
                         disabled={!isEdit}
                         value={userData.phone}
                         onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))}
@@ -179,7 +179,7 @@ const ProfileContent = ({ active }) => {
                 <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-gray-500">Zip Code</label>
                     <input
-                        type="text"
+                        type="tel"
                         disabled={!isEdit}
                         value={userData.zipCode}
                         onChange={(e) => setUserData(prev => ({ ...prev, zipCode: e.target.value }))}

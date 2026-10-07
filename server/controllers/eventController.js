@@ -4,16 +4,46 @@ import SellerModel from "../models/Sellers.js";
 import { v2 as cloudinary } from "cloudinary";
 
 
+// Helper function to clean up expired events
+const cleanupExpiredEvents = async () => {
+    try {
+        const currentDate = new Date();
+        // Find events whose finish_Date is in the past
+        const expiredEvents = await EventModel.find({ finish_Date: { $lt: currentDate } });
+
+        if (expiredEvents.length > 0) {
+            for (const event of expiredEvents) {
+                // Delete images from Cloudinary
+                if (event.images && event.images.length > 0) {
+                    const publicIds = event.images
+                        .map(imgUrl => getCloudinaryPublicId(imgUrl))
+                        .filter(id => id !== null);
+
+                    if (publicIds.length > 0) {
+                        try {
+                            await cloudinary.api.delete_resources(publicIds);
+                        } catch (cloudinaryErr) {
+                            console.error("Cloudinary expired event image deletion failed:", cloudinaryErr.message);
+                        }
+                    }
+                }
+                // Delete the event from database
+                await EventModel.findByIdAndDelete(event._id);
+            }
+        }
+    } catch (error) {
+        console.error("Error cleaning up expired events:", error.message);
+    }
+};
+
+
 // Create Event Product : /api/event/event-product
 export const eventProduct = async (req, res) => {
     let uploadedPublicIds = [];
 
     try {
-        const { shopID, name, category, discountPrice, stock, status, finish_Date, start_Date } = req.body;
-
-        if (!shopID) {
-            return res.json({ success: false, message: "Shop ID is required. Product creation failed." });
-        }
+        const shopID = req.sellerID;   // from the login token
+        const { name, category, discountPrice, stock, status, finish_Date, start_Date } = req.body;
 
         const shop = await SellerModel.findById(shopID);
         if (!shop) {
@@ -67,7 +97,7 @@ export const eventProduct = async (req, res) => {
             stock: Number(stock),
             images: imagesURL,
             shopId: shop._id,
-            shop: shop,
+            shop: { _id: shop._id, name: shop.name, avatar: shop.avatar }
         };
 
         const eventProduct = await EventModel.create(eventData);
@@ -92,6 +122,8 @@ export const eventProduct = async (req, res) => {
 // Get All Events ( Specific Shop ) : /api/event/get-shop-events
 export const getShopEvents = async (req, res) => {
     try {
+        // Clean up before fetching
+        await cleanupExpiredEvents();
         const shopEvents = await EventModel.find({ shopId: req.params.id })
 
         res.json({
@@ -111,11 +143,29 @@ export const getShopEvents = async (req, res) => {
 // Get All Events : /api/event/get-all-events
 export const getAllEvents = async (req, res) => {
     try {
-        const allEvents = await EventModel.find()
+        // Clean up before fetching
+        await cleanupExpiredEvents();
 
-        res.json({
+        // No ?page= in the URL: behave exactly like before
+        if (!req.query.page) {
+            const allEvents = await EventModel.find({}).sort({ createdAt: -1 })
+            return res.json({ success: true, allEvents });
+        }
+
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const limit = Math.min(parseInt(req.query.limit) || 24, 100);
+
+        const [allEvents, total] = await Promise.all([
+            EventModel.find({}).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit),
+            EventModel.countDocuments()
+        ]);
+
+        return res.json({
             success: true,
-            allEvents
+            allEvents,
+            total,
+            page,
+            pages: Math.ceil(total / limit)
         });
     } catch (error) {
 
@@ -133,7 +183,7 @@ export const deleteEvents = async (req, res) => {
         const eventID = req.params.id
 
         // Get the event data
-        const event = await EventModel.findById(eventID)
+        const event = await EventModel.findOne({ _id: eventID, shopId: req.sellerID })
 
         if (!event) {
             return res.json({

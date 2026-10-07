@@ -6,6 +6,13 @@ import { useNavigate } from 'react-router-dom';
 import { MdManageAccounts } from 'react-icons/md';
 import { FiPlusCircle, FiSearch } from 'react-icons/fi';
 
+// The chat routes now need your login cookies, so chat requests must send them
+const withCreds = { withCredentials: true };
+
+// The server now answers 401 / 403 / 429 with a JSON message, so read it from the error response
+const getErrorMessage = (error, fallback) =>
+    error?.response?.data?.message || error?.message || fallback;
+
 const SellerInbox = () => {
     const navigate = useNavigate();
     const { seller } = useSelector((state) => state.seller);
@@ -25,14 +32,14 @@ const SellerInbox = () => {
     const getSellerConversations = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get(`/api/conversation/get-seller-conversation/${sellerId}`);
+            const { data } = await axios.get(`/api/conversation/get-seller-conversation/${sellerId}`, withCreds);
             if (data.success) {
                 setConversations(data.conversations);
             } else {
                 toast.error(data.message);
             }
         } catch (error) {
-            toast.error(error?.message || "Failed to load inbox!");
+            toast.error(getErrorMessage(error, "Failed to load inbox!"));
         } finally {
             setLoading(false);
         }
@@ -61,7 +68,6 @@ const SellerInbox = () => {
                         // Determine which endpoint to call based on the role
                         if (otherRole === 'admin') {
                             // For admin, we don't have a get-admin endpoint yet
-                            // Use a default name or create an admin info endpoint
                             return [conv._id, {
                                 name: "Admin",
                                 avatar: null,
@@ -151,7 +157,11 @@ const SellerInbox = () => {
 
         setSearchingUsers(true);
         try {
-            const { data } = await axios.get(`/api/user/search-users?q=${query}`);
+            // Search now needs the login cookies; params also encodes special characters safely
+            const { data } = await axios.get('/api/user/search-users', {
+                params: { q: query.trim() },
+                withCredentials: true
+            });
             if (data.success) {
                 // Filter out users that already have conversations
                 const existingIds = new Set();
@@ -166,6 +176,11 @@ const SellerInbox = () => {
         } catch (error) {
             console.error("Search error:", error);
             setSearchResults([]);
+
+            // Show login / rate limit problems (the id stops the same toast from repeating while typing)
+            if ([401, 403, 429].includes(error?.response?.status)) {
+                toast.error(getErrorMessage(error, "Search failed"), { id: 'search-error' });
+            }
         } finally {
             setSearchingUsers(false);
         }
@@ -184,7 +199,8 @@ const SellerInbox = () => {
             const { data } = await axios.post('/api/conversation/create-new-conversation', payload, {
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                withCredentials: true
             });
 
             if (data.success) {
@@ -203,7 +219,7 @@ const SellerInbox = () => {
             }
         } catch (error) {
             console.error('Error creating conversation:', error);
-            toast.error(error?.response?.data?.message || error?.message || 'Failed to create conversation');
+            toast.error(getErrorMessage(error, 'Failed to create conversation'));
         }
     };
 

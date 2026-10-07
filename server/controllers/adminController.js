@@ -1,12 +1,55 @@
-import jwt from "jsonwebtoken";
 import { getCloudinaryPublicId } from "../config/cloudinary.js";
-import multer from "multer"
 import { v2 as cloudinary } from "cloudinary";
 import UserModel from "../models/Users.js";
 import SellerModel from "../models/Sellers.js";
 import ProductModel from "../models/Products.js";
 import EventModel from "../models/Events.js";
 import OrderModel from "../models/Orders.js";
+import CouponModel from "../models/Coupons.js";
+import ConversationModel from "../models/Conversations.js";
+import MessageModel from "../models/Messages.js";
+import jwt from "jsonwebtoken"
+import { signAccessToken, verifyAccessToken, accessMaxAge, cookieBase } from "../config/tokens.js";
+
+
+// Orders that are not finished yet. EDIT to match the statuses your sellers really use.
+const OPEN_ORDER_STATUSES = [
+    "Processing",
+    "Transferred to delivery partner",
+    "Shipping",
+    "Processing refund",
+];
+
+// Cloudinary deletes at most 100 images per request
+const chunk = (list, size) => {
+    const parts = [];
+    for (let i = 0; i < list.length; i += size) {
+        parts.push(list.slice(i, i + size));
+    }
+    return parts;
+};
+
+// Deletes images from Cloudinary; a failure here is only logged and never stops the delete
+const deleteCloudinaryImages = async (urls) => {
+    const publicIds = urls.map(getCloudinaryPublicId).filter(Boolean);
+
+    for (const batch of chunk(publicIds, 100)) {
+        try {
+            await cloudinary.api.delete_resources(batch);
+        } catch (error) {
+            console.error("Cloudinary bulk delete failed:", error.message);
+        }
+    }
+};
+
+// Deletes all the chats of one person (conversations and their messages)
+const deleteChatsOf = async (memberId) => {
+    const conversations = await ConversationModel.find({ members: memberId }).select("_id");
+    const conversationIds = conversations.map((conversation) => String(conversation._id));
+
+    await MessageModel.deleteMany({ conversationID: { $in: conversationIds } });
+    await ConversationModel.deleteMany({ members: memberId });
+};
 
 
 // Admin login : /api/admin/admin-login
@@ -20,29 +63,15 @@ export const adminLogin = async (req, res) => {
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASS) {
             // Create admin user object with role
             const adminUser = {
-                id: "admin_" + Date.now(), // Generate a unique ID for admin
+                id: process.env.ADMIN_ID || "admin_main",
                 email: process.env.ADMIN_EMAIL,
                 role: "admin" // Set role as "admin"
             };
 
-            // Generate JWT token with admin ID and role
-            const adminToken = jwt.sign(
-                {
-                    id: adminUser.id,
-                    role: adminUser.role
-                },
-                process.env.JWT_SECRET,
-                { expiresIn: "7d" }
-            );
+            const adminToken = signAccessToken("admin", adminUser.id);
 
-            // Set cookie with the token
-            res.cookie("adminToken", adminToken, {
-                httpOnly: true,
-                secure: isProd,                     // must be true when sameSite is "none"
-                sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
-                maxAge: 7 * 24 * 3600 * 1000, // 7 days
-                path: "/"
-            });
+            res.cookie("adminToken", adminToken, { ...cookieBase, maxAge: accessMaxAge("admin") });
+
 
             // Return success response with admin data (excluding sensitive info)
             return res.status(200).json({
@@ -84,7 +113,7 @@ export const verifyAdmin = async (req, res) => {
             });
         }
 
-        const tokenDecode = jwt.verify(adminToken, process.env.JWT_SECRET);
+        const tokenDecode = verifyAccessToken("admin", adminToken);
 
         if (tokenDecode.role !== "admin") {
             return res.status(403).json({
@@ -146,18 +175,38 @@ export const deleteUser = async (req, res) => {
             })
         }
 
-        if (userDetail.avatar) {
-            try {
-                const publicId = getCloudinaryPublicId(userDetail.avatar)
-                if (publicId) {
-                    await cloudinary.uploader.destroy(publicId)
-                }
-            } catch (cloudinaryError) {
-                console.error("Failed to delete avatar from Cloudinary:", cloudinaryError.message)
-            }
+        // 1. Do not delete a buyer who still has unfinished orders
+        const openOrders = await OrderModel.countDocuments({
+            user: id,
+            status: { $in: OPEN_ORDER_STATUSES }
+        })
+
+        if (openOrders > 0) {
+            return res.json({
+                success: false,
+                message: `This user has ${openOrders} unfinished order(s). Finish or cancel them first.`
+            })
         }
 
+        // 2. Remove the user's reviews and fix the average rating of those products
+        const reviewedProducts = await ProductModel.find({ "reviews.user._id": id })
+
+        for (const product of reviewedProducts) {
+            product.reviews = product.reviews.filter((review) => String(review.user?._id) !== String(id))
+            product.ratings = product.reviews.length > 0
+                ? product.reviews.reduce((sum, review) => sum + (Number(review.rating) || 0), 0) / product.reviews.length
+                : 0
+            await product.save({ validateBeforeSave: false })
+        }
+
+        // 3. Delete the user's chats, then the user
+        await deleteChatsOf(id)
         await UserModel.findByIdAndDelete(id)
+
+        // 4. Avatar last
+        if (userDetail.avatar) {
+            await deleteCloudinaryImages([userDetail.avatar])
+        }
 
         return res.json({
             success: true,
@@ -170,6 +219,7 @@ export const deleteUser = async (req, res) => {
         });
     }
 }
+
 
 
 // Get All Sellers : /api/admin/admin-sellers
@@ -205,18 +255,43 @@ export const deleteSeller = async (req, res) => {
             })
         }
 
-        if (sellerDetail.avatar) {
-            try {
-                const publicId = getCloudinaryPublicId(sellerDetail.avatar)
-                if (publicId) {
-                    await cloudinary.uploader.destroy(publicId)
-                }
-            } catch (cloudinaryError) {
-                console.error("Failed to delete avatar from Cloudinary:", cloudinaryError.message)
-            }
+        // 1. Do not delete a seller who still has unfinished orders
+        const openOrders = await OrderModel.countDocuments({
+            "cart.seller": id,
+            status: { $in: OPEN_ORDER_STATUSES }
+        })
+
+        if (openOrders > 0) {
+            return res.json({
+                success: false,
+                message: `This seller has ${openOrders} unfinished order(s). Finish or cancel them first.`
+            })
         }
 
+        // 2. Remember every image that must be removed from Cloudinary
+        const [products, events] = await Promise.all([
+            ProductModel.find({ shopId: id }).select("images"),
+            EventModel.find({ shopId: id }).select("images"),
+        ])
+
+        const imageUrls = [
+            sellerDetail.avatar,
+            ...products.flatMap((product) => product.images || []),
+            ...events.flatMap((event) => event.images || []),
+        ].filter(Boolean)
+
+        // 3. Delete the seller's data (finished orders are kept as history)
+        await Promise.all([
+            ProductModel.deleteMany({ shopId: id }),
+            EventModel.deleteMany({ shopId: id }),
+            CouponModel.deleteMany({ shopId: id }),
+            deleteChatsOf(id),
+        ])
+
         await SellerModel.findByIdAndDelete(id)
+
+        // 4. Images last: if Cloudinary fails, the delete itself still worked
+        await deleteCloudinaryImages(imageUrls)
 
         return res.json({
             success: true,
@@ -229,6 +304,7 @@ export const deleteSeller = async (req, res) => {
         });
     }
 }
+
 
 
 // Get All Products : /api/admin/admin-products

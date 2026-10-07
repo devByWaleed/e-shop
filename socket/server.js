@@ -2,6 +2,8 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import http from "http";
+import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import { Server } from "socket.io";
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
@@ -71,7 +73,7 @@ if (process.env.REDIS_URL) {
         await pubClient.connect();
         await subClient.connect();
 
-        // Use Redis adapter for Socket.IO
+        // Redis is used ONLY for the Socket.IO adapter (messages reach users on any server instance)
         io.adapter(createAdapter(pubClient, subClient));
         console.log('✅ Redis adapter configured for Socket.IO');
     } catch (error) {
@@ -100,10 +102,10 @@ app.get("/", (req, res) => {
     res.json({
         status: "ok",
         service: "Socket.IO Server",
-        version: "1.0.0",
+        version: "1.1.0",
         timestamp: new Date().toISOString(),
         redis: redisClient ? "connected" : "not configured",
-        connections: users.length,
+        connections: io.engine.clientsCount,
     });
 });
 
@@ -112,42 +114,57 @@ app.get("/health", (req, res) => {
         status: "healthy",
         uptime: process.uptime(),
         timestamp: new Date().toISOString(),
-        connections: users.length,
-        memory: process.memoryUsage(),
+        connections: io.engine.clientsCount,
     });
 });
 
 // ======================
-// User Management
+// Login check: only people with a valid socket token can connect
+// (the token is issued by the API at GET /api/auth/socket-token)
 // ======================
-let users = [];
-const messages = {};
+io.use((socket, next) => {
+    try {
+        const token = socket.handshake.auth?.token;
+        if (!token) {
+            return next(new Error("unauthorized"));
+        }
 
-const addUser = (userID, socketID) => {
-    const userExists = users.some((user) => user.userID === userID);
-    if (!userExists) {
-        users.push({ userID, socketID, joinedAt: new Date().toISOString() });
-    } else {
-        const index = users.findIndex((user) => user.userID === userID);
-        users[index].socketID = socketID;
-        users[index].joinedAt = new Date().toISOString();
-    }
-    // Store in Redis if available
-    if (redisClient) {
-        redisClient.set(`user:${userID}`, socketID, { EX: 3600 });
-    }
-};
+        const decoded = jwt.verify(token, process.env.SOCKET_SECRET);
+        const ids = (decoded.ids || []).map(String);
 
-const removeUser = (socketID) => {
-    const user = users.find((u) => u.socketID === socketID);
-    if (user && redisClient) {
-        redisClient.del(`user:${user.userID}`);
-    }
-    users = users.filter((user) => user.socketID !== socketID);
-};
+        if (ids.length === 0) {
+            return next(new Error("unauthorized"));
+        }
 
-const getUser = (receiverID) => {
-    return users.find((user) => user.userID === receiverID);
+        // Every id this browser is logged in as (buyer id, seller id, admin id)
+        socket.data.ids = ids;
+        next();
+    } catch (error) {
+        next(new Error("unauthorized"));
+    }
+});
+
+// ======================
+// Helpers
+// ======================
+
+// Who is online right now, across ALL server instances (works with the Redis adapter)
+const broadcastPresence = async () => {
+    try {
+        const sockets = await io.fetchSockets();
+        const online = new Set();
+
+        for (const s of sockets) {
+            for (const id of s.data.ids || []) {
+                online.add(id);
+            }
+        }
+
+        // Only user ids are sent, never socket ids
+        io.emit("getUser", [...online].map((userID) => ({ userID })));
+    } catch (error) {
+        console.error("Presence error:", error.message);
+    }
 };
 
 const createMessage = ({ senderID, receiverID, conversationID, text, images }) => ({
@@ -157,7 +174,7 @@ const createMessage = ({ senderID, receiverID, conversationID, text, images }) =
     text,
     images: images || [],
     seen: false,
-    id: Date.now().toString(),
+    id: randomUUID(),
     timestamp: new Date().toISOString(),
 });
 
@@ -166,106 +183,68 @@ const createMessage = ({ senderID, receiverID, conversationID, text, images }) =
 // ======================
 io.on("connection", (socket) => {
     console.log(`✅ User connected: ${socket.id}`);
-    console.log(`📊 Total connections: ${io.engine.clientsCount}`);
 
-    // 1. Add User
+    // Every id of this person gets its own "room".
+    // Sending to a room reaches ALL their tabs, on ANY server instance.
+    socket.data.ids.forEach((id) => socket.join(id));
+
+    // 1. Add User (kept so your frontend still works; the id must really be one of yours)
     socket.on("addUser", (userID) => {
-        if (!userID) {
-            console.error("❌ addUser called without userID");
+        if (!userID || !socket.data.ids.includes(String(userID))) {
             return;
         }
-        addUser(userID, socket.id);
-        io.emit("getUser", users);
-        console.log(`📊 Active users: ${users.length}`);
+        broadcastPresence();
     });
 
-    // 2. Send Message
+    // 2. Send Message (the message is saved by the REST API; the socket only delivers it live)
     socket.on("sendMessage", ({ senderID, receiverID, conversationID, text, images }) => {
         if (!senderID || !receiverID) {
-            console.error("❌ sendMessage missing required fields");
+            return;
+        }
+        // You can only send as yourself
+        if (!socket.data.ids.includes(String(senderID))) {
+            return;
+        }
+        // Basic size guard
+        if (typeof text === "string" && text.length > 5000) {
             return;
         }
 
         const message = createMessage({ senderID, receiverID, conversationID, text, images });
-        const targetUser = getUser(receiverID);
-
-        // Store message
-        if (!messages[conversationID]) {
-            messages[conversationID] = [];
-        }
-        messages[conversationID].push(message);
-
-        // Store in Redis for persistence
-        if (redisClient) {
-            redisClient.lPush(`messages:${conversationID}`, JSON.stringify(message));
-            redisClient.lTrim(`messages:${conversationID}`, 0, 99); // Keep last 100 messages
-        }
-
-        // Send to receiver if online
-        if (targetUser) {
-            io.to(targetUser.socketID).emit("getMessage", message);
-            console.log(`📨 Message sent to ${receiverID}`);
-        } else {
-            console.log(`📨 User ${receiverID} is offline, message queued`);
-            // Store offline message for later delivery
-            if (redisClient) {
-                redisClient.lPush(`offline:${receiverID}`, JSON.stringify(message));
-            }
-        }
+        io.to(String(receiverID)).emit("getMessage", message);
     });
 
-    // 3. Mark Message as Seen
+    // 3. Mark Message as Seen (the frontend also calls PUT /api/message/mark-seen/:conversationId)
     socket.on("messageSeen", ({ senderID, receiverID, messageID }) => {
-        const targetUser = getUser(senderID);
-
-        // Update in memory
-        for (const [convId, convMessages] of Object.entries(messages)) {
-            const message = convMessages.find(
-                (msg) => msg.receiverID === receiverID && msg.id === messageID
-            );
-            if (message) {
-                message.seen = true;
-                message.seenAt = new Date().toISOString();
-                break;
-            }
+        // Only the receiver can say "I saw it"
+        if (!socket.data.ids.includes(String(receiverID))) {
+            return;
         }
-
-        // Update in Redis
-        if (redisClient) {
-            redisClient.set(`seen:${messageID}`, "true", { EX: 86400 });
-        }
-
-        if (targetUser) {
-            io.to(targetUser.socketID).emit("messageSeen", {
-                senderID,
-                receiverID,
-                messageID,
-            });
-        }
+        io.to(String(senderID)).emit("messageSeen", { senderID, receiverID, messageID });
     });
 
     // 4. Typing Indicator
     socket.on("typing", ({ senderID, receiverID, isTyping }) => {
-        const targetUser = getUser(receiverID);
-        if (targetUser) {
-            io.to(targetUser.socketID).emit("typing", {
-                senderID,
-                isTyping,
-            });
+        if (!socket.data.ids.includes(String(senderID))) {
+            return;
         }
+        io.to(String(receiverID)).emit("typing", { senderID, isTyping });
     });
 
-    // 5. Update Last Message Preview
-    socket.on("updateLastMessage", ({ lastMessage, lastMessageID }) => {
-        io.emit("getLastMessage", { lastMessage, lastMessageID });
+    // 5. Update Last Message Preview (only the two people in the chat get it)
+    socket.on("updateLastMessage", ({ lastMessage, lastMessageID, senderID, receiverID }) => {
+        if (!senderID || !receiverID || !socket.data.ids.includes(String(senderID))) {
+            return;
+        }
+        [senderID, receiverID].forEach((id) => {
+            io.to(String(id)).emit("getLastMessage", { lastMessage, lastMessageID });
+        });
     });
 
     // 6. Disconnect
     socket.on("disconnect", () => {
         console.log(`❌ User disconnected: ${socket.id}`);
-        removeUser(socket.id);
-        io.emit("getUser", users);
-        console.log(`📊 Active users: ${users.length}`);
+        broadcastPresence();
     });
 
     // 7. Error Handling

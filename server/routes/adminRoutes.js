@@ -1,5 +1,4 @@
 import express from "express"
-import { upload } from "../config/multer.js";
 import { adminEvents, adminLogin, adminLogout, adminOrders, adminProducts, adminSellers, adminUsers, deleteSeller, deleteUser, verifyAdmin } from "../controllers/adminController.js";
 import adminAuth from "../middleware/adminAuth.js";
 import requiredRole from "../middleware/requireRole.js";

@@ -3,7 +3,7 @@ import CouponModel from "../models/Coupons.js";
 // Create Discount Coupon : /api/coupon/create-coupon
 export const createCoupon = async (req, res) => {
     try {
-        const { name, discountPercentage, minAmount, maxAmount, selectedProduct, shopId } = req.body;
+        const { name, discountPercentage, minAmount, maxAmount, selectedProduct } = req.body;
 
         // Basic Validation for required fields from the frontend body payload
         if (!name || !discountPercentage) {
@@ -14,7 +14,8 @@ export const createCoupon = async (req, res) => {
         }
 
         // Check if a coupon with the exact same name already exists (since 'name' is unique)
-        const isCouponExists = await CouponModel.findOne({ name: name.trim() });
+        const isCouponExists = await CouponModel.findOne({ name: name.trim(), shopId: req.sellerID });
+
         if (isCouponExists) {
             return res.status(400).json({
                 success: false,
@@ -29,7 +30,7 @@ export const createCoupon = async (req, res) => {
             minAmount: minAmount ? Number(minAmount) : null,
             maxAmount: maxAmount ? Number(maxAmount) : null,
             selectedProduct: selectedProduct || null,
-            shopId: shopId
+            shopId: req.sellerID
         });
 
         await newCoupon.save();
@@ -56,9 +57,13 @@ export const createCoupon = async (req, res) => {
 // Get All Coupons : /api/coupon/get-coupon-value
 export const getCouponByName = async (req, res) => {
     try {
-        const couponName = await CouponModel.findOne({ name: req.params.name })
+        const filter = { name: String(req.params.name).trim() }
+        // If the frontend sends ?shopId=..., only match that shop's coupon
+        if (req.query.shopId) filter.shopId = String(req.query.shopId)
 
-        return res.status(201).json({
+        const couponName = await CouponModel.findOne(filter)
+
+        return res.status(200).json({
             success: true,
             couponName
         });
@@ -76,7 +81,7 @@ export const getCouponByName = async (req, res) => {
 // Get All Coupons : /api/coupon/get-coupons
 export const getAllCoupons = async (req, res) => {
     try {
-        const couponCodes = await CouponModel.find({ shopId: req.params.id });
+        const couponCodes = await CouponModel.find({ shopId: req.sellerID });
 
         return res.json({
             success: true,
@@ -97,30 +102,25 @@ export const getAllCoupons = async (req, res) => {
 // Delete Coupon : /api/coupon/delete-coupon
 export const deleteCoupon = async (req, res) => {
     try {
-        const couponID = req.params.id
-
-        // Get the event data
-        const coupon = await CouponModel.findById(couponID)
+        // Delete only if the coupon belongs to the logged-in seller
+        const coupon = await CouponModel.findOneAndDelete({
+            _id: req.params.id,
+            shopId: req.sellerID
+        });
 
         if (!coupon) {
             return res.json({
                 success: false,
-                message: "Event not found"
+                message: "Coupon not found"
             });
         }
-
-
-        // Delete the coupon
-        await CouponModel.findByIdAndDelete(couponID);
 
         res.json({
             success: true,
             message: "Coupon deleted successfully"
         });
 
-
     } catch (error) {
-
         return res.json({
             success: false,
             message: error.message

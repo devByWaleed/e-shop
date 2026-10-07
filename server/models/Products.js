@@ -66,11 +66,14 @@ const ProductSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now(),
+        default: Date.now,
     },
 
 })
 
+ProductSchema.index({ shopId: 1 });
+ProductSchema.index({ category: 1 });
+ProductSchema.index({ name: "text", tags: "text" });   // for fast text search later
 
 // .model gets collection name & schema
 const ProductModel = mongoose.models.product || mongoose.model("product", ProductSchema)

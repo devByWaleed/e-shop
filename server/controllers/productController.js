@@ -2,6 +2,7 @@ import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloud
 import ProductModel from "../models/Products.js";
 import OrderModel from "../models/Orders.js";
 import SellerModel from "../models/Sellers.js";
+import UserModel from "../models/Users.js";
 import { v2 as cloudinary } from "cloudinary";
 
 // Create Product : /api/product/create-product
@@ -9,11 +10,8 @@ export const createProduct = async (req, res) => {
     let uploadedPublicIds = [];
 
     try {
-        const { shopID, name, category, discountPrice, stock } = req.body;
-
-        if (!shopID) {
-            return res.json({ success: false, message: "Shop ID is required. Product creation failed." });
-        }
+        const shopID = req.sellerID;   // from the login token, not from the request body
+        const { name, category, discountPrice, stock } = req.body;
 
         const shop = await SellerModel.findById(shopID);
         if (!shop) {
@@ -58,7 +56,7 @@ export const createProduct = async (req, res) => {
             stock: Number(stock),
             images: imagesURL,
             shopId: shop._id,
-            shop: shop
+            shop: { _id: shop._id, name: shop.name, avatar: shop.avatar }
         };
 
         const product = await ProductModel.create(productData);
@@ -101,11 +99,26 @@ export const getShopProducts = async (req, res) => {
 // Get All Products : /api/product/get-all-products/:id
 export const getAllProducts = async (req, res) => {
     try {
-        const allProducts = await ProductModel.find({})
+        // No ?page= in the URL: behave exactly like before
+        if (!req.query.page) {
+            const allProducts = await ProductModel.find({}).sort({ createdAt: -1 })
+            return res.json({ success: true, allProducts });
+        }
 
-        res.json({
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const limit = Math.min(parseInt(req.query.limit) || 24, 100);
+
+        const [allProducts, total] = await Promise.all([
+            ProductModel.find({}).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit),
+            ProductModel.countDocuments()
+        ]);
+
+        return res.json({
             success: true,
-            allProducts
+            allProducts,
+            total,
+            page,
+            pages: Math.ceil(total / limit)
         });
     } catch (error) {
 
@@ -123,7 +136,7 @@ export const deleteProducts = async (req, res) => {
         const productID = req.params.id
 
         // Get the product Data
-        const product = await ProductModel.findById(productID)
+        const product = await ProductModel.findOne({ _id: productID, shopId: req.sellerID })
 
         if (!product) {
             return res.json({
@@ -170,86 +183,86 @@ export const deleteProducts = async (req, res) => {
 // Create Review : /api/product/create-new-review
 export const createReview = async (req, res) => {
     try {
-        const { user, rating, comment, productId, orderId } = req.body
-        const reviewerId = req.userID || user?._id
+        const { rating, comment, productId, orderId } = req.body
+        const reviewerId = req.userID   // userAuth guarantees this
 
-        if (!reviewerId) {
-            return res.json({ success: false, message: "Not Authorized. Login Again" })
+        // 1. The rating must be a number from 1 to 5
+        const ratingNumber = Number(rating)
+        if (!Number.isFinite(ratingNumber) || ratingNumber < 1 || ratingNumber > 5) {
+            return res.json({ success: false, message: "Rating must be between 1 and 5" })
         }
 
-        const product = await ProductModel.findById(productId)
+        const product = await ProductModel.findById(productId).select("_id")
         if (!product) {
             return res.json({ success: false, message: "Product not found" })
         }
+        const productObjectId = product._id
+
+        // 2. The buyer must have RECEIVED this product
+        const purchase = await OrderModel.exists({
+            user: reviewerId,
+            status: "Delivered",
+            "cart.product._id": { $in: [String(productObjectId), productObjectId] },
+        })
+        if (!purchase) {
+            return res.json({ success: false, message: "You can only review products you have received" })
+        }
+
+        // 3. Name and avatar come from the database, never from the browser
+        const reviewer = await UserModel.findById(reviewerId).select("name avatar")
+        if (!reviewer) {
+            return res.json({ success: false, message: "Not Authorized. Login Again" })
+        }
 
         const review = {
-            user: {
-                ...user,
-                _id: reviewerId
-            },
-            rating,
-            comment,
-            productId
+            user: { _id: reviewerId, name: reviewer.name, avatar: reviewer.avatar },
+            rating: ratingNumber,
+            comment: String(comment || "").slice(0, 1000),
+            productId: String(productObjectId),
         }
 
-        const isReviewed = product.reviews.find(
-            (rev) => rev.user?._id?.toString() === reviewerId.toString()
-        )
-
-        if (isReviewed) {
-            product.reviews = product.reviews.map((rev) => {
-                if (rev.user?._id?.toString() === reviewerId.toString()) {
-                    return {
-                        ...rev,
-                        rating,
-                        comment,
-                        user: review.user
-                    }
-                }
-                return rev
-            })
-        } else {
-            product.reviews.push(review)
-        }
-
-        const avg = product.reviews.reduce((sum, rev) => sum + (Number(rev.rating) || 0), 0)
-        product.ratings = product.reviews.length > 0 ? avg / product.reviews.length : 0
-
-        await product.save({ validateBeforeSave: false })
-
-        if (orderId) {
-            const order = await OrderModel.findById(orderId)
-            if (order) {
-                let updated = false
-                order.cart = order.cart.map((item) => {
-                    const itemProductId = item.product?._id?.toString() || item.product?.toString()
-                    if (itemProductId === productId?.toString()) {
-                        updated = true
-                        return {
-                            ...item.toObject?.(),
-                            isReviewed: true,
-                            rating
-                        }
-                    }
-                    return item
-                })
-
-                if (updated) {
-                    await order.save({ validateBeforeSave: false })
+        // 4a. If the buyer already reviewed this product, change that review
+        const updated = await ProductModel.updateOne(
+            { _id: productObjectId, "reviews.user._id": reviewerId },
+            {
+                $set: {
+                    "reviews.$.rating": review.rating,
+                    "reviews.$.comment": review.comment,
+                    "reviews.$.user": review.user,
                 }
             }
+        )
+
+        // 4b. Otherwise add a new one (the $ne means a double click adds it only once)
+        if (updated.matchedCount === 0) {
+            await ProductModel.updateOne(
+                { _id: productObjectId, "reviews.user._id": { $ne: reviewerId } },
+                { $push: { reviews: review } }
+            )
         }
 
-        return res.json({
-            success: true,
-            message: "Review created successfully"
-        });
+        // 5. The database calculates the average rating
+        const [result] = await ProductModel.aggregate([
+            { $match: { _id: productObjectId } },
+            { $project: { average: { $avg: "$reviews.rating" } } },
+        ])
+        await ProductModel.updateOne(
+            { _id: productObjectId },
+            { $set: { ratings: result?.average || 0 } }
+        )
+
+        // 6. Mark the product as reviewed inside the buyer's order
+        if (orderId) {
+            await OrderModel.updateOne(
+                { _id: orderId, user: reviewerId },
+                { $set: { "cart.$[item].isReviewed": true, "cart.$[item].rating": review.rating } },
+                { arrayFilters: [{ "item.product._id": { $in: [String(productObjectId), productObjectId] } }] }
+            )
+        }
+
+        return res.json({ success: true, message: "Review created successfully" })
 
     } catch (error) {
-
-        return res.json({
-            success: false,
-            message: error.message
-        });
+        return res.json({ success: false, message: error.message })
     }
 }
