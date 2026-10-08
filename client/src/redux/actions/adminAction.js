@@ -15,6 +15,7 @@ import {
     setAllOrders
 } from "../slices/adminSlice";
 import toast from "react-hot-toast";
+import { clearHint, setHint } from "../../utils/authHint";
 
 
 
@@ -29,6 +30,7 @@ export const adminLogin = (email, password) => async (dispatch) => {
 
         if (data.success) {
             dispatch(adminSignInSuccess(data.admin));
+            setHint('admin')
             return { success: true };
         } else {
             dispatch(adminSignInFailure(data.message));
@@ -52,9 +54,10 @@ export const loadAdmin = () => async (dispatch) => {
         });
 
         if (data.success) {
+            setHint('admin')
             dispatch(adminSignInSuccess(data.admin));
         } else {
-            // Token invalid or expired
+            clearHint('admin')
             dispatch(adminLogout());
         }
     } catch (error) {
@@ -62,6 +65,7 @@ export const loadAdmin = () => async (dispatch) => {
         if (error.response?.status !== 401) {
             console.error("Admin load error:", error);
         }
+        clearHint('admin')
         dispatch(adminLogout());
     }
 };
@@ -70,14 +74,16 @@ export const loadAdmin = () => async (dispatch) => {
 // Admin logout
 export const adminLogoutAction = () => async (dispatch) => {
     try {
-        await axios.post('/api/admin/admin-logout', {
+        await axios.post('/api/admin/admin-logout', {}, {
             withCredentials: true
         });
+        clearHint('admin')
         dispatch(adminLogout());
         return { success: true };
     } catch (error) {
         console.error("Logout error:", error);
         // Still clear local state even if API fails
+        clearHint('admin')
         dispatch(adminLogout());
         return { success: false, message: error.message };
     }
@@ -142,7 +148,8 @@ export const getSellersAction = () => async (dispatch) => {
     }
 };
 
-// Delete Specific User
+
+// Delete Specific Seller
 export const deleteSellerAction = (id) => async (dispatch) => {
     try {
         dispatch(fetchDataStart());

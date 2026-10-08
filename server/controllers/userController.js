@@ -10,13 +10,9 @@ import crypto from "crypto";
 
 
 
-// The token carries only a hash of the OTP, never the OTP itself
-const hashOtp = (email, otp) => {
-
-    crypto.createHmac("sha256", process.env.RESET_SECRET)
-    jwt.sign({ email, otpHash: hashOtp(email, otp) }, process.env.RESET_SECRET, { expiresIn: "10m" })
-    jwt.verify(userResetToken, process.env.RESET_SECRET)
-}
+const RESET_SECRET = process.env.RESET_SECRET
+const hashOtp = (email, otp) =>
+    crypto.createHmac("sha256", RESET_SECRET).update(`${email}:${otp}`).digest("hex")
 
 
 const createActivationToken = (user) => {
@@ -527,7 +523,7 @@ export const resetPassword = async (req, res) => {
         // The password changed: log this account out on every device
         await UserModel.updateOne({ _id: user._id }, { $set: { refreshTokens: [] } });
 
-
+        res.clearCookie("userResetVerified", cookieBase);
         return res.json({ success: true, message: "Password has been reset successfully" })
     }
 

@@ -1,29 +1,45 @@
-import { useState, useRef, useContext } from "react"
+import { useState, useRef } from "react"
 import { assets } from "../../assets/assets"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import toast from 'react-hot-toast'
 import axios from "axios"
 
+const USER_API = {
+	send: "/api/user/send-reset-otp",
+	verify: "/api/user/verify-reset-otp",
+	reset: "/api/user/reset-password",
+	login: "/user-login",
+}
+
+const SELLER_API = {
+	send: "/api/seller/seller-send-reset-otp",
+	verify: "/api/seller/seller-verify-reset-otp",
+	reset: "/api/seller/seller-reset-password",
+	login: "/seller-login",
+}
 
 const ProtectedResetPassword = () => {
-	const [email, setEmail] = useState("")
-	const [newPassword, setNewPassword] = useState("")
+	const [form, setForm] = useState({ email: "", newPassword: "" })
 	const [isEmailSend, setIsEmailSend] = useState(false)
-	const OTPRef = useRef("")
 	const [isOTPSubmitted, setIsOTPsubmited] = useState(false)
-	const [showPassword, setShowPassword] = useState(false);
+	const [showPassword, setShowPassword] = useState(false)
 
-	const navigate = useNavigate();
-
+	const navigate = useNavigate()
 	const inputRefs = useRef([])
 
+	// /seller-reset-password uses the seller endpoints, everything else uses the user ones
+	const isSeller = useLocation().pathname.startsWith("/seller")
+	const api = isSeller ? SELLER_API : USER_API
+
+	const handleChange = (e) => {
+		setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+	}
 
 	const handleInput = (e, index) => {
 		if (e.target.value.length > 0 && index < inputRefs.current.length - 1) {
 			inputRefs.current[index + 1].focus()
 		}
 	}
-
 
 	const handleKeyDown = (e, index) => {
 		if (e.key === "Backspace" && e.target.value === "" && index > 0) {
@@ -32,132 +48,118 @@ const ProtectedResetPassword = () => {
 	}
 
 	const handlePaste = (e) => {
-		const paste = e.clipboardData.getData("text")
-		const pasteArray = paste.split("")
+		e.preventDefault()
+		const pasteArray = e.clipboardData.getData("text").trim().slice(0, 6).split("")
 		pasteArray.forEach((char, index) => {
-			inputRefs.current[index].value = char
+			if (inputRefs.current[index]) inputRefs.current[index].value = char
 		})
+		const last = Math.min(pasteArray.length, 6) - 1
+		if (last >= 0) inputRefs.current[last].focus()
 	}
 
-
 	const onSubmitEmail = async (e) => {
-		e.preventDefault();
+		e.preventDefault()
 		try {
-			const { data } = await axios.post("/api/user/send-reset-otp", { email })
+			const { data } = await axios.post(api.send, { email: form.email }, { withCredentials: true })
 
-			data.success ? toast.success(data.message) : toast.error(data.message)
-			data.success && setIsEmailSend(true)
-			setIsEmailSend(true)
-
+			if (data.success) {
+				toast.success(data.message)
+				setIsEmailSend(true)
+			} else {
+				toast.error(data.message)
+			}
 		} catch (error) {
-			toast.error(error.message)
+			toast.error(error.response?.data?.message || error.message)
 		}
 	}
 
 	const onSubmitOTP = async (e) => {
-		e.preventDefault();
+		e.preventDefault()
 		try {
-
-			const otpArray = inputRefs.current.map(e => e.value)
-			const otpString = otpArray.join("")
+			const otpString = inputRefs.current.map((input) => input.value).join("")
 
 			if (otpString.length < 6) {
-				return toast.error("Please enter the full 6-digit OTP");
+				return toast.error("Please enter the full 6-digit OTP")
 			}
 
-			// Actually verify with the server — don't just trust the client
-			const { data } = await axios.post("/api/user/verify-reset-otp", {
-				email,
-				otp: otpString
-			});
+			const { data } = await axios.post(
+				api.verify,
+				{ email: form.email, otp: otpString },
+				{ withCredentials: true }
+			)
 
 			if (data.success) {
-				OTPRef.current = otpString;
-				setIsOTPsubmited(true);
-				toast.success("OTP verified successfully");
+				setIsOTPsubmited(true)
+				toast.success("OTP verified successfully")
 			} else {
-				// Clear the OTP inputs so user can retry
-				inputRefs.current.forEach(input => input.value = "");
-				inputRefs.current[0].focus();
-				toast.error(data.message);
+				inputRefs.current.forEach((input) => (input.value = ""))
+				inputRefs.current[0].focus()
+				toast.error(data.message)
 			}
-
 		} catch (error) {
-			toast.error(error.message)
+			toast.error(error.response?.data?.message || error.message)
 		}
 	}
 
 	const onSubmitNewPassword = async (e) => {
-		e.preventDefault();
+		e.preventDefault()
 		try {
-
-			const { data } = await axios.post("/api/user/reset-password", { email, newPassword })
+			const { data } = await axios.post(
+				api.reset,
+				{ email: form.email, newPassword: form.newPassword },
+				{ withCredentials: true }
+			)
 
 			if (data.success) {
-				toast.success(data.message);
-				navigate("/user-profile");
-				setShowUserLogin(true);
+				toast.success(data.message)
+				navigate(api.login)
 			} else {
-				toast.error(data.message);
+				toast.error(data.message)
 			}
-
 		} catch (error) {
-			toast.error(error.message)
+			toast.error(error.response?.data?.message || error.message)
 		}
 	}
 
-
 	return (
 		<section className="flex flex-col items-center gap-6 text-center min-h-screen justify-center px-4">
-			{/* 
-				*************************************
-				Email for resetting
-				*************************************
-			*/}
+			{/* Email for resetting */}
 			{!isEmailSend &&
 				<div className="flex flex-col items-center gap-6 text-center min-h-screen justify-center px-4">
-					{/* Reset Password Card */}
 					<div className="rounded-3xl p-8 sm:p-12 bg-white shadow-2xl border border-gray-100 w-full max-w-105">
 						<h2 className="text-3xl font-bold text-gray-900 sm:text-4xl tracking-tight mb-2">
 							Reset Password
 						</h2>
 
 						<p className="mb-8 text-sm text-gray-500 sm:text-base">
-							Enter your email address to receive a password reset link
+							Enter your email address to receive a password reset code
 						</p>
 
 						<form className="space-y-4" onSubmit={onSubmitEmail}>
-							{/* Email Field */}
 							<div className="relative group">
 								<input
 									type="email"
+									name="email"
 									placeholder="Email Address"
 									className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"
-									onChange={(e) => setEmail(e.target.value)}
-									value={email}
+									onChange={handleChange}
+									value={form.email}
 									required
 								/>
 							</div>
 
-							{/* Submit Button */}
 							<button
 								type="submit"
 								className="w-full py-3.5 mt-4 font-semibold text-white rounded-xl shadow-lg bg-primary hover:bg-primary-dull transform transition-all active:scale-[0.97]"
 							>
-								Send Reset Link
+								Send Reset Code
 							</button>
 						</form>
 					</div>
 				</div>
 			}
 
-
-
-			{/* 
-				*************************************
-				OTP Input Form
-				*************************************
-			*/}
+			{/* OTP Input Form */}
 			{!isOTPSubmitted && isEmailSend &&
 				<div className="bg-white p-8 sm:p-12 rounded-3xl shadow-2xl w-full max-w-md border border-gray-100 text-center">
 					<div className="mb-6">
@@ -177,7 +179,7 @@ const ProtectedResetPassword = () => {
 									type="text"
 									maxLength="1"
 									className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-									ref={e => inputRefs.current[index] = e}
+									ref={(el) => (inputRefs.current[index] = el)}
 									onInput={(e) => handleInput(e, index)}
 									onKeyDown={(e) => handleKeyDown(e, index)}
 									required
@@ -195,13 +197,7 @@ const ProtectedResetPassword = () => {
 				</div>
 			}
 
-
-
-			{/* 
-				*************************************
-				Password for resetting 
-				*************************************
-			*/}
+			{/* Password for resetting */}
 			{isOTPSubmitted && isEmailSend &&
 				<div className="rounded-3xl p-8 sm:p-12 bg-white shadow-2xl border border-gray-100 w-full max-w-105">
 					<h2 className="text-3xl font-bold text-gray-900 sm:text-4xl tracking-tight mb-2">
@@ -213,16 +209,17 @@ const ProtectedResetPassword = () => {
 					</p>
 
 					<form className="space-y-4" onSubmit={onSubmitNewPassword}>
-						{/* Password Field */}
 						<div className="w-full text-left">
 							<p className="text-sm font-medium text-gray-700 mb-1">New Password</p>
 							<div className="relative mt-1">
 								<input
-									onChange={(e) => setNewPassword(e.target.value)}
-									value={newPassword}
+									name="newPassword"
+									onChange={handleChange}
+									value={form.newPassword}
 									placeholder="Enter your new password"
 									className="border border-gray-200 rounded-xl w-full p-3 pr-12 outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-gray-50"
 									type={showPassword ? "text" : "password"}
+									minLength={8}
 									required
 								/>
 								<img
@@ -234,8 +231,6 @@ const ProtectedResetPassword = () => {
 							</div>
 						</div>
 
-
-						{/* Submit Button */}
 						<button
 							type="submit"
 							className="w-full py-3.5 mt-4 font-semibold text-white rounded-xl shadow-lg bg-primary hover:bg-primary-dull transform transition-all active:scale-[0.97]"
@@ -245,8 +240,6 @@ const ProtectedResetPassword = () => {
 					</form>
 				</div>
 			}
-
-
 		</section>
 	)
 }

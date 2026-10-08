@@ -5,9 +5,15 @@ import transporter from "../config/nodeMailer.js";
 import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
 import { signAccessToken, accessMaxAge, cookieBase } from "../config/tokens.js";
 import { v2 as cloudinary } from 'cloudinary';
+import { startSession, endSession } from "../config/tokens.js";
+import crypto from "crypto";
 
 
 const isProd = process.env.NODE_ENV === "production";
+
+const RESET_SECRET = process.env.RESET_SECRET
+const hashOtp = (email, otp) =>
+    crypto.createHmac("sha256", RESET_SECRET).update(`${email}:${otp}`).digest("hex")
 
 
 const createActivationToken = (seller) => {
@@ -510,6 +516,7 @@ export const resetPassword = async (req, res) => {
         await SellerModel.updateOne({ _id: seller._id }, { $set: { refreshTokens: [] } });
 
 
+        res.clearCookie("sellerResetVerified", cookieBase);
         return res.json({ success: true, message: "Password has been reset successfully" })
     }
 

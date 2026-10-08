@@ -1,10 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { hasHint } from "../../utils/authHint";
 
 const sellerSlice = createSlice({
     name: "seller",
     initialState: {
         sellerAuthenticated: false,
-        sellerLoading: false,
+        sellerLoading: hasHint('seller'),
         seller: null,
         sellerError: null
     },

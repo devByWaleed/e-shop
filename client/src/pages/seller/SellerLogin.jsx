@@ -76,12 +76,6 @@ const SellerLogin = () => {
                 {/* Forgot Password Link (Only for Login) */}
 
                 <div className="flex flex-row justify-between items-center w-full">
-                    <div className="flex items-center">
-                        <input type="checkbox" id="remember-me" name="remember-me" className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                        <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                            Remember me
-                        </label>
-                    </div>
                     <p onClick={() => navigate("/seller-reset-password")} className="text-sm text-right text-primary hover:text-primary-dull cursor-pointer font-medium transition-colors">
                         Forgot password?
                     </p>

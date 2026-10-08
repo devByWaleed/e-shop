@@ -1,21 +1,18 @@
 import axios from "axios"
 import { LoadUserRequest, LoadUserSuccess, LoadUserFail, UpdateUserRequest, UpdateUserSuccess, UpdateUserFail } from "../slices/userSlice"
+import { setHint, clearHint } from "../../utils/authHint"
+
+// Stops two loadUser calls from running at the same time
+let loadingUser = false
 
 export const loadUser = () => async (dispatch, getState) => {
-    // Get current user state
-    const { user, loading } = getState().user;
+    const { user } = getState().user;
 
     // If we already have user data, don't fetch again
-    if (user && user.email) {
+    if (user && user.email) return;
 
-        return;
-    }
-
-    // If already loading, don't fetch again
-    if (loading) {
-
-        return;
-    }
+    if (loadingUser) return;
+    loadingUser = true;
 
     try {
         dispatch(LoadUserRequest())
@@ -25,18 +22,23 @@ export const loadUser = () => async (dispatch, getState) => {
         })
 
         if (data.success) {
+            setHint('user')
             dispatch(LoadUserSuccess(data.userData));
         } else {
+            clearHint('user')
             dispatch(LoadUserFail(data.message));
         }
 
     } catch (error) {
-        // 401 just means "not logged in": not an error to show
+        // 401 just means "not logged in": clear the hint so we stop asking
         if (error.response?.status === 401) {
+            clearHint('user')
             dispatch(LoadUserFail(null))
             return
         }
         dispatch(LoadUserFail(error.response?.data?.message || error.message))
+    } finally {
+        loadingUser = false
     }
 }
 

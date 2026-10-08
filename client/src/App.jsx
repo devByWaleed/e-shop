@@ -2,137 +2,89 @@ import React, { useEffect } from 'react'
 import { matchPath, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Toaster } from 'react-hot-toast'
-import axios from "axios";
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Activation from './pages/Activation'
 import SellerActivation from './pages/seller/SellerActivation'
 import Home from './pages/Home'
-import store from './redux/store'
 import { loadUser } from './redux/actions/userAction'
 import { loadSeller } from './redux/actions/sellerAction'
-import ProtectedLayout from './components/ProtectedLayout';
-import SellerProtectedLayout from './components/seller/SellerProtectedLayout';
+import { loadAdmin } from './redux/actions/adminAction'
+import ProtectedLayout from './components/ProtectedLayout'
+import SellerProtectedLayout from './components/seller/SellerProtectedLayout'
 import Loading from './components/Loading'
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
-import Events from './pages/Events';
-import Faqs from './pages/Faqs';
-import ProductDetails from './pages/ProductDetails';
-import SellerSignup from './pages/seller/SellerSignup';
-import SellerLogin from './pages/seller/SellerLogin';
-import BestDealsPage from './pages/BestDealsPage';
-import AllProducts from './pages/AllProducts';
-import Sidebar from './components/Sidebar';
-import SellerProfile from './pages/seller/SellerProfile';
-import Profile from './pages/Profile';
-import SellerHomepage from './pages/seller/SellerHomepage';
-import Checkout from './pages/Checkout';
-import Payment from './pages/Payment';
-import OrderSuccess from './pages/OrderSuccess';
-import EventDetails from './pages/EventDetails';
-import SellerOrderDetails from './pages/seller/SellerOrderDetails';
-import UserOrderDetails from './pages/UserOrderDetails';
-import UserOrderTrack from './pages/UserOrderTrack';
-import SellerChatPage from './pages/seller/SellerChatPage';
-import UserChatPage from './pages/UserChatPage';
-import ResetPassword from './components/profile/ProtectedResetPassword';
+import Events from './pages/Events'
+import Faqs from './pages/Faqs'
+import ProductDetails from './pages/ProductDetails'
+import SellerSignup from './pages/seller/SellerSignup'
+import SellerLogin from './pages/seller/SellerLogin'
+import BestDealsPage from './pages/BestDealsPage'
+import AllProducts from './pages/AllProducts'
+import SellerProfile from './pages/seller/SellerProfile'
+import Profile from './pages/Profile'
+import SellerHomepage from './pages/seller/SellerHomepage'
+import Checkout from './pages/Checkout'
+import Payment from './pages/Payment'
+import OrderSuccess from './pages/OrderSuccess'
+import EventDetails from './pages/EventDetails'
+import SellerOrderDetails from './pages/seller/SellerOrderDetails'
+import UserOrderDetails from './pages/UserOrderDetails'
+import UserOrderTrack from './pages/UserOrderTrack'
+import SellerChatPage from './pages/seller/SellerChatPage'
+import UserChatPage from './pages/UserChatPage'
+import ResetPassword from './components/profile/ProtectedResetPassword'
 
+import AdminProtectedLayout from './components/admin/AdminProtectedLayout'
+import AdminEvents from './pages/admin/AdminEvents'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminOrders from './pages/admin/AdminOrders'
+import AdminUsers from './pages/admin/AdminUsers'
+import AdminSellers from './pages/admin/AdminSellers'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminLogin from './pages/admin/AdminLogin'
+import AdminProfile from './pages/admin/AdminProfile'
+import AdminInbox from './pages/admin/AdminInbox'
+import AdminChatPage from './pages/admin/AdminChatPage'
+import { hasHint } from './utils/authHint'
 
-import AdminProtectedLayout from './components/admin/AdminProtectedLayout';
-import AdminEvents from './pages/admin/AdminEvents';
-import AdminProducts from './pages/admin/AdminProducts';
-import AdminOrders from './pages/admin/AdminOrders';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminSellers from './pages/admin/AdminSellers';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminLogin from './pages/admin/AdminLogin';
-import AdminProfile from './pages/admin/AdminProfile';
-import AdminInbox from './pages/admin/AdminInbox';
-import { loadAdmin } from './redux/actions/adminAction';
-import AdminChatPage from './pages/admin/AdminChatPage';
-
+const hideNavFooterPages = [
+  '/user-login',
+  '/user-signup',
+  '/seller-login',
+  '/seller-signup',
+  '/seller-dashboard',
+  '/seller-products',
+  '/seller-profile',
+  '/admin-login',
+  '/shop/:id',
+]
 
 const App = () => {
-  const hideNavFooterPages = [
-    '/user-login',
-    '/user-signup',
-    '/seller-login',
-    '/seller-signup',
-    '/seller-dashboard',
-    '/seller-products',
-    '/seller-profile',
-    '/admin-login',
-    '/shop/:id'
-  ]
-
-  const currentPath = useLocation().pathname;
-  const shouldHideNavFooter = hideNavFooterPages.some(pattern =>
-    matchPath(pattern, currentPath)
-  );
-
-
-  const { isLoading } = useSelector((state) => state.loading)
-  const { isAuthenticated, user, loading: userLoading } = useSelector((state) => state.user)
-  const { sellerAuthenticated, seller, sellerLoading } = useSelector((state) => state.seller)
-  const { adminAuthenticated, admin, adminLoading } = useSelector((state) => state.admin)
-
   const dispatch = useDispatch()
+  const currentPath = useLocation().pathname
 
-  // const authReady = useSelector((state) => state.auth.ready);
+  const shouldHideNavFooter = hideNavFooterPages.some((pattern) =>
+    matchPath(pattern, currentPath)
+  )
 
-  // if (!authReady) {
-  //   return <Loading />;
-  // }
+  const { isAuthenticated, user, loading: userLoading } = useSelector((state) => state.user)
+  const { sellerAuthenticated } = useSelector((state) => state.seller)
+  const { adminAuthenticated } = useSelector((state) => state.admin)
 
-  // useEffect(() => {
-  //   dispatch(loadSession());
-  // }, [dispatch]);
 
-  // const needsUserAuth = [
-  //   '/user-login',
-  //   '/user-signup',
-  //   '/user-profile',
-  //   '/user-order/:id',
-  //   '/checkout',
-  //   '/payment',
-  //   '/success',
-  //   '/track-order/:id',
-  //   '/user-conversation/:id',
-  // ].some((pattern) => matchPath(pattern, currentPath))
-
-  // const needsSellerAuth = [
-  //   '/seller-login',
-  //   '/seller-signup',
-  //   '/seller-profile',
-  //   '/order/:id',
-  //   '/conversation/:id',
-  // ].some((pattern) => matchPath(pattern, currentPath))
-
-  // const needsAdminAuth = [
-  //   '/admin-login',
-  //   '/admin-profile/*',
-  //   '/admin-conversation/:id',
-  // ].some((pattern) => matchPath(pattern, currentPath))
-
-  // useEffect(() => {
-  //   if (needsUserAuth) dispatch(loadUser())
-  // }, [dispatch, currentPath, needsUserAuth])
-
-  // useEffect(() => {
-  //   if (needsSellerAuth) dispatch(loadSeller())
-  // }, [dispatch, currentPath, needsSellerAuth])
-
-  // useEffect(() => {
-  //   if (needsAdminAuth) dispatch(loadAdmin())
-  // }, [dispatch, currentPath, needsAdminAuth])
-
+  // Restore a session only if this browser logged in before
+  useEffect(() => {
+    if (hasHint('user')) dispatch(loadUser())
+    if (hasHint('seller')) dispatch(loadSeller())
+    if (hasHint('admin')) dispatch(loadAdmin())
+  }, [dispatch])
 
   // Don't show main content while loading user data on app start
   if (userLoading && !user && currentPath !== '/success') {
     return <Loading />
   }
-
 
   return (
     <>
@@ -140,7 +92,7 @@ const App = () => {
       {!shouldHideNavFooter && <Navbar />}
 
       <Routes>
-        {/* Public Rotes */}
+        {/* Public Routes */}
         <Route path='/loader' element={<Loading />} />
         <Route path='/' element={<Home />} />
 
@@ -149,7 +101,7 @@ const App = () => {
         <Route path='/user-reset-password' element={<ResetPassword />} />
         <Route path='/seller-reset-password' element={<ResetPassword />} />
 
-        <Route path="/best-deals" element={<BestDealsPage />} />
+        <Route path='/best-deals' element={<BestDealsPage />} />
         <Route path='/products' element={<AllProducts />} />
         <Route path='/product-detail' element={<ProductDetails />} />
         <Route path='/products/:category/:id' element={<ProductDetails />} />
@@ -157,20 +109,18 @@ const App = () => {
         <Route path='/event-detail' element={<EventDetails />} />
         <Route path='/events/:category/:id' element={<EventDetails />} />
         <Route path='/faqs' element={<Faqs />} />
-        <Route path="/shop/:id" element={<SellerHomepage />} />
-
+        <Route path='/shop/:id' element={<SellerHomepage />} />
 
         {/* USER Forms Based on Authentication */}
-        <Route element={isAuthenticated ? <Navigate to="/" replace /> : <Outlet />}>
+        <Route element={isAuthenticated ? <Navigate to='/' replace /> : <Outlet />}>
           <Route path='/user-login' element={<Login />} />
           <Route path='/user-signup' element={<SignUp />} />
         </Route>
 
-
         {/* USER Protected Routes */}
-        <Route element={<ProtectedLayout requireAuth={true} requiredRole="user" />}>
+        <Route element={<ProtectedLayout requireAuth={true} requiredRole='user' />}>
           <Route path='/user-profile' element={<Profile />} />
-          <Route path="/user-order/:id" element={<UserOrderDetails />} />
+          <Route path='/user-order/:id' element={<UserOrderDetails />} />
           <Route path='/checkout' element={<Checkout />} />
           <Route path='/payment' element={<Payment />} />
           <Route path='/success' element={<OrderSuccess />} />
@@ -178,40 +128,36 @@ const App = () => {
           <Route path='/user-conversation/:id' element={<UserChatPage />} />
         </Route>
 
-
         {/* SELLER Forms Based on Authentication */}
-        <Route element={sellerAuthenticated ? <Navigate to="/" replace /> : <Outlet />}>
+        <Route element={sellerAuthenticated ? <Navigate to='/' replace /> : <Outlet />}>
           <Route path='/seller-login' element={<SellerLogin />} />
           <Route path='/seller-signup' element={<SellerSignup />} />
         </Route>
 
-
         {/* SELLER Protected Routes */}
-        <Route element={<SellerProtectedLayout requireAuth={true} requiredRole="seller" />}>
-          <Route path="/seller-profile" element={<SellerProfile />} />
-          <Route path="/order/:id" element={<SellerOrderDetails />} />
+        <Route element={<SellerProtectedLayout requireAuth={true} requiredRole='seller' />}>
+          <Route path='/seller-profile' element={<SellerProfile />} />
+          <Route path='/order/:id' element={<SellerOrderDetails />} />
           <Route path='/conversation/:id' element={<SellerChatPage />} />
         </Route>
 
-
         {/* ADMIN Auth Route */}
-        <Route element={adminAuthenticated ? <Navigate to="/admin-profile" replace /> : <Outlet />}>
-          <Route path="/admin-login" element={<AdminLogin />} />
+        <Route element={adminAuthenticated ? <Navigate to='/admin-profile' replace /> : <Outlet />}>
+          <Route path='/admin-login' element={<AdminLogin />} />
         </Route>
 
-
         {/* ADMIN Protected Routes */}
-        <Route element={<AdminProtectedLayout requireAuth={true} requiredRole="admin" />}>
+        <Route element={<AdminProtectedLayout requireAuth={true} requiredRole='admin' />}>
           <Route path='/admin-conversation/:id' element={<AdminChatPage />} />
-          <Route path="/admin-profile" element={<AdminProfile />}>
+          <Route path='/admin-profile' element={<AdminProfile />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="admin-dashboard" element={<AdminDashboard />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="events" element={<AdminEvents />} />
-            <Route path="sellers" element={<AdminSellers />} />
-            <Route path="inbox" element={<AdminInbox />} />
+            <Route path='admin-dashboard' element={<AdminDashboard />} />
+            <Route path='orders' element={<AdminOrders />} />
+            <Route path='products' element={<AdminProducts />} />
+            <Route path='users' element={<AdminUsers />} />
+            <Route path='events' element={<AdminEvents />} />
+            <Route path='sellers' element={<AdminSellers />} />
+            <Route path='inbox' element={<AdminInbox />} />
           </Route>
         </Route>
       </Routes>

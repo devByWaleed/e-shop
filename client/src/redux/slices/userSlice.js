@@ -1,10 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { hasHint } from "../../utils/authHint";
 
 const userSlice = createSlice({
     name: "user",
     initialState: {
         isAuthenticated: false,
-        loading: false,
+        loading: hasHint('user'),
         user: null,
         error: null
     },
