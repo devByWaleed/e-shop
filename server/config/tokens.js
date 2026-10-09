@@ -5,16 +5,12 @@ const isProd = process.env.NODE_ENV === "production";
 
 // One secret per role: a token made for a buyer can never pass as a seller or admin token
 const SECRETS = {
-    user: process.env.USER_JWT_SECRET,
-    seller: process.env.SELLER_JWT_SECRET,
     admin: process.env.ADMIN_JWT_SECRET,
 };
 
 // Stop at startup when a secret is missing (better than signing tokens with "undefined")
-for (const [role, secret] of Object.entries(SECRETS)) {
-    if (!secret) {
-        throw new Error(`Missing ${role.toUpperCase()}_JWT_SECRET in the environment`);
-    }
+if (!SECRETS.admin) {
+    throw new Error("Missing ADMIN_JWT_SECRET in the environment");
 }
 
 // How long the ACCESS cookie lives, in minutes.

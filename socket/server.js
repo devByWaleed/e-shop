@@ -41,6 +41,11 @@ const io = new Server(server, {
 // ======================
 // Redis Setup (for multi-instance support)
 // ======================
+// ======================
+// Redis Setup (for multi-instance support)
+// ======================
+const REDIS_MAX_RETRIES = 3;
+
 let redisClient = null;
 let pubClient = null;
 let subClient = null;
@@ -50,38 +55,51 @@ if (process.env.REDIS_URL) {
         redisClient = createClient({
             url: process.env.REDIS_URL,
             socket: {
+                connectTimeout: 5000,
                 reconnectStrategy: (retries) => {
-                    console.log(`🔄 Redis reconnecting... attempt ${retries}`);
-                    return Math.min(retries * 100, 3000);
+                    // Returning an Error stops the retrying and makes connect() fail
+                    if (retries >= REDIS_MAX_RETRIES) {
+                        return new Error("Redis is unreachable, giving up");
+                    }
+                    console.log(`🔄 Redis reconnecting... attempt ${retries + 1} of ${REDIS_MAX_RETRIES}`);
+                    return (retries + 1) * 500;
                 }
             }
         });
 
-        redisClient.on('error', (err) => {
-            console.error('❌ Redis Client Error:', err);
-        });
+        pubClient = redisClient.duplicate();
+        subClient = redisClient.duplicate();
 
-        redisClient.on('connect', () => {
-            console.log('✅ Redis Client Connected');
+        // Every client needs an error listener, or one error can crash the process
+        [redisClient, pubClient, subClient].forEach((client) => {
+            client.on("error", (err) => {
+                console.error("❌ Redis error:", err.code || err.message);
+            });
         });
 
         await redisClient.connect();
-
-        pubClient = redisClient.duplicate();
-        subClient = redisClient.duplicate();
+        console.log("✅ Redis Client Connected");
 
         await pubClient.connect();
         await subClient.connect();
 
         // Redis is used ONLY for the Socket.IO adapter (messages reach users on any server instance)
         io.adapter(createAdapter(pubClient, subClient));
-        console.log('✅ Redis adapter configured for Socket.IO');
+        console.log("✅ Redis adapter configured for Socket.IO");
     } catch (error) {
-        console.error('❌ Redis connection failed:', error.message);
-        console.log('⚠️ Running without Redis (single instance mode)');
+        console.error("❌ Redis connection failed:", error.message);
+        console.log("⚠️ Running without Redis (single instance mode)");
+
+        // Close whatever opened, and reset so the health check tells the truth
+        for (const client of [redisClient, pubClient, subClient]) {
+            try { await client?.disconnect(); } catch { /* already closed */ }
+        }
+        redisClient = null;
+        pubClient = null;
+        subClient = null;
     }
 } else {
-    console.log('⚠️ No Redis URL provided, running in single instance mode');
+    console.log("⚠️ No Redis URL provided, running in single instance mode");
 }
 
 // ======================

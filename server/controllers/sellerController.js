@@ -5,8 +5,8 @@ import transporter from "../config/nodeMailer.js";
 import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
 import { signAccessToken, accessMaxAge, cookieBase } from "../config/tokens.js";
 import { v2 as cloudinary } from 'cloudinary';
-import { startSession, endSession } from "../config/tokens.js";
-import crypto from "crypto";
+import ProductModel from "../models/Products.js";
+import EventModel from "../models/Events.js";
 
 
 const isProd = process.env.NODE_ENV === "production";
@@ -21,6 +21,17 @@ const createActivationToken = (seller) => {
         expiresIn: "5m"
     })
 }
+
+
+// Login cookie lives this many days (one place to change it)
+const LOGIN_DAYS = 365;
+const LOGIN_MAX_AGE = LOGIN_DAYS * 24 * 60 * 60 * 1000;
+
+// Used by login, logout and the password reset cookies
+
+const signLoginToken = (user) =>
+    jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: `${LOGIN_DAYS}d` });
+
 
 // Seller registration : /api/seller/register
 export const sellerRegister = async (req, res) => {
@@ -143,7 +154,7 @@ export const activateAccount = async (req, res) => {
         })
         await seller.save()
 
-        await startSession(res, SellerModel, "seller", seller)
+        res.cookie("sellerToken", signLoginToken(seller), { ...cookieBase, maxAge: LOGIN_MAX_AGE })
 
         return res.json({
             success: true,
@@ -165,8 +176,7 @@ export const activateAccount = async (req, res) => {
 }
 
 
-
-// Seller login : /api/seller/login
+// Seller login : /api/seller/seller-login
 export const sellerLogin = async (req, res) => {
 
     try {
@@ -181,28 +191,22 @@ export const sellerLogin = async (req, res) => {
 
         const seller = await SellerModel.findOne({ email }).select("+password")
 
-        if (!seller) {
-            return res.json({
-                success: false,
-                message: "Invalid Email"
-            })
-        }
-
         const isMatch = seller ? await bcrypt.compare(password, seller.password) : false;
 
         if (!isMatch) {
             return res.json({
                 success: false,
-                message: "Invalid Password"
+                message: "Invalid email or password"
             })
         }
 
-        await startSession(res, SellerModel, "seller", seller)
+        res.cookie("sellerToken", signLoginToken(seller), { ...cookieBase, maxAge: LOGIN_MAX_AGE })
 
-
+        // SellerLogin.jsx reads data.seller.id to open the shop page
         return res.json({
             success: true,
-            message: "Seller Logged In"
+            message: "Seller Logged In",
+            seller: { email: seller.email, name: seller.name, role: seller.role, id: seller._id }
         })
     }
 
@@ -240,11 +244,11 @@ export const sellerProfile = async (req, res) => {
 
 
 
-// Seller logout : /api/seler/logout
+// Seller logout : /api/seller/seller-logout
 export const sellerLogout = async (req, res) => {
 
     try {
-        await endSession(req, res, SellerModel, "seller")
+        res.clearCookie("sellerToken", cookieBase)
 
         return res.json({
             success: true,
@@ -371,6 +375,16 @@ export const updateSellerProfile = async (req, res) => {
         }
 
         const sellerData = await SellerModel.findById(sellerID).select("-password");
+        const shopCopy = {
+            shop: {
+                id: seller._id,
+                name: seller.name,
+                avatar: seller.avatar
+            }
+        };
+
+        await ProductModel.updateMany({ shopId: String(seller._id) }, { $set: shopCopy });
+        await EventModel.updateMany({ shopId: String(seller._id) }, { $set: shopCopy });
 
         return res.json({
             success: true,

@@ -58,6 +58,19 @@ export const eventProduct = async (req, res) => {
             return res.json({ success: false, message: "Missing required product fields." });
         }
 
+        // Prices and stock must be real, non-negative numbers
+        const discountPriceNum = Number(discountPrice);
+        const stockNum = Number(stock);
+        if (Number.isNaN(discountPriceNum) || discountPriceNum < 0 || Number.isNaN(stockNum) || stockNum < 0) {
+            return res.json({ success: false, message: "Price and stock must be valid numbers." });
+        }
+
+        // Original price is optional: only use it when it is a real number
+        const originalPriceNum = Number(req.body.originalPrice);
+        const hasOriginalPrice = req.body.originalPrice !== undefined
+            && req.body.originalPrice !== ""
+            && !Number.isNaN(originalPriceNum);
+
         let description = req.body.description;
         if (!description) {
             return res.json({ success: false, message: "Please add a product description." });
@@ -92,12 +105,19 @@ export const eventProduct = async (req, res) => {
             start_Date,
             status,
             tags: req.body.tags,
-            originalPrice: Number(req.body.originalPrice),
-            discountPrice: Number(discountPrice),
-            stock: Number(stock),
+            ...(hasOriginalPrice && { originalPrice: originalPriceNum }),
+            discountPrice: discountPriceNum,
+            stock: stockNum,
             images: imagesURL,
             shopId: shop._id,
-            shop: { _id: shop._id, name: shop.name, avatar: shop.avatar }
+            // Only public fields are copied into the event
+            shop: {
+                _id: shop._id,
+                name: shop.name,
+                avatar: shop.avatar,
+                description: shop.description,
+                createdAt: shop.createdAt,
+            }
         };
 
         const eventProduct = await EventModel.create(eventData);

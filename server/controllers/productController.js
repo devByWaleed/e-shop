@@ -215,10 +215,10 @@ export const createReview = async (req, res) => {
         }
 
         const review = {
-            user: { _id: reviewerId, name: reviewer.name, avatar: reviewer.avatar },
-            rating: ratingNumber,
-            comment: String(comment || "").slice(0, 1000),
-            productId: String(productObjectId),
+            user: { _id: String(user._id), name: user.name, avatar: user.avatar },
+            rating,
+            comment,
+            productId,
         }
 
         // 4a. If the buyer already reviewed this product, change that review

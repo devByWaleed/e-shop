@@ -54,8 +54,6 @@ const deleteChatsOf = async (memberId) => {
 
 // Admin login : /api/admin/admin-login
 export const adminLogin = async (req, res) => {
-    const isProd = process.env.NODE_ENV === "production";
-
     try {
         const { email, password } = req.body;
 
@@ -367,15 +365,8 @@ export const adminOrders = async (req, res) => {
 
 // Admin logout : /api/admin/admin-logout
 export const adminLogout = async (req, res) => {
-    const isProd = process.env.NODE_ENV === "production";
-
     try {
-        res.clearCookie("adminToken", {
-            httpOnly: true,
-            secure: isProd,                     // must be true when sameSite is "none"
-            sameSite: isProd ? "none" : "lax",  // "none" required for cross-site in prod
-            path: "/"
-        })
+        res.clearCookie("adminToken", cookieBase);
 
         return res.json({
             success: true,
@@ -384,10 +375,9 @@ export const adminLogout = async (req, res) => {
     }
 
     catch (error) {
-
         return res.json({
             success: false,
             message: error.message
         })
     }
-}
+};

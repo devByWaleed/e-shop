@@ -1,18 +1,21 @@
 import axios from "axios"
 import { LoadSellerRequest, LoadSellerSuccess, LoadSellerFail, UpdateSellerRequest, UpdateSellerSuccess, UpdateSellerFail } from "../slices/sellerSlice"
-import { setHint, clearHint } from "../../utils/authHint"
-
-// Stops two loadSeller calls from running at the same time
-let loadingSeller = false
 
 export const loadSeller = () => async (dispatch, getState) => {
-    const { seller } = getState().seller;
+    // Get current user state
+    const { seller, sellerLoading } = getState().seller;
 
-    // If we already have seller data, don't fetch again
-    if (seller && seller.email) return;
+    // If we already have user data, don't fetch again
+    if (seller && seller.email) {
 
-    if (loadingSeller) return;
-    loadingSeller = true;
+        return;
+    }
+
+    // If already loading, don't fetch again
+    if (sellerLoading) {
+
+        return;
+    }
 
     try {
         dispatch(LoadSellerRequest())
@@ -22,24 +25,16 @@ export const loadSeller = () => async (dispatch, getState) => {
         })
 
         if (data.success) {
-            setHint('seller')
             dispatch(LoadSellerSuccess(data.sellerData));
         } else {
-            clearHint('seller')
             dispatch(LoadSellerFail(data.message));
         }
 
     } catch (error) {
-        if (error.response?.status === 401) {
-            clearHint('seller')
-            dispatch(LoadSellerFail(null))
-            return
-        }
-        dispatch(LoadSellerFail(error.response?.data?.message || error.message))
-    } finally {
-        loadingSeller = false
+        dispatch(LoadSellerFail(error.message))
     }
 }
+
 
 
 export const updateSeller = (formData) => async (dispatch) => {

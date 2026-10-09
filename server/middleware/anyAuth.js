@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import { verifyAccessToken } from "../config/tokens.js";
 
 const COOKIES = [
@@ -5,6 +6,10 @@ const COOKIES = [
     { cookie: "sellerToken", role: "seller" },
     { cookie: "adminToken", role: "admin" },
 ];
+
+// User and seller tokens use JWT_SECRET; admin tokens still come from tokens.js
+const verify = (role, token) =>
+    role === "admin" ? verifyAccessToken("admin", token) : jwt.verify(token, process.env.JWT_SECRET);
 
 const anyAuth = (req, res, next) => {
     const actors = [];
@@ -14,7 +19,7 @@ const anyAuth = (req, res, next) => {
         if (!token) continue;
 
         try {
-            const decoded = verifyAccessToken(role, token);
+            const decoded = verify(role, token);
             if (decoded.id && decoded.role === role) {
                 actors.push({ id: String(decoded.id), role });
             }

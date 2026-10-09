@@ -110,6 +110,7 @@ const ShopInfo = ({ isOwner }) => {
 
         const result = await dispatch(updateSeller(formData));
         if (result && result.success) {
+            dispatch(getAllProducts(seller._id));
             toast.success("Shop profile successfully updated!");
             setIsEdit(false);
             setPassword("");
@@ -142,7 +143,7 @@ const ShopInfo = ({ isOwner }) => {
                     {isEdit ? (
                         <label htmlFor="shop-avatar" className="cursor-pointer block relative w-full h-full">
                             <img
-                                src={image ? URL.createObjectURL(image) : sellerData.avatar}
+                                src={image ? URL.createObjectURL(image) : (sellerData.avatar || undefined)}
                                 alt={sellerData.name}
                                 className="w-full h-full object-cover opacity-80 transition-opacity hover:opacity-60"
                             />
@@ -156,11 +157,15 @@ const ShopInfo = ({ isOwner }) => {
                             />
                         </label>
                     ) : (
-                        <img
-                            src={`${sellerData.avatar}`}
-                            alt={sellerData.name}
-                            className="w-full h-full object-cover"
-                        />
+                        seller.avatar ? (
+                            <img
+                                src={seller.avatar}
+                                alt={seller.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gray-100" />
+                        )
                     )}
                 </div>
             </div>

@@ -17,7 +17,6 @@ import messageRouter from "./routes/messageRoutes.js"
 import adminRouter from "./routes/adminRoutes.js"
 import jwt from "jsonwebtoken";
 import anyAuth from "./middleware/anyAuth.js";
-import authRouter from "./routes/authRoutes.js";
 
 
 // Configuring server
@@ -33,20 +32,17 @@ const allowedOrigin = [
 ].filter(Boolean);
 
 app.use(cors({
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin || allowedOrigin.includes(origin) || process.env.NODE_ENV !== "production") {
+            callback(null, true);
+        } else {
+            callback(null, false); // Fail gracefully instead of throwing a 500 Error crash
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
-}));
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigin.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
-    credentials: true
 }));
 
 
@@ -160,7 +156,6 @@ app.use('/api/order', orderRouter);
 app.use('/api/conversation', conversationRouter);
 app.use('/api/message', messageRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/auth', authRouter);
 
 // Short-lived token the frontend uses to connect to the socket server
 app.get("/api/auth/socket-token", anyAuth, (req, res) => {

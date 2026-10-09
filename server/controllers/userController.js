@@ -3,8 +3,7 @@ import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import transporter from "../config/nodeMailer.js";
 import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloudinary.js";
-import { signAccessToken, accessMaxAge, cookieBase } from "../config/tokens.js";
-import { startSession, endSession } from "../config/tokens.js";
+import { cookieBase } from "../config/tokens.js";
 import { v2 as cloudinary } from 'cloudinary';
 import crypto from "crypto";
 
@@ -20,6 +19,19 @@ const createActivationToken = (user) => {
         expiresIn: "5m"
     })
 }
+
+const isProd = process.env.NODE_ENV === "production";
+
+// Login cookie lives this many days (one place to change it)
+const LOGIN_DAYS = 365;
+const LOGIN_MAX_AGE = LOGIN_DAYS * 24 * 60 * 60 * 1000;
+
+// Used by login, logout and the password reset cookies
+
+
+const signLoginToken = (user) =>
+    jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: `${LOGIN_DAYS}d` });
+
 
 // User registration : /api/user/register
 export const register = async (req, res) => {
@@ -134,10 +146,7 @@ export const activateAccount = async (req, res) => {
         const user = new UserModel({ name, email, password, avatar })
         await user.save()
 
-        const token = signAccessToken("user", user._id)
-
-        res.cookie("token", token, { ...cookieBase, maxAge: accessMaxAge("user") })
-
+        res.cookie("token", signLoginToken(user), { ...cookieBase, maxAge: LOGIN_MAX_AGE })
 
         return res.json({
             success: true,
@@ -172,6 +181,7 @@ export const login = async (req, res) => {
             })
         }
 
+        // +password is needed because the field is hidden by default
         const user = await UserModel.findOne({ email }).select("+password")
 
         const isMatch = user ? await bcrypt.compare(password, user.password) : false;
@@ -183,8 +193,7 @@ export const login = async (req, res) => {
             })
         }
 
-        await startSession(res, UserModel, "user", user)
-
+        res.cookie("token", signLoginToken(user), { ...cookieBase, maxAge: LOGIN_MAX_AGE })
 
         return res.json({
             success: true,
@@ -324,7 +333,7 @@ export const updateProfile = async (req, res) => {
 export const logout = async (req, res) => {
 
     try {
-        await endSession(req, res, UserModel, "user")
+        res.clearCookie("token", cookieBase)
 
         return res.json({
             success: true,

@@ -47,7 +47,6 @@ import AdminLogin from './pages/admin/AdminLogin'
 import AdminProfile from './pages/admin/AdminProfile'
 import AdminInbox from './pages/admin/AdminInbox'
 import AdminChatPage from './pages/admin/AdminChatPage'
-import { hasHint } from './utils/authHint'
 
 const hideNavFooterPages = [
   '/user-login',
@@ -74,12 +73,23 @@ const App = () => {
   const { adminAuthenticated } = useSelector((state) => state.admin)
 
 
-  // Restore a session only if this browser logged in before
+  // Admin session is only checked inside the admin area,
+  // so normal visitors never trigger the verify-admin call
+  const needsAdminAuth = currentPath.startsWith('/admin')
+
+  // Restore user and seller sessions once, when the app starts (page reload)
   useEffect(() => {
-    if (hasHint('user')) dispatch(loadUser())
-    if (hasHint('seller')) dispatch(loadSeller())
-    if (hasHint('admin')) dispatch(loadAdmin())
+    dispatch(loadUser())
+    dispatch(loadSeller())
   }, [dispatch])
+
+  // Restore the admin session only when entering an admin page
+  useEffect(() => {
+    if (needsAdminAuth && !adminAuthenticated) {
+      dispatch(loadAdmin())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, needsAdminAuth])
 
   // Don't show main content while loading user data on app start
   if (userLoading && !user && currentPath !== '/success') {
