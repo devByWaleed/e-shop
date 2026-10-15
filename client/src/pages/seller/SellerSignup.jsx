@@ -11,9 +11,9 @@ const SellerSignup = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [phoneNumber, setPhoneNumber] = useState(0);
     const [address, setAddress] = useState("");
-    const [zipCode, setZipCode] = useState(0);
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [zipCode, setZipCode] = useState("");
     const [avatar, setAvatar] = useState(null);
 
     const [showPassword, setShowPassword] = useState(false);
@@ -49,9 +49,9 @@ const SellerSignup = () => {
                     setEmail("");
                     setPassword("");
                     setAvatar(null);
-                    setPhoneNumber(0);
+                    setPhoneNumber("");
                     setAddress("");
-                    setZipCode(0);
+                    setZipCode("");
                 } else {
                     toast.error(data.message);
                     throw new Error(data.message);

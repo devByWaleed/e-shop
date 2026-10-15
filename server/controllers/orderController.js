@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import OrderModel from "../models/Orders.js";
 import UserModel from "../models/Users.js";
 import ProductModel from "../models/Products.js";
@@ -5,13 +6,30 @@ import { getCouponDiscount } from "../config/coupon.js";
 import stripe from "stripe"
 
 
+// Delivery stages in order. An order can only move forward through these.
+const DELIVERY_FLOW = [
+    "Processing",
+    "Transferred to delivery partner",
+    "Shipping",
+    "Received",
+    "On the way",
+    "Delivered",
+];
+
+// Every status the app uses (taken from your UserOrderTrack page)
+const VALID_STATUSES = [
+    ...DELIVERY_FLOW,
+    "Processing refund",
+    "Refund success",
+];
+
+// A seller owns an order if at least one cart item belongs to their shop
+const sellerOwnsOrder = (order, sellerID) =>
+    order.cart.some((item) => String(item.seller) === String(sellerID));
+
+
 // Statuses at which stock is taken from the product
 const STOCK_DEPLETED_STATUSES = ["Transferred to delivery partner", "Delivered"];
-
-// The status your seller "accept refund" button sends.
-// It is the same status that already puts the stock back. Confirm it with:
-//   grep -rn "Processing refund" frontend/src
-const REFUND_ACCEPT_STATUS = "Processing refund";
 
 
 const getProductUnitPrice = (product) => {
@@ -26,6 +44,9 @@ const getQuantity = (value) => {
 
 
 const FEE_RATE = 0.02;   // 2% added to online payments
+
+// Stripe accepts 30 minutes to 24 hours. The extra margin covers clock drift and request time.
+const STRIPE_SESSION_MINUTES = 40;
 
 // Money is calculated in whole cents to avoid numbers like 59.97000000000001
 const toCents = (amount) => Math.round(amount * 100);
@@ -117,13 +138,16 @@ export const placeOrderCOD = async (req, res) => {
         });
 
         // All the shop orders are saved together or not at all
-        const session = await mongoose.startSession();
+        // Ids are created up front so a half finished insert can be cleaned up
+        const docsWithIds = docs.map((doc) => ({ ...doc, _id: new mongoose.Types.ObjectId() }));
+        const orderIds = docsWithIds.map((doc) => doc._id);
+
         try {
-            await session.withTransaction(async () => {
-                await OrderModel.insertMany(docs, { session });
-            });
-        } finally {
-            session.endSession();
+            await OrderModel.insertMany(docsWithIds);
+        } catch (insertError) {
+            // insertMany can stop halfway, so remove whatever was saved
+            await OrderModel.deleteMany({ _id: { $in: orderIds } }).catch(() => { });
+            throw insertError;
         }
 
         return res.json({ success: true, message: "Order placed successfully" });
@@ -194,7 +218,7 @@ export const placeOrderStripe = async (req, res) => {
             mode: "payment",
             success_url: `${frontendUrl}/success`,
             cancel_url: `${frontendUrl}/cart`,
-            expires_at: Math.floor(Date.now() / 1000) + 31 * 60,   // Stripe needs at least 30 minutes
+            expires_at: Math.floor(Date.now() / 1000) + STRIPE_SESSION_MINUTES * 60,
             metadata: {
                 orderIds: createdOrderIds.join(","),
                 userID
@@ -346,6 +370,9 @@ export const getAllOrders = async (req, res) => {
 
 // Update Order Status: /api/order/update-order-status/:id
 export const updateOrderStatus = async (req, res) => {
+    // Remembers what was taken, so it can be put back if a later step fails
+    const reducedItems = [];
+
     try {
         const order = await OrderModel.findById(req.params.id);
 
@@ -369,38 +396,51 @@ export const updateOrderStatus = async (req, res) => {
             return res.json({ success: false, message: "An order cannot move back to an earlier status" });
         }
 
+        // A delivered order goes through the refund flow, not cancellation
+        if (order.status === "Delivered" && nextStatus === "Cancelled") {
+            return res.json({ success: false, message: "A delivered order cannot be cancelled. Use the refund flow." });
+        }
+
         // Stock is taken exactly once, whichever of the two statuses comes first
         const stockAlreadyDepleted = STOCK_DEPLETED_STATUSES.includes(order.status);
         const isNowDepletingStatus = STOCK_DEPLETED_STATUSES.includes(nextStatus);
 
-        // A transaction makes this all-or-nothing: if ONE item has no stock, NO item is reduced
-        const session = await mongoose.startSession();
+        // Only this seller's items (matters for old orders that mix several shops)
+        const myItems = order.cart.filter((item) => item.seller === String(req.sellerID));
+
         try {
-            await session.withTransaction(async () => {
-                if (isNowDepletingStatus && !stockAlreadyDepleted) {
-                    // Only this seller's items (matters for old orders that mix several shops)
-                    const myItems = order.cart.filter((item) => item.seller === String(req.sellerID));
-
-                    for (const item of myItems) {
-                        await reduceStock(item.product?._id || item.product, item.quantity, session);
-                    }
+            if (isNowDepletingStatus && !stockAlreadyDepleted) {
+                for (const item of myItems) {
+                    const productId = item.product?._id || item.product;
+                    await reduceStock(productId, item.quantity);
+                    reducedItems.push({ productId, quantity: item.quantity });
                 }
+            }
 
+            order.status = nextStatus;
 
-                order.status = nextStatus;
-
-                if (nextStatus === "Delivered") {
-                    order.deliveredAt = Date.now();
-                    if (order.paymentInfo.type === "COD") {
-                        order.paymentInfo.status = "Paid";
-                        order.paidAt = Date.now();
-                    }
+            if (nextStatus === "Delivered") {
+                order.deliveredAt = Date.now();
+                if (order.paymentInfo.type === "COD") {
+                    order.paymentInfo.status = "Paid";
+                    order.paidAt = Date.now();
                 }
+            }
 
-                await order.save({ session, validateBeforeSave: false });
-            });
-        } finally {
-            session.endSession();
+            await order.save({ validateBeforeSave: false });
+        } catch (stepError) {
+            // One item failed: give back everything already taken
+            for (const taken of reducedItems) {
+                await updateRefundStock(taken.productId, taken.quantity).catch(() => { });
+            }
+            throw stepError;
+        }
+
+        // Cancelled after stock was already taken: put it back
+        if (nextStatus === "Cancelled" && stockAlreadyDepleted) {
+            for (const item of myItems) {
+                await updateRefundStock(item.product?._id || item.product, item.quantity);
+            }
         }
 
         return res.json({ success: true, message: "Order status updated successfully" });
@@ -481,7 +521,18 @@ export const refundAccept = async (req, res) => {
             }
         }
 
-        order.status = req.body.status
+        // Only the buyer can ask for a refund on their own order
+        if (String(order.user?._id || order.user) !== String(req.userID)) {
+            return res.status(403).json({ success: false, message: "This is not your order" });
+        }
+
+        if (order.status === "Processing refund" || order.status === "Refund success") {
+            return res.json({ success: false, message: "A refund was already requested for this order" });
+        }
+
+        // The server decides the status, never the browser
+        order.status = "Processing refund";
+
         await order.save({ validateBeforeSave: false });
 
         return res.json({ success: true, message: "Order status updated successfully." + note });
@@ -492,16 +543,15 @@ export const refundAccept = async (req, res) => {
 
 
 
-// Takes stock in ONE atomic step: the database only subtracts if enough is left
-const reduceStock = async (productId, qty, session) => {
+const reduceStock = async (productId, qty) => {
     const updated = await ProductModel.findOneAndUpdate(
         { _id: productId, stock: { $gte: qty } },
         { $inc: { stock: -qty, soldOut: qty } },
-        { new: true, session }
+        { new: true }
     );
 
     if (!updated) {
-        const stillExists = await ProductModel.exists({ _id: productId }).session(session);
+        const stillExists = await ProductModel.exists({ _id: productId });
         if (stillExists) {
             throw new Error("Not enough stock for one of the items");
         }

@@ -53,6 +53,28 @@ const SellerOrderDetails = () => {
     }
   };
 
+  const handleAcceptRefund = async () => {
+    setUpdating(true);
+    try {
+      const { data } = await axios.post(
+        `/api/order/order-refund-success/${id}`,
+        { status: "Refund success" },
+        { withCredentials: true }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        dispatch(getShopOrder(seller._id)); // Refresh data
+      } else {
+        toast.error(data.message || "Failed to accept refund");
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error?.message || "Something went wrong");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   if (orderLoading) {
     return <div className="text-center py-20 text-gray-500 text-lg">Loading order details...</div>;
   }
@@ -65,6 +87,10 @@ const SellerOrderDetails = () => {
     return <div className="text-center py-20 text-gray-500 text-lg">Order not found.</div>;
   }
 
+  // While a refund is requested or finished, the normal status dropdown is locked
+  const isRefundStage =
+    orderData.status === "Processing refund" || orderData.status === "Refund success";
+
   return (
     <section className="max-w-5xl mx-auto px-4 py-10 font-sans">
       {/* Back to Profile Button */}
@@ -76,6 +102,26 @@ const SellerOrderDetails = () => {
           ← Back to Profile
         </button>
       </div>
+
+      {/* Refund banner */}
+      {isRefundStage && (
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm">
+          <p className="text-amber-800">
+            {orderData.status === "Processing refund"
+              ? "The buyer requested a refund for this order."
+              : "This refund has been completed."}
+          </p>
+          {orderData.status === "Processing refund" && (
+            <button
+              onClick={handleAcceptRefund}
+              disabled={updating}
+              className="px-4 py-2 text-sm font-medium cursor-pointer bg-black hover:bg-black/80 disabled:bg-gray-400 rounded-lg text-white transition-colors shrink-0"
+            >
+              {updating ? "Processing..." : "Accept refund"}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Header Info */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-6 mb-8 gap-4">
@@ -95,19 +141,24 @@ const SellerOrderDetails = () => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <select
               value={status}
-              disabled={updating}
+              disabled={updating || isRefundStage}
               onChange={(e) => setStatus(e.target.value)}
               className="bg-white border border-gray-300 rounded-lg text-sm px-3 py-2 text-gray-700 font-medium focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 min-w-45"
             >
               <option value="Processing">Processing</option>
               <option value="Transferred to delivery partner">Transferred to delivery partner</option>
               <option value="Shipping">Shipping</option>
+              <option value="Received">Received</option>
+              <option value="On the way">On the way</option>
               <option value="Delivered">Delivered</option>
               <option value="Cancelled">Cancelled</option>
+              {/* Shown only so the dropdown can display refund states, never selectable */}
+              <option value="Processing refund" disabled>Processing refund</option>
+              <option value="Refund success" disabled>Refund success</option>
             </select>
             <button
               onClick={handleStatusUpdate}
-              disabled={updating}
+              disabled={updating || isRefundStage}
               className='px-4 py-2 text-sm font-medium cursor-pointer bg-black hover:bg-black/80 disabled:bg-gray-400 rounded-lg text-white transition-colors shrink-0'
             >
               {updating ? "Updating..." : "Update"}
@@ -127,7 +178,7 @@ const SellerOrderDetails = () => {
                   <div className="w-20 h-20 bg-gray-50 rounded-lg border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center">
                     <img
                       src={item.product?.images?.[0]}
-                      alt={item.name || "Product"}
+                      alt={item.product?.name || "Product"}
                       className="w-full h-full object-contain p-1"
                     />
                   </div>

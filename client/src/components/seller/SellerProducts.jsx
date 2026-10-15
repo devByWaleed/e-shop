@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { deleteProduct, getAllProducts } from '../../redux/actions/productAction';
+import { deleteProduct, getShopProducts } from '../../redux/actions/productAction';
 
 const SellerProducts = () => {
     const { seller } = useSelector((state) => state.seller);
-    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
+    const { shopProducts, productLoading, productError } = useSelector((state) => state.product);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -13,15 +13,15 @@ const SellerProducts = () => {
 
     useEffect(() => {
         if (seller?._id) {
-            dispatch(getAllProducts(seller._id));
+            dispatch(getShopProducts(seller._id));
         }
     }, [dispatch, seller]);
 
     useEffect(() => {
-        if (allProducts) {
-            setProducts(allProducts);
+        if (shopProducts) {
+            setProducts(shopProducts);
         }
-    }, [allProducts]);
+    }, [shopProducts]);
 
     const handleDelete = (e, id) => {
         e.stopPropagation(); // Prevents clicking the delete button from opening details

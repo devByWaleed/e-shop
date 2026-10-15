@@ -7,9 +7,9 @@ const UserOrderTrack = () => {
     const dispatch = useDispatch();
     const { id } = useParams();
     const { user } = useSelector((state) => state.user);
-    
+
     // 1. Destructure loading state from your order reducer (assuming your slice has it)
-    const { orders, loading } = useSelector((state) => state.order);
+    const { orders, orderLoading } = useSelector((state) => state.order);
 
     useEffect(() => {
         if (user?._id) {
@@ -21,7 +21,7 @@ const UserOrderTrack = () => {
     const data = orders && orders.find((item) => item._id === id);
 
     // 3. Render a loading spinner/message if the API call is still processing
-    if (loading) {
+    if (orderLoading) {
         return (
             <div className="w-full h-[80vh] flex justify-center items-center">
                 <h1 className="text-[20px] text-gray-500">Loading tracking details...</h1>
@@ -44,19 +44,19 @@ const UserOrderTrack = () => {
                     <h1 className="text-[20px]">Our Delivery man going to deliver your order.</h1>
                 ) : data?.status === "Delivered" ? (
                     <h1 className="text-[20px]">Your order is delivered!</h1>
-                ) : 
-                
-                data?.status === "Processing refund" ? (
-                    <h1 className="text-[20px]">Your refund is under processing</h1>
-                ) : 
-                
-                data?.status === "Refund success" ? (
-                    <h1 className="text-[20px]">Your refund is success</h1>
-                ) : 
-                                
-                (
-                    <h1 className="text-[20px] text-red-500">No order tracking details available.</h1>
-                )
+                ) :
+
+                    data?.status === "Processing refund" ? (
+                        <h1 className="text-[20px]">Your refund is under processing</h1>
+                    ) :
+
+                        data?.status === "Refund success" ? (
+                            <h1 className="text-[20px]">Your refund is success</h1>
+                        ) :
+
+                            (
+                                <h1 className="text-[20px] text-red-500">No order tracking details available.</h1>
+                            )
             }
         </div>
     );

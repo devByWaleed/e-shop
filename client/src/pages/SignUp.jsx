@@ -3,6 +3,7 @@ import { assets } from '../assets/assets.js'
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios"
 import toast from "react-hot-toast";
+import useLoading from "../hooks/useLoading.js";
 
 
 const SignUp = () => {
@@ -12,6 +13,7 @@ const SignUp = () => {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [avatar, setAvatar] = useState(null);
+    const { withLoading } = useLoading();
 
     const navigate = useNavigate()
 

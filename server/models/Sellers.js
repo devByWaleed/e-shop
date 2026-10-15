@@ -44,13 +44,7 @@ const SellerSchema = new mongoose.Schema({
         default: Date.now,
     },
     resetPasswordToken: String,
-    resetPasswordTime: Date,
-    // Hashes of the active refresh tokens (one per logged-in device)
-    refreshTokens: {
-        type: [{ hash: String, expiresAt: Date }],
-        select: false,
-        default: [],
-    },
+    resetPasswordTime: Date
 })
 
 

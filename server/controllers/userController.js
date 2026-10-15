@@ -150,6 +150,7 @@ export const activateAccount = async (req, res) => {
 
         return res.json({
             success: true,
+            message: "Account activated successfully",
             user: { email: user.email, name: user.name, role: user.role }
         })
 

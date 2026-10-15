@@ -158,6 +158,7 @@ export const activateAccount = async (req, res) => {
 
         return res.json({
             success: true,
+            message: "Shop activated successfully",
             seller: { email: seller.email, name: seller.name, role: seller.role, id: seller._id }
         })
 

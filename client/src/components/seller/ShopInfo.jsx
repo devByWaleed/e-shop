@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { getAllProducts } from '../../redux/actions/productAction';
+import { getShopProducts } from '../../redux/actions/productAction';
 import { loadSeller } from '../../redux/actions/sellerAction';
 import { LoadSellerFail } from '../../redux/slices/sellerSlice';
 import { updateSeller } from '../../redux/actions/sellerAction';
@@ -12,7 +12,7 @@ import StarRating from '../StarRating';
 const ShopInfo = ({ isOwner }) => {
     // Accessing seller data from Redux state
     const { seller, sellerLoading } = useSelector((state) => state.seller);
-    const { allProducts, productLoading, productError } = useSelector((state) => state.product);
+    const { shopProducts, productLoading, productError } = useSelector((state) => state.product);
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -52,9 +52,9 @@ const ShopInfo = ({ isOwner }) => {
 
     // Calculate ratings from products
     useEffect(() => {
-        if (allProducts && allProducts.length > 0) {
+        if (shopProducts && shopProducts.length > 0) {
             // Get all reviews from products
-            const allReviews = allProducts.flatMap(product => product.reviews || []);
+            const allReviews = shopProducts.flatMap(product => product.reviews || []);
 
             if (allReviews.length > 0) {
                 const totalRating = allReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
@@ -71,7 +71,7 @@ const ShopInfo = ({ isOwner }) => {
                 });
             }
         }
-    }, [allProducts]);
+    }, [shopProducts]);
 
     const handleLogout = async () => {
         try {
@@ -110,7 +110,7 @@ const ShopInfo = ({ isOwner }) => {
 
         const result = await dispatch(updateSeller(formData));
         if (result && result.success) {
-            dispatch(getAllProducts(seller._id));
+            dispatch(getShopProducts(seller._id));
             toast.success("Shop profile successfully updated!");
             setIsEdit(false);
             setPassword("");
@@ -123,7 +123,7 @@ const ShopInfo = ({ isOwner }) => {
     // Once seller is available, fetch that seller's products
     useEffect(() => {
         if (seller?._id) {
-            dispatch(getAllProducts(seller._id))
+            dispatch(getShopProducts(seller._id))
         }
     }, [seller?._id, dispatch])
 
@@ -266,7 +266,7 @@ const ShopInfo = ({ isOwner }) => {
                 {/* Total Products */}
                 <div>
                     <h5 className="font-semibold text-gray-900 text-[15px]">Total Products</h5>
-                    <p className="text-gray-500 text-sm mt-0.5">{allProducts?.length ?? 0}</p>
+                    <p className="text-gray-500 text-sm mt-0.5">{shopProducts?.length ?? 0}</p>
                 </div>
 
                 {/* Shop Ratings */}
