@@ -6,7 +6,7 @@ import { addToCart } from "../redux/actions/cartAction";
 import toast from "react-hot-toast";
 
 const ProductCard = ({ product, index }) => {
-    const { seller } = useSelector((state) => state.seller);
+    // const { seller } = useSelector((state) => state.seller);
     const { wishlist } = useSelector((state) => state.wishlist);
     const { cart } = useSelector((state) => state.cart);
 
@@ -102,7 +102,7 @@ const ProductCard = ({ product, index }) => {
                 />
             </div>
 
-            <h5 className="pt-3 text-[15px] text-blue-400 pb-3">{seller?.name || "Verified Seller"}</h5>
+            <h5 className="pt-3 text-[15px] text-blue-400 pb-3">{product.shop?.name}</h5>
 
             {/* Product Name */}
             <p className="text-sm text-neutral-500 mb-2 px-2 line-clamp-2 min-h-10">{product.name}</p>

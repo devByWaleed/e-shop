@@ -17,7 +17,7 @@ const AllOrders = () => {
         if (seller?._id) {
             dispatch(getShopOrder(seller._id));
         }
-    }, [dispatch, seller]);
+    }, [dispatch, seller?._id]);
 
     // useEffect(() => {
     //     if (allProducts) {
@@ -49,10 +49,11 @@ const AllOrders = () => {
                     <div className='p-12 text-center text-text-muted'>No order found!!</div>
                 ) : (
                     <div className='divide-y divide-light-border max-h-[75vh] overflow-y-auto'>
-                        {shopOrders.map((item, index) => {
-                            // const c = item.category
-                            // let categorySlug = c.toLowerCase()
-                            // categorySlug = categorySlug.replace(/\s+/g, "-")
+                        {shopOrders.map((item) => {
+                            // Units this seller has to ship in this order
+                            // (older orders may also contain other shops' items, so only count this shop's)
+                            const sellerItems = item.cart.filter((c) => c.seller === String(seller?._id));
+                            const totalUnits = sellerItems.reduce((sum, c) => sum + (c.quantity || 0), 0);
 
                             return (
 
@@ -95,8 +96,8 @@ const AllOrders = () => {
                                     {/* Quantity Column */}
                                     <div className='flex justify-between items-center md:block'>
                                         <span className='md:hidden text-text-muted'>Quantity:</span>
-                                        <p className={`font-medium ${item.cart.quantity === 0 ? 'text-secondary font-bold' : 'text-text'}`}>
-                                            {item.cart[index].quantity} units
+                                        <p className={`font-medium ${totalUnits === 0 ? 'text-secondary font-bold' : 'text-text'}`}>
+                                            {totalUnits} {totalUnits === 1 ? 'unit' : 'units'}
                                         </p>
                                     </div>
 

@@ -8,10 +8,7 @@ const OrderSuccess = () => {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        localStorage.removeItem("latestOrder");
-        localStorage.removeItem("cartItems");
-        localStorage.setItem("latestOrder", JSON.stringify([]));
-        localStorage.setItem("cartItems", JSON.stringify([]));
+        // Empties the Redux cart and removes both "cartItems" and "latestOrder"
         dispatch(clearCart());
     }, [dispatch]);
 

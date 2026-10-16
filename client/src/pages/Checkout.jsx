@@ -137,7 +137,7 @@ const Checkout = () => {
             subtotalPrice: subtotal,
             shippingPrice: shipping,
             discountPrice: discount,
-            appliedCoupon: couponCodeData ? couponCodeData.name : null
+            couponCode: couponCodeData ? couponCodeData.name : ""
         };
 
         // Saving to Local Storage

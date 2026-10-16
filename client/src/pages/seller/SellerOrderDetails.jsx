@@ -41,7 +41,8 @@ const SellerOrderDetails = () => {
       );
 
       if (data.success) {
-        toast.success("Order status updated successfully!");
+        toast.success(data.message || "Order status updated successfully!");
+        setStatus(data.order?.status || status);
         dispatch(getShopOrder(seller._id)); // Refresh data
       } else {
         toast.error(data.message || "Failed to update status");

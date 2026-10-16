@@ -128,12 +128,12 @@ const App = () => {
         </Route>
 
         {/* USER Protected Routes */}
+        <Route path='/success' element={<OrderSuccess />} />
         <Route element={<ProtectedLayout requireAuth={true} requiredRole='user' />}>
           <Route path='/user-profile' element={<Profile />} />
           <Route path='/user-order/:id' element={<UserOrderDetails />} />
           <Route path='/checkout' element={<Checkout />} />
           <Route path='/payment' element={<Payment />} />
-          <Route path='/success' element={<OrderSuccess />} />
           <Route path='/track-order/:id' element={<UserOrderTrack />} />
           <Route path='/user-conversation/:id' element={<UserChatPage />} />
         </Route>

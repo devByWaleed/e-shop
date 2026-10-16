@@ -192,19 +192,33 @@ export const createReview = async (req, res) => {
             return res.json({ success: false, message: "Rating must be between 1 and 5" })
         }
 
+        if (!orderId) {
+            return res.json({ success: false, message: "Order id is required" })
+        }
+
         const product = await ProductModel.findById(productId).select("_id")
         if (!product) {
             return res.json({ success: false, message: "Product not found" })
         }
         const productObjectId = product._id
+        const productMatch = [String(productObjectId), productObjectId]
 
-        // 2. The buyer must have RECEIVED this product
-        const purchase = await OrderModel.exists({
+        // 2. This exact order must belong to the buyer and contain the product
+        const order = await OrderModel.findOne({
+            _id: orderId,
             user: reviewerId,
-            status: "Delivered",
-            "cart.product._id": { $in: [String(productObjectId), productObjectId] },
-        })
-        if (!purchase) {
+            "cart.product._id": { $in: productMatch },
+        }).select("status")
+
+        if (!order) {
+            return res.json({ success: false, message: "No order found for this product" })
+        }
+
+        // The buyer must have RECEIVED it, and a refunded order cannot be reviewed
+        if (order.status === "Processing refund" || order.status === "Refund success") {
+            return res.json({ success: false, message: "You cannot review a product from a refunded order" })
+        }
+        if (order.status !== "Delivered") {
             return res.json({ success: false, message: "You can only review products you have received" })
         }
 
@@ -215,15 +229,15 @@ export const createReview = async (req, res) => {
         }
 
         const review = {
-            user: { _id: String(user._id), name: user.name, avatar: user.avatar },
-            rating,
-            comment,
-            productId,
+            user: { _id: String(reviewer._id), name: reviewer.name, avatar: reviewer.avatar },
+            rating: ratingNumber,
+            comment: typeof comment === "string" ? comment.trim() : "",
+            productId: String(productObjectId),
         }
 
         // 4a. If the buyer already reviewed this product, change that review
         const updated = await ProductModel.updateOne(
-            { _id: productObjectId, "reviews.user._id": reviewerId },
+            { _id: productObjectId, "reviews.user._id": String(reviewerId) },
             {
                 $set: {
                     "reviews.$.rating": review.rating,
@@ -236,7 +250,7 @@ export const createReview = async (req, res) => {
         // 4b. Otherwise add a new one (the $ne means a double click adds it only once)
         if (updated.matchedCount === 0) {
             await ProductModel.updateOne(
-                { _id: productObjectId, "reviews.user._id": { $ne: reviewerId } },
+                { _id: productObjectId, "reviews.user._id": { $ne: String(reviewerId) } },
                 { $push: { reviews: review } }
             )
         }
@@ -251,14 +265,12 @@ export const createReview = async (req, res) => {
             { $set: { ratings: result?.average || 0 } }
         )
 
-        // 6. Mark the product as reviewed inside the buyer's order
-        if (orderId) {
-            await OrderModel.updateOne(
-                { _id: orderId, user: reviewerId },
-                { $set: { "cart.$[item].isReviewed": true, "cart.$[item].rating": review.rating } },
-                { arrayFilters: [{ "item.product._id": { $in: [String(productObjectId), productObjectId] } }] }
-            )
-        }
+        // 6. Mark the product as reviewed inside this order
+        await OrderModel.updateOne(
+            { _id: orderId, user: reviewerId },
+            { $set: { "cart.$[item].isReviewed": true, "cart.$[item].rating": review.rating } },
+            { arrayFilters: [{ "item.product._id": { $in: productMatch } }] }
+        )
 
         return res.json({ success: true, message: "Review created successfully" })
 

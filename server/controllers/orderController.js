@@ -237,9 +237,6 @@ export const placeOrderStripe = async (req, res) => {
 };
 
 
-
-
-
 // Stripe Webhooks to verify payments action : /stripe
 export const stripeWebhooks = async (req, res) => {
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
@@ -374,7 +371,7 @@ export const updateOrderStatus = async (req, res) => {
     const reducedItems = [];
 
     try {
-        const order = await OrderModel.findById(req.params.id);
+        const order = await OrderModel.findById(req.params.id).lean();
 
         if (!order) {
             return res.json({ success: false, message: "Order not found" });
@@ -386,10 +383,16 @@ export const updateOrderStatus = async (req, res) => {
         }
 
         // Only known statuses, and delivery stages cannot go backwards
-        const nextStatus = req.body.status;
+        const nextStatus = req.body?.status;
         if (!VALID_STATUSES.includes(nextStatus)) {
             return res.json({ success: false, message: `Invalid status: ${nextStatus}` });
         }
+
+        // Nothing to change: say so instead of reporting a fake success
+        if (order.status === nextStatus) {
+            return res.json({ success: false, message: `Order is already ${nextStatus}` });
+        }
+
         const from = DELIVERY_FLOW.indexOf(order.status);
         const to = DELIVERY_FLOW.indexOf(nextStatus);
         if (from !== -1 && to !== -1 && to < from) {
@@ -408,6 +411,18 @@ export const updateOrderStatus = async (req, res) => {
         // Only this seller's items (matters for old orders that mix several shops)
         const myItems = order.cart.filter((item) => item.seller === String(req.sellerID));
 
+        // The fields to write
+        const changes = { status: nextStatus };
+        if (nextStatus === "Delivered") {
+            changes.deliveredAt = new Date();
+            if (order.paymentInfo?.type === "COD") {
+                changes["paymentInfo.status"] = "Paid";
+                changes.paidAt = new Date();
+            }
+        }
+
+        let updatedOrder;
+
         try {
             if (isNowDepletingStatus && !stockAlreadyDepleted) {
                 for (const item of myItems) {
@@ -417,19 +432,19 @@ export const updateOrderStatus = async (req, res) => {
                 }
             }
 
-            order.status = nextStatus;
+            // Updates only if the order still has the status we read a moment ago.
+            // This blocks double clicks and two sellers changing it at the same time.
+            updatedOrder = await OrderModel.findOneAndUpdate(
+                { _id: order._id, status: order.status },
+                { $set: changes },
+                { new: true }
+            ).lean();
 
-            if (nextStatus === "Delivered") {
-                order.deliveredAt = Date.now();
-                if (order.paymentInfo.type === "COD") {
-                    order.paymentInfo.status = "Paid";
-                    order.paidAt = Date.now();
-                }
+            if (!updatedOrder) {
+                throw new Error("This order was just changed. Refresh the page and try again.");
             }
-
-            await order.save({ validateBeforeSave: false });
         } catch (stepError) {
-            // One item failed: give back everything already taken
+            // Something failed: give back everything already taken
             for (const taken of reducedItems) {
                 await updateRefundStock(taken.productId, taken.quantity).catch(() => { });
             }
@@ -443,7 +458,11 @@ export const updateOrderStatus = async (req, res) => {
             }
         }
 
-        return res.json({ success: true, message: "Order status updated successfully" });
+        return res.json({
+            success: true,
+            message: "Order status updated successfully",
+            order: { _id: updatedOrder._id, status: updatedOrder.status },
+        });
 
     } catch (error) {
         return res.json({ success: false, message: error.message });

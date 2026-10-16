@@ -39,14 +39,15 @@ const UserOrderDetails = () => {
   const navigate = useNavigate();
 
   const { id } = useParams();
-  const [status, setStatus] = useState("");
-  const [updating, setUpdating] = useState(false);
 
   // Review modal state
   const [reviewItem, setReviewItem] = useState(null); // the cart item being reviewed
   const [rating, setRating] = useState(0);
   const [reviewMessage, setReviewMessage] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Refund request state
+  const [refunding, setRefunding] = useState(false);
 
   useEffect(() => {
     if (user?._id) {
@@ -55,14 +56,6 @@ const UserOrderDetails = () => {
   }, [dispatch, user?._id]);
 
   const orderData = orders?.find((item) => item._id === id);
-
-
-  // Sync state when order finishes loading
-  useEffect(() => {
-    if (orderData) {
-      setStatus(orderData.status);
-    }
-  }, [orderData]);
 
   const openReviewModal = (item) => {
     setReviewItem(item);
@@ -85,11 +78,9 @@ const UserOrderDetails = () => {
     try {
       setSubmittingReview(true);
 
-      // TODO: replace with your actual review endpoint
       const { data } = await axios.post(
         `/api/product/create-new-review`,
         {
-          user,
           rating,
           comment: reviewMessage,
           productId: reviewItem.product?._id,
@@ -98,29 +89,50 @@ const UserOrderDetails = () => {
         { withCredentials: true }
       );
 
-      toast.success(data.message);
-      dispatch(getUserOrder(user._id))
-      closeReviewModal();
+      if (data.success) {
+        toast.success(data.message);
+        dispatch(getUserOrder(user._id));
+        closeReviewModal();
+      } else {
+        toast.error(data.message || "Failed to submit review");
+      }
     } catch (err) {
-      toast.error(err?.message || "Failed to submit review");
+      toast.error(err?.response?.data?.message || err?.message || "Failed to submit review");
     } finally {
       setSubmittingReview(false);
     }
   };
 
   const refundHandler = async () => {
+    // Blocks double clicks while a request is already running
+    if (refunding) return;
+
+    if (!window.confirm("Request a refund for this order? The seller will review your request.")) {
+      return;
+    }
+
     try {
+      setRefunding(true);
+
+      // The server decides the new status, so nothing needs to be sent
       const { data } = await axios.put(
         `/api/order/order-refund/${id}`,
-        { status: "Processing refund" },
+        {},
         { withCredentials: true }
       );
 
-      toast.success(data.message);
+      if (data.success) {
+        toast.success(data.message);
+        dispatch(getUserOrder(user._id)); // Refresh so the page shows the new status
+      } else {
+        toast.error(data.message || "Failed to request refund");
+      }
     } catch (error) {
-      toast.error(error?.message || "Failed to submit review");
+      toast.error(error?.response?.data?.message || error?.message || "Failed to request refund");
+    } finally {
+      setRefunding(false);
     }
-  }
+  };
 
   if (orderLoading) {
     return <div className="text-center py-20 text-gray-500 text-lg">Loading order details...</div>;
@@ -133,6 +145,12 @@ const UserOrderDetails = () => {
   if (!orderData) {
     return <div className="text-center py-20 text-gray-500 text-lg">Order not found.</div>;
   }
+
+  // Refund guard: the button only exists for a delivered order,
+  // and once a refund is requested or finished it is replaced by a status notice
+  const isDelivered = orderData.status === "Delivered";
+  const refundRequested = orderData.status === "Processing refund";
+  const refundCompleted = orderData.status === "Refund success";
 
   return (
     <section className="max-w-5xl mx-auto px-4 py-10 font-sans">
@@ -183,7 +201,7 @@ const UserOrderDetails = () => {
                       <span className="text-gray-500 font-medium">${item.product?.discountPrice || item.product?.originalPrice || 0} each</span>
                       <span className="font-bold text-gray-900">${(item.product?.discountPrice || item.product?.originalPrice || 0) * item.quantity}</span>
                     </div>
-                    {item.isReviewed ? null :
+                    {item.isReviewed || !isDelivered ? null :
                       <button
                         onClick={() => openReviewModal(item)}
                         className="mt-2 p-3 self-start text-xs font-semibold text-white bg-primary-dull rounded hover:opacity-70 cursor-pointer"
@@ -196,10 +214,32 @@ const UserOrderDetails = () => {
               ))}
             </div>
           </div>
-          <button onClick={refundHandler} className='p-2 bg-black text-white'>Give a refund</button>
-          <button
-            // onClick={ } 
-            className='p-2 ml-3 bg-black text-white'>Send message</button>
+
+          {/* Refund area: a button, a pending notice, or a completed notice */}
+          {isDelivered && (
+            <button
+              onClick={refundHandler}
+              disabled={refunding}
+              className="px-5 py-2.5 text-sm font-semibold rounded-lg border border-red-500 text-red-500 hover:bg-red-500 hover:text-white active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-red-500"
+            >
+              {refunding ? "Requesting..." : "Request a refund"}
+            </button>
+          )}
+
+          {refundRequested && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm">
+              Refund requested. The seller is reviewing your request.
+            </div>
+          )}
+
+          {refundCompleted && (
+            <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4 text-sm">
+              Your refund was accepted.
+              {orderData.paymentInfo?.type === "Online"
+                ? " The money goes back to your card and can take several days to appear on your statement."
+                : " The seller will return your payment."}
+            </div>
+          )}
         </div>
 
         {/* Right Side: Shipping & Financials breakdown panels */}
@@ -235,7 +275,7 @@ const UserOrderDetails = () => {
                 </span>
               </div>
               <div className="flex justify-between border-t pt-3 font-bold text-base text-gray-800">
-                <span>Total Revenue:</span>
+                <span>Total:</span>
                 <span className="text-primary">${orderData.totalPrice}</span>
               </div>
 
