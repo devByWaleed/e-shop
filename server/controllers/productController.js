@@ -78,9 +78,13 @@ export const createProduct = async (req, res) => {
 };
 
 // Get Shop Products : /api/product/get-all-products/:id
+// Products of suspended or closed shops are hidden from every public list
+const VISIBLE = { isHidden: { $ne: true } };
+
+// Get Shop Products : /api/product/get-all-products/:id
 export const getShopProducts = async (req, res) => {
     try {
-        const shopProducts = await ProductModel.find({ shopId: req.params.id })
+        const shopProducts = await ProductModel.find({ shopId: req.params.id, ...VISIBLE })
 
         res.json({
             success: true,
@@ -101,7 +105,7 @@ export const getAllProducts = async (req, res) => {
     try {
         // No ?page= in the URL: behave exactly like before
         if (!req.query.page) {
-            const allProducts = await ProductModel.find({}).sort({ createdAt: -1 })
+            const allProducts = await ProductModel.find(VISIBLE).sort({ createdAt: -1 })
             return res.json({ success: true, allProducts });
         }
 
@@ -109,8 +113,8 @@ export const getAllProducts = async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit) || 24, 100);
 
         const [allProducts, total] = await Promise.all([
-            ProductModel.find({}).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit),
-            ProductModel.countDocuments()
+            ProductModel.find(VISIBLE).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit),
+            ProductModel.countDocuments(VISIBLE)
         ]);
 
         return res.json({

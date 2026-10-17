@@ -54,6 +54,24 @@ const UserSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+
+    // Old accounts have no status, and that counts as "active"
+    status: {
+        type: String,
+        enum: ["active", "suspended", "deleted"],
+        default: "active",
+    },
+    statusReason: {
+        type: String,
+        default: "",
+    },
+    statusChangedAt: {
+        type: Date,
+    },
+    deletedAt: {
+        type: Date,
+    },
+
     resetPasswordToken: String,
     resetPasswordTime: Date,
 })

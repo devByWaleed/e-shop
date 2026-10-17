@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { getCloudinaryPublicId } from "../config/cloudinary.js";
 import { v2 as cloudinary } from "cloudinary";
 import UserModel from "../models/Users.js";
@@ -6,19 +7,27 @@ import ProductModel from "../models/Products.js";
 import EventModel from "../models/Events.js";
 import OrderModel from "../models/Orders.js";
 import CouponModel from "../models/Coupons.js";
-import ConversationModel from "../models/Conversations.js";
-import MessageModel from "../models/Messages.js";
 import jwt from "jsonwebtoken"
 import { signAccessToken, verifyAccessToken, accessMaxAge, cookieBase } from "../config/tokens.js";
 
 
-// Orders that are not finished yet. EDIT to match the statuses your sellers really use.
-const OPEN_ORDER_STATUSES = [
-    "Processing",
-    "Transferred to delivery partner",
-    "Shipping",
-    "Processing refund",
-];
+// A closed shop can be reopened for this many days. After that it can be removed permanently.
+const SHOP_GRACE_DAYS = 30;
+
+// Orders in these statuses are finished. Everything else is still open.
+// (The old list forgot "Received" and "On the way", so those orders did not block a delete.)
+const FINISHED_ORDER_STATUSES = ["Delivered", "Refund success", "Cancelled"];
+
+// Query for open orders. Unpaid card orders are ignored: buyers never see them
+// and they expire by themselves after 3 days.
+const openOrdersFilter = (extra) => ({
+    ...extra,
+    status: { $nin: FINISHED_ORDER_STATUSES },
+    $or: [
+        { "paymentInfo.type": "COD" },
+        { "paymentInfo.status": { $in: ["Paid", "Refunded"] } },
+    ],
+});
 
 // Cloudinary deletes at most 100 images per request
 const chunk = (list, size) => {
@@ -42,13 +51,49 @@ const deleteCloudinaryImages = async (urls) => {
     }
 };
 
-// Deletes all the chats of one person (conversations and their messages)
-const deleteChatsOf = async (memberId) => {
-    const conversations = await ConversationModel.find({ members: memberId }).select("_id");
-    const conversationIds = conversations.map((conversation) => String(conversation._id));
+const cleanReason = (text) => (typeof text === "string" ? text.trim().slice(0, 200) : "");
 
-    await MessageModel.deleteMany({ conversationID: { $in: conversationIds } });
-    await ConversationModel.deleteMany({ members: memberId });
+// Scrubbed accounts get a unique dummy email, so the real email can register again
+const scrubbedEmail = (id) => `deleted_${id}@deleted.invalid`;
+
+// Nobody knows this password, so a scrubbed account can never log in
+const randomPassword = () => crypto.randomBytes(32).toString("hex");
+
+// Reviews stay (so product ratings do not change) but lose the person's name and avatar
+const anonymizeReviewsOf = (userId) =>
+    ProductModel.updateMany(
+        { "reviews.user._id": String(userId) },
+        { $set: { "reviews.$[r].user.name": "Deleted user", "reviews.$[r].user.avatar": "" } },
+        { arrayFilters: [{ "r.user._id": String(userId) }] }
+    );
+
+// Removes the reviews completely and fixes the average rating of those products
+const removeReviewsOf = async (userId) => {
+    const id = String(userId);
+    const products = await ProductModel.find({ "reviews.user._id": id }).select("_id");
+
+    await ProductModel.updateMany(
+        { "reviews.user._id": id },
+        { $pull: { reviews: { "user._id": id } } }
+    );
+
+    for (const { _id } of products) {
+        const [result] = await ProductModel.aggregate([
+            { $match: { _id } },
+            { $project: { average: { $avg: "$reviews.rating" } } },
+        ]);
+        await ProductModel.updateOne({ _id }, { $set: { ratings: result?.average || 0 } });
+    }
+};
+
+// Hides (or shows again) every product and event of one shop
+const setShopVisibility = async (shopId, hidden) => {
+    const filter = { shopId: String(shopId) };
+
+    await Promise.all([
+        ProductModel.updateMany(filter, { $set: { isHidden: hidden } }),
+        EventModel.updateMany(filter, { $set: { isHidden: hidden } }),
+    ]);
 };
 
 
@@ -160,9 +205,12 @@ export const adminUsers = async (req, res) => {
 
 
 // Delete Specific User : /api/admin/delete-user-by-id/:id
+// Delete Specific User : /api/admin/delete-user-by-id/:id
+// Optional: ?removeReviews=true removes the reviews instead of making them anonymous
 export const deleteUser = async (req, res) => {
     try {
         const id = req.params.id
+        const removeReviews = req.query.removeReviews === "true"
 
         const userDetail = await UserModel.findById(id)
 
@@ -173,11 +221,15 @@ export const deleteUser = async (req, res) => {
             })
         }
 
+        if (userDetail.status === "deleted") {
+            return res.json({
+                success: false,
+                message: "This user is already deleted"
+            })
+        }
+
         // 1. Do not delete a buyer who still has unfinished orders
-        const openOrders = await OrderModel.countDocuments({
-            user: id,
-            status: { $in: OPEN_ORDER_STATUSES }
-        })
+        const openOrders = await OrderModel.countDocuments(openOrdersFilter({ user: id }))
 
         if (openOrders > 0) {
             return res.json({
@@ -186,20 +238,34 @@ export const deleteUser = async (req, res) => {
             })
         }
 
-        // 2. Remove the user's reviews and fix the average rating of those products
-        const reviewedProducts = await ProductModel.find({ "reviews.user._id": id })
-
-        for (const product of reviewedProducts) {
-            product.reviews = product.reviews.filter((review) => String(review.user?._id) !== String(id))
-            product.ratings = product.reviews.length > 0
-                ? product.reviews.reduce((sum, review) => sum + (Number(review.rating) || 0), 0) / product.reviews.length
-                : 0
-            await product.save({ validateBeforeSave: false })
+        // 2. Reviews: anonymous by default, removed only when the admin asks
+        if (removeReviews) {
+            await removeReviewsOf(id)
+        } else {
+            await anonymizeReviewsOf(id)
         }
 
-        // 3. Delete the user's chats, then the user
-        await deleteChatsOf(id)
-        await UserModel.findByIdAndDelete(id)
+        // 3. Scrub the personal data but KEEP the document and its _id,
+        //    so orders and chats that point to it keep working
+        const now = new Date()
+        await UserModel.updateOne(
+            { _id: id },
+            {
+                $set: {
+                    status: "deleted",
+                    statusReason: cleanReason(req.query.reason),
+                    statusChangedAt: now,
+                    deletedAt: now,
+                    name: "Deleted user",
+                    email: scrubbedEmail(id),
+                    phoneNumber: "",
+                    addresses: [],
+                    avatar: "",
+                    password: randomPassword(),
+                },
+                $unset: { resetPasswordToken: "", resetPasswordTime: "" },
+            }
+        )
 
         // 4. Avatar last
         if (userDetail.avatar) {
@@ -209,6 +275,67 @@ export const deleteUser = async (req, res) => {
         return res.json({
             success: true,
             message: "User Deleted Successfully",
+        })
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message || "Internal Server Error"
+        });
+    }
+}
+
+
+// Suspend or reactivate a user : PATCH /api/admin/user-status/:id
+// Body: { status: "active" | "suspended", reason }
+export const setUserStatus = async (req, res) => {
+    try {
+        const { status, reason } = req.body
+
+        if (!["active", "suspended"].includes(status)) {
+            return res.json({
+                success: false,
+                message: "Status must be active or suspended"
+            })
+        }
+
+        const user = await UserModel.findById(req.params.id).select("status")
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            })
+        }
+
+        if (user.status === "deleted") {
+            return res.json({
+                success: false,
+                message: "A deleted user cannot be changed"
+            })
+        }
+
+        if ((user.status || "active") === status) {
+            return res.json({
+                success: false,
+                message: `User is already ${status}`
+            })
+        }
+
+        await UserModel.updateOne(
+            { _id: user._id },
+            {
+                $set: {
+                    status,
+                    statusReason: status === "suspended" ? cleanReason(reason) : "",
+                    statusChangedAt: new Date(),
+                },
+            }
+        )
+
+        return res.json({
+            success: true,
+            message: status === "suspended" ? "User suspended" : "User reactivated",
+            status
         })
     } catch (error) {
         return res.json({
@@ -240,6 +367,7 @@ export const adminSellers = async (req, res) => {
 
 
 // Delete Specific Seller : /api/admin/delete-seller-by-id/:id
+// This CLOSES the shop: hidden for SHOP_GRACE_DAYS, admin can still reopen it.
 export const deleteSeller = async (req, res) => {
     try {
         const id = req.params.id
@@ -253,11 +381,168 @@ export const deleteSeller = async (req, res) => {
             })
         }
 
-        // 1. Do not delete a seller who still has unfinished orders
-        const openOrders = await OrderModel.countDocuments({
-            "cart.seller": id,
-            status: { $in: OPEN_ORDER_STATUSES }
+        if (sellerDetail.status === "deleted") {
+            return res.json({
+                success: false,
+                message: "This shop is already removed permanently"
+            })
+        }
+
+        if (sellerDetail.status === "closed") {
+            return res.json({
+                success: false,
+                message: "This shop is already closed. Use the permanent removal after the grace period."
+            })
+        }
+
+        // 1. Do not close a shop that still has unfinished orders
+        const openOrders = await OrderModel.countDocuments(openOrdersFilter({ "cart.seller": id }))
+
+        if (openOrders > 0) {
+            return res.json({
+                success: false,
+                message: `This seller has ${openOrders} unfinished order(s). Finish or cancel them first.`
+            })
+        }
+
+        // 2. Close the shop and hide everything it sells
+        const now = new Date()
+        const purgeAfter = new Date(now.getTime() + SHOP_GRACE_DAYS * 24 * 60 * 60 * 1000)
+
+        await SellerModel.updateOne(
+            { _id: id },
+            {
+                $set: {
+                    status: "closed",
+                    statusReason: cleanReason(req.query.reason),
+                    statusChangedAt: now,
+                    purgeAfter,
+                },
+            }
+        )
+        await setShopVisibility(id, true)
+
+        return res.json({
+            success: true,
+            message: `Shop closed. It can be removed permanently after ${purgeAfter.toISOString().slice(0, 10)}.`,
+            status: "closed",
+            purgeAfter
         })
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message || "Internal Server Error"
+        });
+    }
+}
+
+
+// Suspend, reactivate or reopen a shop : PATCH /api/admin/seller-status/:id
+// Body: { status: "active" | "suspended", reason }
+export const setSellerStatus = async (req, res) => {
+    try {
+        const { status, reason } = req.body
+
+        if (!["active", "suspended"].includes(status)) {
+            return res.json({
+                success: false,
+                message: "Status must be active or suspended"
+            })
+        }
+
+        const seller = await SellerModel.findById(req.params.id).select("status")
+
+        if (!seller) {
+            return res.status(404).json({
+                success: false,
+                message: "Seller not found"
+            })
+        }
+
+        if (seller.status === "deleted") {
+            return res.json({
+                success: false,
+                message: "A shop that was removed permanently cannot be changed"
+            })
+        }
+
+        const current = seller.status || "active"
+
+        if (current === status) {
+            return res.json({
+                success: false,
+                message: `Shop is already ${status}`
+            })
+        }
+
+        await SellerModel.updateOne(
+            { _id: seller._id },
+            {
+                $set: {
+                    status,
+                    statusReason: status === "suspended" ? cleanReason(reason) : "",
+                    statusChangedAt: new Date(),
+                },
+                $unset: { purgeAfter: "" },
+            }
+        )
+        await setShopVisibility(seller._id, status !== "active")
+
+        let message = "Shop reactivated"
+        if (status === "suspended") message = "Shop suspended"
+        else if (current === "closed") message = "Shop reopened"
+
+        return res.json({ success: true, message, status })
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message || "Internal Server Error"
+        });
+    }
+}
+
+
+// Remove a closed shop permanently : DELETE /api/admin/purge-seller-by-id/:id
+// Allowed only after the grace period. ?force=true skips the wait (useful for testing).
+export const purgeSeller = async (req, res) => {
+    try {
+        const id = req.params.id
+
+        const sellerDetail = await SellerModel.findById(id)
+
+        if (!sellerDetail) {
+            return res.status(404).json({
+                success: false,
+                message: "Seller not found"
+            })
+        }
+
+        if (sellerDetail.status === "deleted") {
+            return res.json({
+                success: false,
+                message: "This shop is already removed permanently"
+            })
+        }
+
+        if (sellerDetail.status !== "closed") {
+            return res.json({
+                success: false,
+                message: "Close the shop first. It is removed permanently only after the grace period."
+            })
+        }
+
+        const waitIsOver = sellerDetail.purgeAfter && sellerDetail.purgeAfter <= new Date()
+
+        if (!waitIsOver && req.query.force !== "true") {
+            const date = sellerDetail.purgeAfter ? sellerDetail.purgeAfter.toISOString().slice(0, 10) : "later"
+            return res.json({
+                success: false,
+                message: `The grace period ends on ${date}.`
+            })
+        }
+
+        // 1. Check once more that nothing is still open
+        const openOrders = await OrderModel.countDocuments(openOrdersFilter({ "cart.seller": id }))
 
         if (openOrders > 0) {
             return res.json({
@@ -268,8 +553,8 @@ export const deleteSeller = async (req, res) => {
 
         // 2. Remember every image that must be removed from Cloudinary
         const [products, events] = await Promise.all([
-            ProductModel.find({ shopId: id }).select("images"),
-            EventModel.find({ shopId: id }).select("images"),
+            ProductModel.find({ shopId: String(id) }).select("images"),
+            EventModel.find({ shopId: String(id) }).select("images"),
         ])
 
         const imageUrls = [
@@ -278,22 +563,41 @@ export const deleteSeller = async (req, res) => {
             ...events.flatMap((event) => event.images || []),
         ].filter(Boolean)
 
-        // 3. Delete the seller's data (finished orders are kept as history)
+        // 3. Remove the shop's catalog (finished orders and chats are kept as history)
         await Promise.all([
-            ProductModel.deleteMany({ shopId: id }),
-            EventModel.deleteMany({ shopId: id }),
-            CouponModel.deleteMany({ shopId: id }),
-            deleteChatsOf(id),
+            ProductModel.deleteMany({ shopId: String(id) }),
+            EventModel.deleteMany({ shopId: String(id) }),
+            CouponModel.deleteMany({ shopId: String(id) }),
         ])
 
-        await SellerModel.findByIdAndDelete(id)
+        // 4. Scrub the personal data but keep the document and its _id
+        const now = new Date()
+        await SellerModel.updateOne(
+            { _id: id },
+            {
+                $set: {
+                    status: "deleted",
+                    statusChangedAt: now,
+                    deletedAt: now,
+                    name: "Deleted shop",
+                    email: scrubbedEmail(id),
+                    phoneNumber: 0,
+                    address: "",
+                    zipCode: 0,
+                    avatar: "",
+                    description: "",
+                    password: randomPassword(),
+                },
+                $unset: { purgeAfter: "", resetPasswordToken: "", resetPasswordTime: "" },
+            }
+        )
 
-        // 4. Images last: if Cloudinary fails, the delete itself still worked
+        // 5. Images last: if Cloudinary fails, the removal itself still worked
         await deleteCloudinaryImages(imageUrls)
 
         return res.json({
             success: true,
-            message: "Seller Deleted Successfully",
+            message: "Shop removed permanently",
         })
     } catch (error) {
         return res.json({

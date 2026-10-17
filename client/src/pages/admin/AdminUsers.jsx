@@ -1,10 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { FiTrash2, FiSearch, FiUser, FiArrowLeft } from 'react-icons/fi';
-import { MdOutlineDeleteOutline } from 'react-icons/md';
+import { FiSearch, FiUser, FiArrowLeft } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { deleteUserAction, getUsersAction } from '../../redux/actions/adminAction';
-import { useEffect } from 'react';
+import { deleteUserAction, getUsersAction, setUserStatusAction } from '../../redux/actions/adminAction';
+import StatusBadge from '../../components/admin/StatusBadge';
+import AccountActionModal from '../../components/admin/AccountActionModal';
+
+// What each modal says and shows
+const MODAL_CONFIG = {
+    suspend: {
+        tone: 'warning',
+        title: 'Suspend User',
+        description: 'The user is logged out and cannot log in or place orders until you reactivate the account. Nothing is deleted.',
+        confirmLabel: 'Suspend',
+        showReason: true,
+        checkboxes: [],
+    },
+    reactivate: {
+        tone: 'success',
+        title: 'Reactivate User',
+        description: 'The user can log in and use the store again.',
+        confirmLabel: 'Reactivate',
+        showReason: false,
+        checkboxes: [],
+    },
+    delete: {
+        tone: 'danger',
+        title: 'Delete User',
+        description: 'Personal data is erased and the account can never be used again. Orders stay as history. Users with unfinished orders cannot be deleted.',
+        confirmLabel: 'Delete user',
+        showReason: true,
+        checkboxes: [
+            {
+                name: 'removeReviews',
+                label: "Also remove this user's reviews",
+                hint: 'Leave it unchecked to keep the reviews as anonymous ratings. Check it for fake or abusive accounts.',
+            },
+        ],
+    },
+};
+
+const EMPTY_FORM = { reason: '', removeReviews: false };
+
+// Old accounts have no status field, and that counts as active
+const getStatus = (user) => user.status || 'active';
+
+const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Intl.DateTimeFormat('en-US', options).format(date);
+};
+
+// Helper to safely truncate MongoDB ObjectIds for display UI
+const truncateId = (id) => id && id.length > 10 ? `${id.substring(0, 10)}...` : id;
+
+const BTN = 'px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer';
+const BTN_WARN = `${BTN} border-amber-200 text-amber-700 hover:bg-amber-50`;
+const BTN_OK = `${BTN} border-green-200 text-green-700 hover:bg-green-50`;
+const BTN_DANGER = `${BTN} border-red-200 text-red-600 hover:bg-red-50`;
+
+const Avatar = ({ user }) =>
+    user.avatar ? (
+        <img
+            className='w-8 h-8 rounded-full object-cover'
+            src={user.avatar}
+            alt="Profile Pic"
+        />
+    ) : (
+        <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-semibold text-sm'>
+            {(user.name || '?').charAt(0)}
+        </div>
+    );
 
 const AdminUsers = () => {
     const dispatch = useDispatch();
@@ -14,50 +80,92 @@ const AdminUsers = () => {
     const { allUsers } = useSelector((state) => state.admin);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [modal, setModal] = useState({ type: null, user: null });
+    const [form, setForm] = useState(EMPTY_FORM);
+    const [busy, setBusy] = useState(false);
 
-    // Date Formatter
-    const formatDate = (isoString) => {
-        const date = new Date(isoString);
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Intl.DateTimeFormat('en-US', options).format(date);
+    // Filter users based on search and status
+    const filteredUsers = allUsers.filter((user) => {
+        const term = searchTerm.toLowerCase();
+        const matchesSearch =
+            (user.name || '').toLowerCase().includes(term) ||
+            (user.email || '').toLowerCase().includes(term) ||
+            (user.role || '').toLowerCase().includes(term);
+
+        const matchesStatus = statusFilter === 'all' || getStatus(user) === statusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    const openModal = (type, user) => {
+        setForm(EMPTY_FORM);
+        setModal({ type, user });
     };
 
-    // Filter users based on search
-    const filteredUsers = allUsers.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.role.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // Handle delete click (opens local confirmation modal)
-    const handleDeleteClick = (user) => {
-        setSelectedUser(user);
-        setShowDeleteModal(true);
+    const closeModal = () => {
+        if (!busy) setModal({ type: null, user: null });
     };
 
-    // Confirm delete (dispatches to slicer)
-    const handleConfirmDelete = () => {
-        if (selectedUser) {
-            dispatch(deleteUserAction(selectedUser._id));
-            setShowDeleteModal(false);
-            setSelectedUser(null);
+    const handleFormChange = (name, value) => {
+        setForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // Runs the chosen action. The modal closes only when the server accepts it.
+    const handleConfirm = async () => {
+        const { type, user } = modal;
+        if (!type || !user) return;
+
+        setBusy(true);
+
+        let result;
+        if (type === 'delete') {
+            result = await dispatch(deleteUserAction(user._id, {
+                removeReviews: form.removeReviews,
+                reason: form.reason,
+            }));
+        } else {
+            const nextStatus = type === 'suspend' ? 'suspended' : 'active';
+            result = await dispatch(setUserStatusAction(user._id, nextStatus, form.reason));
+        }
+
+        setBusy(false);
+
+        if (result?.success) {
+            setModal({ type: null, user: null });
         }
     };
 
-    // Cancel delete
-    const handleCancelDelete = () => {
-        setShowDeleteModal(false);
-        setSelectedUser(null);
-    };
+    const renderActions = (user) => {
+        const status = getStatus(user);
 
-    // Helper helper to safely truncate MongoDB ObjectIds for display UI
-    const truncateId = (id) => id && id.length > 10 ? `${id.substring(0, 10)}...` : id;
+        if (status === 'deleted') {
+            return <span className="text-xs text-gray-400">No actions</span>;
+        }
+
+        return (
+            <div className="flex items-center justify-center gap-2">
+                {status === 'suspended' ? (
+                    <button onClick={() => openModal('reactivate', user)} className={BTN_OK}>
+                        Reactivate
+                    </button>
+                ) : (
+                    <button onClick={() => openModal('suspend', user)} className={BTN_WARN}>
+                        Suspend
+                    </button>
+                )}
+                <button onClick={() => openModal('delete', user)} className={BTN_DANGER}>
+                    Delete
+                </button>
+            </div>
+        );
+    };
 
     useEffect(() => {
         dispatch(getUsersAction());
     }, [dispatch]);
+
+    const config = modal.type ? MODAL_CONFIG[modal.type] : null;
 
     return (
         <div className="relative p-4">
@@ -77,16 +185,29 @@ const AdminUsers = () => {
                     </button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative">
-                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search users..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full sm:w-64"
-                    />
+                {/* Search + Status Filter */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-sm"
+                    >
+                        <option value="all">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="deleted">Deleted</option>
+                    </select>
+
+                    <div className="relative">
+                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full sm:w-64"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -107,41 +228,40 @@ const AdminUsers = () => {
                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Joined At
                             </th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Status
+                            </th>
                             <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Delete User
+                                Actions
                             </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {filteredUsers.map((user) => (
-                            <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                            <tr
+                                key={user._id}
+                                className={`hover:bg-gray-50 transition-colors ${getStatus(user) === 'deleted' ? 'opacity-60' : ''}`}
+                            >
                                 <td title={user._id} className="px-6 py-4 text-sm font-mono text-gray-600 truncate">
                                     {truncateId(user._id)}
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
-                                        <img
-                                            className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm'
-                                            src={user.avatar}
-                                            alt="Profile Pic"
-                                        />
+                                        <Avatar user={user} />
                                         <span className="text-sm font-medium text-gray-800">{user.name}</span>
                                     </div>
                                 </td>
                                 <td title={user.email} className="truncate px-6 py-4 text-sm text-gray-600">
-                                    {user.email}
+                                    {getStatus(user) === 'deleted' ? 'Removed' : user.email}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
                                     {formatDate(user.createdAt)}
                                 </td>
+                                <td className="px-6 py-4" title={user.statusReason || ''}>
+                                    <StatusBadge status={getStatus(user)} />
+                                </td>
                                 <td className="px-6 py-4 text-center">
-                                    <button
-                                        onClick={() => handleDeleteClick(user)}
-                                        className="text-red-400 hover:text-red-600 transition-colors"
-                                        title="Delete User"
-                                    >
-                                        <FiTrash2 size={18} />
-                                    </button>
+                                    {renderActions(user)}
                                 </td>
                             </tr>
                         ))}
@@ -152,37 +272,35 @@ const AdminUsers = () => {
             {/* Card View - Mobile & Tablet */}
             <div className="md:hidden space-y-4">
                 {filteredUsers.map((user) => (
-                    <div key={user._id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                    <div
+                        key={user._id}
+                        className={`bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow ${getStatus(user) === 'deleted' ? 'opacity-60' : ''}`}
+                    >
                         <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
-                                <img
-                                    className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm'
-                                    src={user.avatar}
-                                    alt="Profile Pic"
-                                />
+                                <Avatar user={user} />
                                 <div>
                                     <h3 className="font-semibold text-gray-800">{user.name}</h3>
                                     <p className="text-xs text-gray-500 font-mono">{truncateId(user._id)}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => handleDeleteClick(user)}
-                                className="text-red-400 hover:text-red-600 transition-colors p-2"
-                            >
-                                <FiTrash2 size={18} />
-                            </button>
+                            <StatusBadge status={getStatus(user)} />
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-2">
                             <div>
                                 <p className="text-xs text-gray-500">Email</p>
-                                <p className="text-sm text-gray-700 truncate">{user.email}</p>
+                                <p className="text-sm text-gray-700 truncate">
+                                    {getStatus(user) === 'deleted' ? 'Removed' : user.email}
+                                </p>
                             </div>
-                            <div className="col-span-2">
+                            <div>
                                 <p className="text-xs text-gray-500">Joined</p>
                                 <p className="text-sm text-gray-700">{formatDate(user.createdAt)}</p>
                             </div>
                         </div>
+
+                        <div className="mt-4">{renderActions(user)}</div>
                     </div>
                 ))}
             </div>
@@ -192,64 +310,26 @@ const AdminUsers = () => {
                 <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
                     <FiUser className="mx-auto text-gray-300 text-5xl mb-4" />
                     <p className="text-gray-500">No users found</p>
-                    <p className="text-sm text-gray-400 mt-1">Try adjusting your search</p>
+                    <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filter</p>
                 </div>
             )}
 
-            {/* Delete Confirmation Modal */}
-            {showDeleteModal && selectedUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-                    <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={handleCancelDelete}
-                    />
-
-                    <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
-                                <MdOutlineDeleteOutline className="text-red-500 text-2xl" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-800">Delete User</h3>
-                                <p className="text-sm text-gray-500">Are you sure you want to delete this user?</p>
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                                    {selectedUser.name.charAt(0)}
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-800">{selectedUser.name}</p>
-                                    <p className="text-xs text-gray-500 font-mono">{selectedUser._id}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                    <p className="text-xs text-gray-500">Email</p>
-                                    <p className="text-gray-700 truncate">{selectedUser.email}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <button
-                                onClick={handleCancelDelete}
-                                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleConfirmDelete}
-                                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
-                            >
-                                Confirm
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Action Modal */}
+            <AccountActionModal
+                open={Boolean(config)}
+                tone={config?.tone}
+                title={config?.title}
+                description={config?.description}
+                account={modal.user}
+                form={form}
+                onFormChange={handleFormChange}
+                showReason={config?.showReason}
+                checkboxes={config?.checkboxes}
+                confirmLabel={config?.confirmLabel}
+                busy={busy}
+                onConfirm={handleConfirm}
+                onCancel={closeModal}
+            />
         </div>
     );
 };

@@ -1,5 +1,5 @@
 import express from "express"
-import { adminEvents, adminLogin, adminLogout, adminOrders, adminProducts, adminSellers, adminUsers, deleteSeller, deleteUser, verifyAdmin } from "../controllers/adminController.js";
+import { adminEvents, adminLogin, adminLogout, adminOrders, adminProducts, adminSellers, adminUsers, deleteSeller, deleteUser, purgeSeller, setSellerStatus, setUserStatus, verifyAdmin } from "../controllers/adminController.js";
 import adminAuth from "../middleware/adminAuth.js";
 import requiredRole from "../middleware/requireRole.js";
 
@@ -17,5 +17,9 @@ adminRouter.get("/admin-orders", adminAuth, requiredRole("admin"), adminOrders)
 
 adminRouter.delete("/delete-user-by-id/:id", adminAuth, requiredRole("admin"), deleteUser)
 adminRouter.delete("/delete-seller-by-id/:id", adminAuth, requiredRole("admin"), deleteSeller)
+
+adminRouter.patch("/user-status/:id", adminAuth, setUserStatus);
+adminRouter.patch("/seller-status/:id", adminAuth, setSellerStatus);
+adminRouter.delete("/purge-seller-by-id/:id", adminAuth, purgeSeller);
 
 export default adminRouter

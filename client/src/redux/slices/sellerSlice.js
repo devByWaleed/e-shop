@@ -6,7 +6,18 @@ const sellerSlice = createSlice({
         sellerAuthenticated: false,
         sellerLoading: false,
         seller: null,
-        sellerError: null
+        sellerError: null,
+
+        // Shop events (shown on the shop profile page)
+        shopEvents: [],
+        eventsLoading: false,
+        eventsError: null,
+
+        // Shop reviews (shown on the shop profile page)
+        shopReviews: [],
+        reviewsSummary: null,
+        reviewsLoading: false,
+        reviewsError: null
     },
     reducers: {
         signInStart: (state) => {
@@ -53,9 +64,56 @@ const sellerSlice = createSlice({
         },
         ClearError: (state) => {
             state.sellerError = null
+        },
+
+
+        // --- SHOP EVENTS ---
+        FetchShopEventsRequest: (state) => {
+            state.eventsLoading = true
+            state.eventsError = null
+        },
+        FetchShopEventsSuccess: (state, action) => {
+            state.shopEvents = action.payload
+            state.eventsLoading = false
+            state.eventsError = null
+        },
+        FetchShopEventsFail: (state, action) => {
+            state.eventsLoading = false
+            state.eventsError = action.payload
+        },
+
+
+        // --- SHOP REVIEWS ---
+        FetchShopReviewsRequest: (state) => {
+            state.reviewsLoading = true
+            state.reviewsError = null
+        },
+        FetchShopReviewsSuccess: (state, action) => {
+            state.shopReviews = action.payload.reviews
+            state.reviewsSummary = action.payload.summary
+            state.reviewsLoading = false
+            state.reviewsError = null
+        },
+        FetchShopReviewsFail: (state, action) => {
+            state.reviewsLoading = false
+            state.reviewsError = action.payload
         }
     }
 })
 
-export const { LoadSellerRequest, LoadSellerSuccess, LoadSellerFail, UpdateSellerRequest, UpdateSellerSuccess, UpdateSellerFail, ClearError } = sellerSlice.actions
+export const {
+    LoadSellerRequest,
+    LoadSellerSuccess,
+    LoadSellerFail,
+    UpdateSellerRequest,
+    UpdateSellerSuccess,
+    UpdateSellerFail,
+    ClearError,
+    FetchShopEventsRequest,
+    FetchShopEventsSuccess,
+    FetchShopEventsFail,
+    FetchShopReviewsRequest,
+    FetchShopReviewsSuccess,
+    FetchShopReviewsFail
+} = sellerSlice.actions
 export default sellerSlice.reducer

@@ -1,5 +1,18 @@
 import axios from "axios"
-import { LoadSellerRequest, LoadSellerSuccess, LoadSellerFail, UpdateSellerRequest, UpdateSellerSuccess, UpdateSellerFail } from "../slices/sellerSlice"
+import {
+    LoadSellerRequest,
+    LoadSellerSuccess,
+    LoadSellerFail,
+    UpdateSellerRequest,
+    UpdateSellerSuccess,
+    UpdateSellerFail,
+    FetchShopEventsRequest,
+    FetchShopEventsSuccess,
+    FetchShopEventsFail,
+    FetchShopReviewsRequest,
+    FetchShopReviewsSuccess,
+    FetchShopReviewsFail
+} from "../slices/sellerSlice"
 
 export const loadSeller = () => async (dispatch, getState) => {
     // Get current user state
@@ -58,5 +71,47 @@ export const updateSeller = (formData) => async (dispatch) => {
         const errorMsg = error.message;
         dispatch(UpdateSellerFail(errorMsg));
         return { success: false, message: errorMsg };
+    }
+};
+
+
+
+// Get all events of one shop
+export const getShopEvents = (shopId) => async (dispatch) => {
+    try {
+        dispatch(FetchShopEventsRequest());
+
+        const { data } = await axios.get(`/api/seller/shop-events/${shopId}`, {
+            withCredentials: true
+        });
+
+        if (data.success) {
+            dispatch(FetchShopEventsSuccess(data.events));
+        } else {
+            dispatch(FetchShopEventsFail(data.message));
+        }
+    } catch (error) {
+        dispatch(FetchShopEventsFail(error.message));
+    }
+};
+
+
+
+// Get all reviews of one shop (reviews of all its products)
+export const getShopReviews = (shopId) => async (dispatch) => {
+    try {
+        dispatch(FetchShopReviewsRequest());
+
+        const { data } = await axios.get(`/api/seller/shop-reviews/${shopId}`, {
+            withCredentials: true
+        });
+
+        if (data.success) {
+            dispatch(FetchShopReviewsSuccess({ reviews: data.reviews, summary: data.summary }));
+        } else {
+            dispatch(FetchShopReviewsFail(data.message));
+        }
+    } catch (error) {
+        dispatch(FetchShopReviewsFail(error.message));
     }
 };

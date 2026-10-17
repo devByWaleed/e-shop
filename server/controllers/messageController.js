@@ -3,6 +3,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { uploadBufferToCloudinary } from "../config/cloudinary.js";
 import ConversationModel from "../models/Conversations.js";
 import { isActor, actorIds } from "../middleware/anyAuth.js";
+import { isAccountBlocked } from "../middleware/accountStatus.js";
 
 
 export const newMessage = async (req, res) => {
@@ -30,6 +31,14 @@ export const newMessage = async (req, res) => {
 
         // The receiver is the other member of the conversation
         const receiver = conversation.members.find((member) => member !== String(sender));
+
+        // Suspended, closed or deleted accounts cannot receive new messages
+        if (await isAccountBlocked(receiver)) {
+            return res.status(403).json({
+                success: false,
+                message: "This account is no longer available, so you cannot send messages to it"
+            });
+        }
 
         const hasImages = req.files && req.files.length > 0;
 

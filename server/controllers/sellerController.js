@@ -7,6 +7,7 @@ import { signAccessToken, accessMaxAge, cookieBase } from "../config/tokens.js";
 import { v2 as cloudinary } from 'cloudinary';
 import ProductModel from "../models/Products.js";
 import EventModel from "../models/Events.js";
+import { BLOCKED_STATUSES } from "../middleware/accountStatus.js";
 
 
 const isProd = process.env.NODE_ENV === "production";
@@ -201,6 +202,14 @@ export const sellerLogin = async (req, res) => {
             })
         }
 
+        // Suspended, closed or deleted shops cannot log in
+        if (BLOCKED_STATUSES.includes(seller.status)) {
+            return res.json({
+                success: false,
+                message: "This account is not available. Please contact support."
+            })
+        }
+
         res.cookie("sellerToken", signLoginToken(seller), { ...cookieBase, maxAge: LOGIN_MAX_AGE })
 
         // SellerLogin.jsx reads data.seller.id to open the shop page
@@ -312,6 +321,7 @@ export const searchSellers = async (req, res) => {
 
         const safe = escapeRegex(q);
         const sellers = await SellerModel.find({
+            status: { $nin: BLOCKED_STATUSES },
             $or: [
                 { name: { $regex: safe, $options: "i" } },
                 { email: { $regex: safe, $options: "i" } }
@@ -539,3 +549,90 @@ export const resetPassword = async (req, res) => {
         return res.json({ success: false, message: error.message })
     }
 }
+
+
+
+// Get all events of one shop : /api/seller/shop-events/:id
+export const getShopEvents = async (req, res) => {
+    try {
+        const shopId = req.params.id;
+
+        const events = await EventModel.find({ shopId: String(shopId), isHidden: { $ne: true } }).sort({ _id: -1 });
+
+        return res.json({
+            success: true,
+            events
+        });
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
+
+// Get all reviews of one shop (reviews of all its products) : /api/seller/shop-reviews/:id
+export const getShopReviews = async (req, res) => {
+    try {
+        const shopId = req.params.id;
+
+        const products = await ProductModel.find({ shopId: String(shopId) })
+            .select("name category images reviews");
+
+        // Flatten every product's reviews, keeping only public fields
+        const reviews = products
+            .flatMap((product) =>
+                (product.reviews || []).map((review) => {
+                    const plain = review.toObject ? review.toObject() : review;
+
+                    return {
+                        _id: plain._id,
+                        rating: Number(plain.rating) || 0,
+                        comment: plain.comment || "",
+                        createdAt: plain.createdAt,
+                        user: {
+                            _id: plain.user?._id,
+                            name: plain.user?.name,
+                            avatar: plain.user?.avatar
+                        },
+                        product: {
+                            _id: product._id,
+                            name: product.name,
+                            category: product.category,
+                            image: product.images?.[0]
+                        }
+                    };
+                })
+            )
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        // Average and star breakdown
+        const breakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let sum = 0;
+
+        for (const review of reviews) {
+            sum += review.rating;
+            const bucket = Math.min(5, Math.max(1, Math.round(review.rating)));
+            breakdown[bucket] += 1;
+        }
+
+        const summary = {
+            total: reviews.length,
+            average: reviews.length > 0 ? Number((sum / reviews.length).toFixed(1)) : 0,
+            breakdown
+        };
+
+        return res.json({
+            success: true,
+            reviews,
+            summary
+        });
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};

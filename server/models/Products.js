@@ -66,6 +66,13 @@ const ProductSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+
+    // True while the shop is suspended or closed. Public lists and checkout skip these.
+    isHidden: {
+        type: Boolean,
+        default: false,
+    },
+
     createdAt: {
         type: Date,
         default: Date.now,

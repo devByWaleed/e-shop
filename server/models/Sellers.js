@@ -43,6 +43,28 @@ const SellerSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+
+    // Old accounts have no status, and that counts as "active"
+    status: {
+        type: String,
+        enum: ["active", "suspended", "closed", "deleted"],
+        default: "active",
+    },
+    statusReason: {
+        type: String,
+        default: "",
+    },
+    statusChangedAt: {
+        type: Date,
+    },
+    // Set when the shop is closed: the earliest day it can be removed permanently
+    purgeAfter: {
+        type: Date,
+    },
+    deletedAt: {
+        type: Date,
+    },
+
     resetPasswordToken: String,
     resetPasswordTime: Date
 })

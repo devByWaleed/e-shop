@@ -144,7 +144,9 @@ export const getShopEvents = async (req, res) => {
     try {
         // Clean up before fetching
         await cleanupExpiredEvents();
-        const shopEvents = await EventModel.find({ shopId: req.params.id })
+        // Events of suspended or closed shops are hidden from every public list
+        const VISIBLE = { isHidden: { $ne: true } };
+        const shopEvents = await EventModel.find({ shopId: req.params.id, ...VISIBLE })
 
         res.json({
             success: true,
@@ -168,7 +170,7 @@ export const getAllEvents = async (req, res) => {
 
         // No ?page= in the URL: behave exactly like before
         if (!req.query.page) {
-            const allEvents = await EventModel.find({}).sort({ createdAt: -1 })
+            const allEvents = await EventModel.find(VISIBLE).sort({ createdAt: -1 })
             return res.json({ success: true, allEvents });
         }
 
@@ -176,8 +178,8 @@ export const getAllEvents = async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit) || 24, 100);
 
         const [allEvents, total] = await Promise.all([
-            EventModel.find({}).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit),
-            EventModel.countDocuments()
+            EventModel.find(VISIBLE).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit),
+            EventModel.countDocuments(VISIBLE)
         ]);
 
         return res.json({

@@ -96,6 +96,11 @@ const buildCart = async (items) => {
             throw new Error(`Product not found: ${item.product}`);
         }
 
+        // Products of suspended or closed shops cannot be bought
+        if (product.isHidden) {
+            throw new Error(`${product.name} is no longer available`);
+        }
+
         const quantity = getQuantity(item.quantity);
 
         if (product.stock < quantity) {

@@ -6,6 +6,7 @@ import { uploadBufferToCloudinary, getCloudinaryPublicId } from "../config/cloud
 import { cookieBase } from "../config/tokens.js";
 import { v2 as cloudinary } from 'cloudinary';
 import crypto from "crypto";
+import { BLOCKED_STATUSES } from "../middleware/accountStatus.js";
 
 
 
@@ -191,6 +192,14 @@ export const login = async (req, res) => {
             return res.json({
                 success: false,
                 message: "Invalid email or password"
+            })
+        }
+
+        // Suspended or deleted accounts cannot log in
+        if (BLOCKED_STATUSES.includes(user.status)) {
+            return res.json({
+                success: false,
+                message: "This account is not available. Please contact support."
             })
         }
 
@@ -397,7 +406,9 @@ export const searchUsers = async (req, res) => {
         }
 
         const safe = escapeRegex(q);
+
         const users = await UserModel.find({
+            status: { $nin: BLOCKED_STATUSES },
             $or: [
                 { name: { $regex: safe, $options: "i" } },
                 { email: { $regex: safe, $options: "i" } }

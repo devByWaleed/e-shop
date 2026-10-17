@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { verifyAccessToken } from "../config/tokens.js";
+import { isAccountUsable } from "./accountStatus.js";
 
 const COOKIES = [
     { cookie: "token", role: "user" },
@@ -11,7 +12,7 @@ const COOKIES = [
 const verify = (role, token) =>
     role === "admin" ? verifyAccessToken("admin", token) : jwt.verify(token, process.env.JWT_SECRET);
 
-const anyAuth = (req, res, next) => {
+const anyAuth = async (req, res, next) => {
     const actors = [];
 
     for (const { cookie, role } of COOKIES) {
@@ -21,6 +22,9 @@ const anyAuth = (req, res, next) => {
         try {
             const decoded = verify(role, token);
             if (decoded.id && decoded.role === role) {
+                // Suspended, closed or deleted accounts are treated like a missing cookie
+                if (role !== "admin" && !(await isAccountUsable(role, decoded.id))) continue;
+
                 actors.push({ id: String(decoded.id), role });
             }
         } catch (error) {

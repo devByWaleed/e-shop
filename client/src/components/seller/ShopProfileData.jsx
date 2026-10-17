@@ -2,14 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../ProductCard';
+import ShopEvents from './ShopEvents';
+import ShopReviews from './ShopReviews';
 import { productData } from '../../assets/assets';
 import { getShopProducts } from '../../redux/actions/productAction';
+import { getShopEvents, getShopReviews } from '../../redux/actions/sellerAction';
 
 const ShopProfileData = ({ isOwner }) => {
 
     const [activeTab, setActiveTab] = useState(1);
 
-    const { seller } = useSelector((state) => state.seller);
+    const {
+        seller,
+        shopEvents,
+        eventsLoading,
+        eventsError,
+        shopReviews,
+        reviewsSummary,
+        reviewsLoading,
+        reviewsError
+    } = useSelector((state) => state.seller);
     const { shopProducts, productLoading, productError } = useSelector((state) => state.product);
 
     const dispatch = useDispatch();
@@ -18,13 +30,15 @@ const ShopProfileData = ({ isOwner }) => {
     // Tab Definitions
     const tabs = [
         { id: 1, label: "Shop Products" },
-        // { id: 2, label: "Running Events" },
-        // { id: 3, label: "Shop Reviews" },
+        { id: 2, label: "Running Events" },
+        { id: 3, label: "Shop Reviews" },
     ];
 
     useEffect(() => {
         if (seller?._id) {
             dispatch(getShopProducts(seller._id));
+            dispatch(getShopEvents(seller._id));
+            dispatch(getShopReviews(seller._id));
         }
     }, [dispatch, seller]);
 
@@ -77,6 +91,24 @@ const ShopProfileData = ({ isOwner }) => {
                     </div>
                 )}
 
+                {/* Panel 2: Running Events */}
+                {activeTab === 2 && (
+                    <ShopEvents
+                        events={shopEvents}
+                        loading={eventsLoading}
+                        error={eventsError}
+                    />
+                )}
+
+                {/* Panel 3: Shop Reviews */}
+                {activeTab === 3 && (
+                    <ShopReviews
+                        reviews={shopReviews}
+                        summary={reviewsSummary}
+                        loading={reviewsLoading}
+                        error={reviewsError}
+                    />
+                )}
 
             </div>
         </div>

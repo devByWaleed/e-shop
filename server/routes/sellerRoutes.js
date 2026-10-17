@@ -1,6 +1,6 @@
 import express from "express"
 import { upload } from "../config/multer.js";
-import { sellerRegister, activateAccount, sellerLogin, sellerLogout, sellerProfile, getSellerInfo, sendResetOTP, verifyResetOTP, resetPassword, searchSellers, updateSellerProfile } from "../controllers/sellerController.js";
+import { sellerRegister, activateAccount, sellerLogin, sellerLogout, sellerProfile, getSellerInfo, sendResetOTP, verifyResetOTP, resetPassword, searchSellers, updateSellerProfile, getShopEvents, getShopReviews } from "../controllers/sellerController.js";
 import sellerAuth from "../middleware/sellerAuth.js";
 import requiredRole from "../middleware/requireRole.js";
 import anyAuth from "../middleware/anyAuth.js";
@@ -19,5 +19,7 @@ sellerRouter.post("/seller-reset-password", resetPassword)
 sellerRouter.get("/get-seller/:id", getSellerInfo)
 sellerRouter.get("/search-sellers", anyAuth, searchSellers);
 sellerRouter.put("/update-seller-profile", sellerAuth, requiredRole("seller"), upload.single("file"), updateSellerProfile)
+sellerRouter.get("/shop-events/:id", sellerAuth, requiredRole("seller"), getShopEvents);
+sellerRouter.get("/shop-reviews/:id", sellerAuth, requiredRole("seller"), getShopReviews);
 
 export default sellerRouter

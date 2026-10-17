@@ -82,15 +82,23 @@ const adminSlice = createSlice({
             state.adminError = action.payload;
         },
 
-        // --- DELETE REDUCERS ---
-        deleteUser: (state, action) => {
-            state.allUsers = state.allUsers.filter(user => user._id !== action.payload);
+        // --- UPDATE ONE ROW (suspend, reactivate, delete, close, reopen, remove) ---
+        patchUser: (state, action) => {
+            const { id, changes } = action.payload;
+            state.allUsers = state.allUsers.map((user) =>
+                user._id === id ? { ...user, ...changes } : user
+            );
+            state.dataLoading = false;
         },
-        deleteSeller: (state, action) => {
-            state.allSellers = state.allSellers.filter(seller => seller._id !== action.payload);
+        patchSeller: (state, action) => {
+            const { id, changes } = action.payload;
+            state.allSellers = state.allSellers.map((seller) =>
+                seller._id === id ? { ...seller, ...changes } : seller
+            );
+            state.dataLoading = false;
         }
     }
 })
 
-export const { adminSignInStart, adminSignInSuccess, adminSignInFailure, adminLogout, ClearAdminError, fetchDataStart, setAllUsers, setAllSellers, fetchDataFailure, deleteUser, deleteSeller, setAllProducts, setAllEvents, setAllOrders } = adminSlice.actions
+export const { adminSignInStart, adminSignInSuccess, adminSignInFailure, adminLogout, ClearAdminError, fetchDataStart, setAllUsers, setAllSellers, fetchDataFailure, patchUser, patchSeller, setAllProducts, setAllEvents, setAllOrders } = adminSlice.actions
 export default adminSlice.reducer

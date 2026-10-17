@@ -48,6 +48,8 @@ import AdminProfile from './pages/admin/AdminProfile'
 import AdminInbox from './pages/admin/AdminInbox'
 import AdminChatPage from './pages/admin/AdminChatPage'
 
+import { hasHint } from './utils/authHint'
+
 const hideNavFooterPages = [
   '/user-login',
   '/user-signup',
@@ -84,8 +86,9 @@ const App = () => {
   }, [dispatch])
 
   // Restore the admin session only when entering an admin page
+  // and only if a previous admin login left a hint behind
   useEffect(() => {
-    if (needsAdminAuth && !adminAuthenticated) {
+    if (needsAdminAuth && !adminAuthenticated && hasHint('admin')) {
       dispatch(loadAdmin())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,4 +1,6 @@
 import jwt from "jsonwebtoken"
+import { cookieBase } from "../config/tokens.js";
+import { isAccountUsable } from "./accountStatus.js";
 
 const userAuth = async (req, res, next) => {
     const token = req.cookies?.token;  // Safe navigation
@@ -14,6 +16,16 @@ const userAuth = async (req, res, next) => {
         const tokenDecode = jwt.verify(token, process.env.JWT_SECRET)
 
         if (tokenDecode.id && tokenDecode.role) {
+            // The cookie lives for a year, so the account is checked on every request
+            if (!(await isAccountUsable("user", tokenDecode.id))) {
+                res.clearCookie("token", cookieBase)
+                return res.json({
+                    success: false,
+                    code: "ACCOUNT_UNAVAILABLE",
+                    message: "This account is not available. Please contact support."
+                })
+            }
+
             req.userID = tokenDecode.id
             req.userRole = tokenDecode.role
             next()

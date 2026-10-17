@@ -1,10 +1,26 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 
 // Only ONE refresh at a time; other failed requests wait for it
 let refreshPromise = null;
 
+// The server sends this code when the logged in account was suspended, closed or deleted
+const ACCOUNT_UNAVAILABLE = "ACCOUNT_UNAVAILABLE";
+let accountNoticeShown = false;
+
 axios.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        const data = response.data;
+
+        // The server already removed the login cookie. Tell the person, then reload as a guest.
+        if (data?.code === ACCOUNT_UNAVAILABLE && !accountNoticeShown) {
+            accountNoticeShown = true;
+            toast.error(data.message || "This account is not available.");
+            setTimeout(() => window.location.assign("/"), 1500);
+        }
+
+        return response;
+    },
     async (error) => {
         const original = error.config;
         const status = error.response?.status;

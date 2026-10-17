@@ -8,8 +8,8 @@ import {
     fetchDataStart,
     fetchDataFailure,
     setAllUsers,
-    deleteUser,
-    deleteSeller,
+    patchUser,
+    patchSeller,
     setAllProducts,
     setAllEvents,
     setAllOrders
@@ -90,6 +90,28 @@ export const adminLogoutAction = () => async (dispatch) => {
 };
 
 
+// Shared by the five account actions below: runs one request, shows the toast,
+// updates the list when the server says yes, and tells the page what happened
+const runAccountAction = async (request, onSuccess) => {
+    try {
+        const { data } = await request();
+
+        if (data.success) {
+            onSuccess(data);
+            toast.success(data.message);
+            return { success: true, message: data.message };
+        }
+
+        toast.error(data.message);
+        return { success: false, message: data.message };
+    } catch (error) {
+        const message = error.response?.data?.message || error.message;
+        toast.error(message);
+        return { success: false, message };
+    }
+};
+
+
 // Get All Users
 export const getUsersAction = () => async (dispatch) => {
     try {
@@ -108,27 +130,41 @@ export const getUsersAction = () => async (dispatch) => {
 };
 
 
-// Delete Specific User
-export const deleteUserAction = (id) => async (dispatch) => {
-    try {
-        dispatch(fetchDataStart());
+// Suspend or reactivate a user
+export const setUserStatusAction = (id, status, reason = "") => (dispatch) =>
+    runAccountAction(
+        () => axios.patch(`/api/admin/user-status/${id}`, { status, reason }, { withCredentials: true }),
+        (data) => dispatch(patchUser({
+            id,
+            changes: {
+                status: data.status,
+                statusReason: status === "suspended" ? reason : "",
+                statusChangedAt: new Date().toISOString()
+            }
+        }))
+    );
 
-        const { data } = await axios.delete(`/api/admin/delete-user-by-id/${id}`, {
+
+// Delete a user (the server erases personal data and keeps orders as history)
+export const deleteUserAction = (id, { removeReviews = false, reason = "" } = {}) => (dispatch) =>
+    runAccountAction(
+        () => axios.delete(`/api/admin/delete-user-by-id/${id}`, {
+            params: { removeReviews, reason },
             withCredentials: true
-        });
-
-        if (data.success) {
-            dispatch(deleteUser(id));
-            toast.success(data.message)
-        } else {
-            toast.error(data.message)
-            dispatch(fetchDataFailure(data.message));
-        }
-    } catch (error) {
-        toast.error(error.message)
-        dispatch(fetchDataFailure(error.message));
-    }
-}
+        }),
+        () => dispatch(patchUser({
+            id,
+            changes: {
+                status: "deleted",
+                statusReason: reason,
+                name: "Deleted user",
+                email: "",
+                phoneNumber: "",
+                avatar: "",
+                deletedAt: new Date().toISOString()
+            }
+        }))
+    );
 
 
 // Get All Sellers
@@ -149,27 +185,60 @@ export const getSellersAction = () => async (dispatch) => {
 };
 
 
-// Delete Specific Seller
-export const deleteSellerAction = (id) => async (dispatch) => {
-    try {
-        dispatch(fetchDataStart());
+// Suspend, reactivate or reopen a shop
+export const setSellerStatusAction = (id, status, reason = "") => (dispatch) =>
+    runAccountAction(
+        () => axios.patch(`/api/admin/seller-status/${id}`, { status, reason }, { withCredentials: true }),
+        (data) => dispatch(patchSeller({
+            id,
+            changes: {
+                status: data.status,
+                statusReason: status === "suspended" ? reason : "",
+                statusChangedAt: new Date().toISOString(),
+                purgeAfter: null
+            }
+        }))
+    );
 
-        const { data } = await axios.delete(`/api/admin/delete-seller-by-id/${id}`, {
+
+// Close a shop (hidden for the grace period, can be reopened)
+export const deleteSellerAction = (id, reason = "") => (dispatch) =>
+    runAccountAction(
+        () => axios.delete(`/api/admin/delete-seller-by-id/${id}`, {
+            params: { reason },
             withCredentials: true
-        });
+        }),
+        (data) => dispatch(patchSeller({
+            id,
+            changes: {
+                status: "closed",
+                statusReason: reason,
+                purgeAfter: data.purgeAfter,
+                statusChangedAt: new Date().toISOString()
+            }
+        }))
+    );
 
-        if (data.success) {
-            dispatch(deleteSeller(id));
-            toast.success(data.message)
-        } else {
-            toast.error(data.message)
-            dispatch(fetchDataFailure(data.message));
-        }
-    } catch (error) {
-        toast.error(error.message)
-        dispatch(fetchDataFailure(error.message));
-    }
-}
+
+// Remove a closed shop permanently
+export const purgeSellerAction = (id, force = false) => (dispatch) =>
+    runAccountAction(
+        () => axios.delete(`/api/admin/purge-seller-by-id/${id}`, {
+            params: { force },
+            withCredentials: true
+        }),
+        () => dispatch(patchSeller({
+            id,
+            changes: {
+                status: "deleted",
+                name: "Deleted shop",
+                email: "",
+                avatar: "",
+                purgeAfter: null,
+                deletedAt: new Date().toISOString()
+            }
+        }))
+    );
 
 
 // Get All Products
